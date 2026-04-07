@@ -3,394 +3,513 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard ยอดขายรายบุคคล</title>
+    <title>Sales Performance Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #f1f5f9;
-        }
-        .chart-container {
-            position: relative;
-            height: 50vh;
-            width: 100%;
-        }
-        .card {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            border: 1px solid #e2e8f0;
-        }
-        .table-container::-webkit-scrollbar {
-            height: 8px;
-        }
-        .table-container::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .table-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; height: 550px; width: 100%; }
+        .filter-btn-active { background-color: #2563eb !important; color: white !important; border-color: #2563eb !important; }
+        .kpi-card-blue { background-color: #eff6ff; border: 1px solid #dbeafe; }
+        .kpi-card-cyan { background-color: #ecfeff; border: 1px solid #cffafe; }
+        .kpi-card-purple { background-color: #f5f3ff; border: 1px solid #ede9fe; }
+        .kpi-card-orange { background-color: #fff7ed; border: 1px solid #ffedd5; }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <!-- Navbar / Header -->
-    <nav class="bg-white border-b border-gray-200 px-6 py-4 flex flex-wrap justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center space-x-4">
-            <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold text-gray-800 leading-tight">ระบบวิเคราะห์ยอดขาย</h1>
-                <p class="text-xs text-gray-500 font-medium">Real-time Performance Tracking</p>
-            </div>
-        </div>
-        
-        <div class="flex flex-wrap items-center gap-3 mt-4 lg:mt-0">
-            <div class="relative">
-                <select id="filterMonth" class="appearance-none bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-40 p-2.5 pr-8 transition shadow-sm">
-                    <option value="all">🗓️ ทุกช่วงเวลา</option>
-                </select>
+    <div id="app" class="flex flex-col h-screen overflow-hidden">
+        <header class="bg-white border-b px-6 py-4 flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <i class="fas fa-chart-pie text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">Sales Dashboard</h1>
+                    <p class="text-xs text-gray-500 font-medium" id="data-status">กำลังโหลดข้อมูล...</p>
+                </div>
             </div>
             
-            <div class="relative">
-                <select id="filterPerson" class="appearance-none bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-44 p-2.5 pr-8 transition shadow-sm">
-                    <option value="all">👤 พนักงานทุกคน</option>
-                </select>
+            <div id="top-performer" class="hidden md:flex items-center bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-full">
+                <i class="fas fa-crown text-yellow-500 mr-2"></i>
+                <span class="text-sm font-semibold text-yellow-800">Top Performer: <span id="top-performer-name">-</span> (<span id="top-performer-value">0</span>)</span>
             </div>
 
-            <button onclick="fetchData()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition duration-200 shadow-md shadow-indigo-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                รีเฟรช
+            <button id="refresh-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-sm active:scale-95">
+                <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                <span>รีเฟรชข้อมูล</span>
             </button>
-        </div>
-    </nav>
+        </header>
 
-    <!-- Main Content -->
-    <main class="p-6 max-w-[1600px] mx-auto space-y-6">
-        
-        <div id="loading" class="hidden fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] z-[60] flex items-center justify-center">
-            <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
-                <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent"></div>
-                <p class="mt-4 text-indigo-600 font-semibold">กำลังโหลดข้อมูล...</p>
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-2 border-l-4 border-blue-600 pl-4 py-1">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800" id="main-report-title">รายงานสรุปยอดขายภาพรวม</h2>
+                    <p class="text-sm text-gray-600" id="report-subtitle">แสดงข้อมูลยอดขายของพนักงานทุกคน ทุกบริษัท</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">ข้อมูลอัปเดตล่าสุด</span>
+                    <p class="text-sm font-bold text-blue-600" id="last-update-date">-</p>
+                </div>
             </div>
-        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="card p-6 border-t-4 border-t-indigo-500">
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">ยอดรวมสุทธิ</p>
-                    <div class="bg-indigo-50 p-2 rounded-lg text-indigo-600">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="kpi-card-blue p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-semibold text-blue-600">ยอดรวมทั้งหมด (Net)</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-total">฿0.00</h3>
+                        </div>
+                        <div class="bg-blue-600 p-2 rounded-lg text-white"><i class="fas fa-wallet"></i></div>
                     </div>
                 </div>
-                <h2 id="totalSales" class="text-2xl font-bold text-gray-800 mt-2">฿0.00</h2>
-            </div>
-            <div class="card p-6 border-t-4 border-t-emerald-500">
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">ยอดบริษัท GFS</p>
-                    <div class="bg-emerald-50 p-2 rounded-lg text-emerald-600 text-xs font-bold px-3">GFS</div>
-                </div>
-                <h2 id="totalGFS" class="text-2xl font-bold text-gray-800 mt-2">฿0.00</h2>
-            </div>
-            <div class="card p-6 border-t-4 border-t-blue-500">
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">ยอดบริษัท MHL</p>
-                    <div class="bg-blue-50 p-2 rounded-lg text-blue-600 text-xs font-bold px-3">MHL</div>
-                </div>
-                <h2 id="totalMHL" class="text-2xl font-bold text-gray-800 mt-2">฿0.00</h2>
-            </div>
-            <div class="card p-6 border-t-4 border-t-orange-500 bg-orange-50/20">
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-orange-500 font-bold uppercase tracking-wider">TOP PERFORMER</p>
-                    <div class="bg-orange-100 p-2 rounded-lg text-orange-600">🏆</div>
-                </div>
-                <h2 id="topPerformer" class="text-2xl font-bold text-gray-800 mt-2">-</h2>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-6">
-            <div class="card p-6 bg-white">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-800">กราฟเปรียบเทียบผลงาน</h3>
-                        <p class="text-sm text-gray-500">วิเคราะห์ยอดขายแยกตามบริษัทและยอดรวมสะสม</p>
+                <div class="kpi-card-cyan p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-semibold text-cyan-600">ยอดขาย GFS</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-gfs">฿0.00</h3>
+                        </div>
+                        <div class="bg-cyan-500 p-2 rounded-lg text-white"><i class="fas fa-building"></i></div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div class="flex items-center gap-2 text-xs font-semibold text-gray-600">
-                            <span class="inline-block w-4 h-2 bg-blue-500 rounded-full shadow-sm"></span> MHL
+                </div>
+                <div class="kpi-card-purple p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-semibold text-purple-600">ยอดขาย MHL</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-mhl">฿0.00</h3>
                         </div>
-                        <div class="flex items-center gap-2 text-xs font-semibold text-gray-600">
-                            <span class="inline-block w-4 h-2 bg-emerald-500 rounded-full shadow-sm"></span> GFS
+                        <div class="bg-purple-500 p-2 rounded-lg text-white"><i class="fas fa-industry"></i></div>
+                    </div>
+                </div>
+                <div class="kpi-card-orange p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-semibold text-orange-600">ยอดขาย MHLCar</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-mhlcar">฿0.00</h3>
                         </div>
-                        <div class="flex items-center gap-2 text-xs font-semibold text-orange-500">
-                            <span class="inline-block w-6 h-0.5 border-t-2 border-orange-400"></span> ยอดรวม 2 บริษัท
-                        </div>
+                        <div class="bg-orange-500 p-2 rounded-lg text-white"><i class="fas fa-car"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 border-b pb-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-gray-500 uppercase">กรองเดือน</label>
+                        <select id="filter-month" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                            <option value="all">ทั้งหมด</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-gray-500 uppercase">กรองพนักงาน</label>
+                        <select id="filter-staff" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                            <option value="all">ทั้งหมด</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-gray-500 uppercase">กรองบริษัท</label>
+                        <select id="filter-company" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                            <option value="all">ทั้งหมด</option>
+                            <option value="GFS">GFS</option>
+                            <option value="MHL">MHL</option>
+                            <option value="MHLCar">MHLCar</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="reset-filters" class="text-blue-600 text-sm hover:underline font-medium mb-2">ล้างตัวกรองทั้งหมด</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-gray-500 uppercase">ตัวกรองด่วนตามกลุ่มทีม</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterByGroup('all')" id="btn-group-all" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all filter-btn-active">ทุกคน</button>
+                        <button onclick="filterByGroup('building')" id="btn-group-building" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all bg-white">ฝ่ายขายอาคาร</button>
+                        <button onclick="filterByGroup('admin')" id="btn-group-admin" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all bg-white">Sales Admin</button>
+                        <button onclick="filterByGroup('car')" id="btn-group-car" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all bg-white">ฝ่ายขายรถยนต์</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-lg font-bold text-gray-800" id="chart-title">ยอดขายรายบุคคล</h3>
+                        <button id="toggle-datalabels" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
+                            <i class="fas fa-eye text-[10px]" id="eye-icon"></i>
+                            <span id="toggle-label-text">แสดงยอดรวมบนกราฟ</span>
+                        </button>
                     </div>
                 </div>
                 <div class="chart-container">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
-        </div>
 
-        <div class="card overflow-hidden">
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-700">รายการข้อมูลทั้งหมด</h3>
+            <!-- Table Section -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <button id="toggle-table" class="w-full px-6 py-4 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors border-b">
+                    <span class="font-bold text-gray-700 flex items-center gap-2"><i class="fas fa-table"></i>รายละเอียดข้อมูลรายการขาย</span>
+                    <i class="fas fa-chevron-down transform transition-transform" id="table-icon"></i>
+                </button>
+                <div id="table-content" class="hidden overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
+                            <tr>
+                                <th class="px-6 py-3">เดือน</th>
+                                <th class="px-6 py-3">วันที่</th>
+                                <th class="px-6 py-3">พนักงาน</th>
+                                <th class="px-6 py-3">บริษัท</th>
+                                <th class="px-6 py-3 text-right">ยอดขาย</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-body" class="divide-y divide-gray-100 text-gray-700"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="table-container overflow-x-auto">
-                <table class="w-full text-sm text-left border-collapse">
-                    <thead class="text-xs font-bold text-gray-500 uppercase bg-gray-100/50 sticky top-0">
-                        <tr id="tableHeader">
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-gray-100">
-                    </tbody>
-                </table>
-            </div>
+        </main>
+        
+        <div id="loading" class="fixed inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-50">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
+            <p class="text-blue-600 font-medium">กำลังประมวลผลข้อมูลยอดขาย...</p>
         </div>
-    </main>
+    </div>
 
     <script>
-        const SPREADSHEET_ID = '1Ag7yh0SFSqGfm3LTNinHwlwV6h5Xa4M2yIuf03mq2uc';
-        const TAB_NAME = 'ยอดขายรายบุคคล';
+        Chart.register(ChartDataLabels);
 
-        let rawData = [];
-        let staffNames = [];
-        let salesChart = null;
+        const SHEET_ID = '11Ra0vKh49h12-KYKnnbBoIuQc5nWLqCO3rB3UWZnIQs';
+        const SHEET_NAME_SALES = 'ยอดขายเชลล์';
+        const SHEET_NAME_TARGET = 'เป้ายอดขาย';
+        
+        const SALES_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_SALES)}`;
+        const TARGET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_TARGET)}`;
 
-        const monthNamesThai = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-        const monthOrder = { 'ม.ค.': 1, 'ก.พ.': 2, 'มี.ค.': 3, 'เม.ย.': 4, 'พ.ค.': 5, 'มิ.ย.': 6, 'ก.ค.': 7, 'ส.ค.': 8, 'ก.ย.': 9, 'ต.ค.': 10, 'พ.ย.': 11, 'ธ.ค.': 12 };
-
-        window.onload = () => {
-            fetchData();
-            document.getElementById('filterMonth').addEventListener('change', updateDisplay);
-            document.getElementById('filterPerson').addEventListener('change', updateDisplay);
+        const monthOrder = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        const companyColors = { 'GFS': '#06b6d4', 'MHL': '#8b5cf6', 'MHLCar': '#f97316' };
+        const groups = {
+            building: ['ยา(P)', 'เจ', 'บอม', 'สายฟ้า', 'พัท', 'อิมเมจ'],
+            admin: ['ดาว', 'ก้าว', 'เก็ต'],
+            car: ['นัท', 'พี่เมย์']
         };
 
+        let rawData = [];
+        let targetData = [];
+        let filteredData = [];
+        let salesChart = null;
+        let currentGroup = 'all';
+        let showDataLabels = true;
+
+        function parseThaiDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const parts = dateStr.split('/').map(p => p.trim());
+            if (parts.length !== 3) return null;
+            let d = parseInt(parts[0]);
+            let m = parseInt(parts[1]) - 1;
+            let y = parseInt(parts[2]);
+            if (y < 100) y += 2000; 
+            if (y > 2500) y -= 543;
+            const dateObj = new Date(y, m, d);
+            return isNaN(dateObj.getTime()) ? null : dateObj;
+        }
+
         async function fetchData() {
-            showLoading(true);
+            document.getElementById('loading').classList.remove('hidden');
             try {
-                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(TAB_NAME)}`;
-                const response = await fetch(url);
-                const text = await response.text();
-                const json = JSON.parse(text.substr(47).slice(0, -2));
-                processSheetData(json.table);
-            } catch (error) {
-                console.error("Fetch Error:", error);
-            } finally {
-                showLoading(false);
+                const [salesRes, targetRes] = await Promise.all([
+                    fetch(SALES_CSV_URL + '&cache=' + Date.now()),
+                    fetch(TARGET_CSV_URL + '&cache=' + Date.now())
+                ]);
+                const salesText = await salesRes.text();
+                const targetText = await targetRes.text();
+                parseSalesCSV(salesText);
+                parseTargetCSV(targetText);
+                populateFilters();
+                updateDashboard();
+                document.getElementById('data-status').innerText = 'ข้อมูลซิงค์สำเร็จ (ตรวจสอบความถูกต้องเรียบร้อย)';
+            } catch (error) { 
+                console.error("Fetch Error:", error); 
+                document.getElementById('data-status').innerText = 'เกิดข้อผิดพลาดในการดึงข้อมูล';
+            } finally { 
+                document.getElementById('loading').classList.add('hidden'); 
             }
         }
 
-        // ฟังก์ชันช่วยแปลงค่า "Date(2025,0,1)" เป็น "ม.ค. 25" หรือรูปแบบที่ต้องการ
-        function formatMonthValue(val) {
-            if (!val) return "";
-            if (typeof val === 'string' && val.startsWith('Date(')) {
-                // แยกค่าจาก Date(2025,0,1)
-                const parts = val.match(/\d+/g);
-                if (parts && parts.length >= 2) {
-                    const yearFull = parseInt(parts[0]);
-                    const monthIdx = parseInt(parts[1]);
-                    const yearShort = yearFull.toString().slice(-2);
-                    return `${monthNamesThai[monthIdx]} ${yearShort}`;
+        function parseSalesCSV(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            const result = [];
+            let latestValidDateObj = null;
+            let latestValidDateStr = "-";
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const row = [];
+                let currentField = '';
+                let inQuotes = false;
+                for (let char of line) {
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) { row.push(currentField.trim()); currentField = ''; }
+                    else currentField += char;
+                }
+                row.push(currentField.trim());
+
+                if (row.length >= 5) {
+                    const rawSales = (row[2] || "0").replace(/[^\d.-]/g, '');
+                    const salesVal = parseFloat(rawSales);
+                    const dateStr = row[1];
+                    const dateObj = parseThaiDate(dateStr);
+                    if (!isNaN(salesVal)) {
+                        result.push({
+                            month: row[0], date: dateStr, sales: salesVal, 
+                            staff: row[3] || 'ไม่ระบุชื่อ', company: row[4] || 'ไม่ระบุบริษัท', 
+                            timestamp: dateObj ? dateObj.getTime() : 0
+                        });
+                        if (dateObj && (!latestValidDateObj || dateObj > latestValidDateObj)) {
+                            latestValidDateObj = dateObj;
+                            latestValidDateStr = dateStr;
+                        }
+                    }
                 }
             }
-            // ถ้าเป็นรูปแบบอื่นๆ หรือ String อยู่แล้ว
-            return val;
+            rawData = result;
+            filteredData = [...rawData];
+            document.getElementById('last-update-date').innerText = latestValidDateStr;
         }
 
-        function sortMonths(months) {
-            return months.sort((a, b) => {
-                const [m1, y1] = a.split(' ');
-                const [m2, y2] = b.split(' ');
-                if (y1 !== y2) return parseInt(y1) - parseInt(y2);
-                return monthOrder[m1] - monthOrder[m2];
+        function parseTargetCSV(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const row = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
+                if (row.length >= 3) {
+                    const targetVal = parseFloat((row[2] || "0").replace(/[^\d.-]/g, '')) || 0;
+                    result.push({ month: row[0], staff: row[1], target: targetVal });
+                }
+            }
+            targetData = result;
+        }
+
+        function populateFilters() {
+            const uniqueMonths = [...new Set(rawData.map(d => d.month))].filter(Boolean);
+            const sortedMonths = uniqueMonths.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+            const staff = [...new Set(rawData.map(d => d.staff))].filter(Boolean).sort();
+            const mSelect = document.getElementById('filter-month'), sSelect = document.getElementById('filter-staff');
+            mSelect.innerHTML = sSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
+            sortedMonths.forEach(m => mSelect.innerHTML += `<option value="${m}">${m}</option>`);
+            staff.forEach(s => sSelect.innerHTML += `<option value="${s}">${s}</option>`);
+        }
+
+        function applyFilters() {
+            const month = document.getElementById('filter-month').value;
+            const staff = document.getElementById('filter-staff').value;
+            const company = document.getElementById('filter-company').value;
+            filteredData = rawData.filter(d => {
+                const mY = month === 'all' || d.month === month;
+                const sY = staff === 'all' || d.staff === staff;
+                const cY = company === 'all' || d.company === company;
+                const gY = currentGroup === 'all' || groups[currentGroup].includes(d.staff);
+                return mY && sY && cY && gY;
             });
+            updateDashboard();
         }
 
-        function processSheetData(table) {
-            staffNames = table.cols.slice(2).map(col => col.label || "").filter(n => n && !n.includes('Column'));
-            
-            rawData = table.rows.map(row => {
-                // แก้ไขการดึงเดือนตรงนี้
-                let rawMonth = row.c[1]?.v || "";
-                let formattedMonth = formatMonthValue(rawMonth);
+        function filterByGroup(groupId) {
+            currentGroup = groupId;
+            document.querySelectorAll('.group-filter-btn').forEach(btn => btn.classList.remove('filter-btn-active'));
+            document.getElementById(groupId === 'all' ? 'btn-group-all' : `btn-group-${groupId}`).classList.add('filter-btn-active');
+            applyFilters();
+        }
 
-                const item = {
-                    company: row.c[0]?.v || "",
-                    month: formattedMonth,
-                    sales: {}
-                };
-                
-                staffNames.forEach((name, index) => {
-                    const cellVal = row.c[index + 2]?.v;
-                    item.sales[name] = typeof cellVal === 'number' ? cellVal : 0;
+        function updateDashboard() {
+            const total = filteredData.reduce((sum, d) => sum + d.sales, 0);
+            document.getElementById('kpi-total').innerText = formatCurrency(total);
+            ['GFS', 'MHL', 'MHLCar'].forEach(c => {
+                const val = filteredData.filter(d => d.company === c).reduce((sum, d) => sum + d.sales, 0);
+                document.getElementById(`kpi-${c.toLowerCase()}`).innerText = formatCurrency(val);
+            });
+            renderChart();
+            renderTable();
+            updateTopPerformer();
+        }
+
+        function updateTopPerformer() {
+            const sSales = {};
+            filteredData.forEach(d => { sSales[d.staff] = (sSales[d.staff] || 0) + d.sales; });
+            let topN = "-", topV = 0;
+            Object.entries(sSales).forEach(([n, v]) => { if (v > topV) { topV = v; topN = n; } });
+            document.getElementById('top-performer-name').innerText = topN;
+            document.getElementById('top-performer-value').innerText = formatCurrency(topV);
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('salesChart');
+            const currentMonth = document.getElementById('filter-month').value;
+            const staffSalesTotal = {};
+            filteredData.forEach(d => { staffSalesTotal[d.staff] = (staffSalesTotal[d.staff] || 0) + d.sales; });
+            const labels = Object.keys(staffSalesTotal).sort((a, b) => staffSalesTotal[b] - staffSalesTotal[a]);
+            const companies = ['GFS', 'MHL', 'MHLCar'];
+            
+            const datasets = companies.map(c => ({
+                label: `ยอดขาย ${c}`,
+                data: labels.map(s => filteredData.filter(d => d.staff === s && d.company === c).reduce((sum, d) => sum + d.sales, 0)),
+                backgroundColor: companyColors[c],
+                stack: 'Actual'
+            }));
+
+            if (currentGroup === 'building') {
+                datasets.push({
+                    label: 'เป้ายอดขาย',
+                    data: labels.map(s => targetData.filter(t => t.staff === s && (currentMonth === 'all' || t.month === currentMonth)).reduce((sum, t) => sum + t.target, 0)),
+                    backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', borderWidth: 1, stack: 'Target',
+                    datalabels: {
+                        display: (context) => showDataLabels && context.dataset.data[context.dataIndex] > 0,
+                        anchor: 'end', align: 'top', color: '#64748b', font: { size: 10 },
+                        formatter: (v) => v > 0 ? formatCurrencyShort(v) : ''
+                    }
                 });
-                return item;
-            }).filter(item => item.company && item.month);
-
-            updateFilters();
-            updateDisplay();
-        }
-
-        function updateFilters() {
-            const monthSelect = document.getElementById('filterMonth');
-            const personSelect = document.getElementById('filterPerson');
-            
-            const months = sortMonths([...new Set(rawData.map(d => d.month))]);
-            
-            monthSelect.innerHTML = '<option value="all">🗓️ ทุกช่วงเวลา</option>';
-            months.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.textContent = m;
-                monthSelect.appendChild(opt);
-            });
-
-            personSelect.innerHTML = '<option value="all">👤 พนักงานทุกคน</option>';
-            staffNames.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                personSelect.appendChild(opt);
-            });
-        }
-
-        function updateDisplay() {
-            const selectedMonth = document.getElementById('filterMonth').value;
-            const selectedPerson = document.getElementById('filterPerson').value;
-
-            let filtered = rawData;
-            if (selectedMonth !== 'all') {
-                filtered = filtered.filter(d => d.month === selectedMonth);
             }
 
-            let totalAll = 0, totalGFS = 0, totalMHL = 0;
-            let personTotals = {};
-            staffNames.forEach(n => personTotals[n] = 0);
-
-            filtered.forEach(item => {
-                staffNames.forEach(n => {
-                    const val = item.sales[n];
-                    totalAll += val;
-                    personTotals[n] += val;
-                    if (item.company === 'GFS') totalGFS += val;
-                    if (item.company === 'MHL') totalMHL += val;
-                });
-            });
-
-            document.getElementById('totalSales').textContent = '฿' + totalAll.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('totalGFS').textContent = '฿' + totalGFS.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('totalMHL').textContent = '฿' + totalMHL.toLocaleString(undefined, {minimumFractionDigits: 2});
-            
-            let topStaff = Object.entries(personTotals).sort((a, b) => b[1] - a[1])[0];
-            document.getElementById('topPerformer').textContent = (topStaff && topStaff[1] > 0) ? topStaff[0] : '-';
-
-            renderChart(filtered, selectedPerson);
-            renderTable(filtered);
-        }
-
-        function renderChart(data, selectedPerson) {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            let displayStaff = selectedPerson === 'all' ? staffNames : [selectedPerson];
-            
-            const mhlData = displayStaff.map(name => 
-                data.filter(d => d.company === 'MHL').reduce((sum, d) => sum + d.sales[name], 0)
-            );
-            const gfsData = displayStaff.map(name => 
-                data.filter(d => d.company === 'GFS').reduce((sum, d) => sum + d.sales[name], 0)
-            );
-            const lineData = displayStaff.map((_, i) => mhlData[i] + gfsData[i]);
-
             if (salesChart) salesChart.destroy();
-
             salesChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: displayStaff,
-                    datasets: [
-                        {
-                            label: 'MHL Sales',
-                            data: mhlData,
-                            backgroundColor: '#3b82f6',
-                            borderRadius: 6,
-                            stack: 'company'
-                        },
-                        {
-                            label: 'GFS Sales',
-                            data: gfsData,
-                            backgroundColor: '#10b981',
-                            borderRadius: 6,
-                            stack: 'company'
-                        },
-                        {
-                            label: 'Total',
-                            data: lineData,
-                            type: 'line',
-                            borderColor: '#f97316',
-                            borderWidth: 3,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#f97316',
-                            pointRadius: 5,
-                            tension: 0.4
-                        }
-                    ]
-                },
+                data: { labels, datasets },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            ticks: { callback: v => v >= 1000 ? (v/1000).toLocaleString() + 'k' : v }
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                            titleColor: '#1e293b',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyColor: '#475569',
+                            bodyFont: { size: 13 },
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            callbacks: {
+                                title: (tooltipItems) => `พนักงาน: ${tooltipItems[0].label}`,
+                                label: (context) => {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) label += formatCurrency(context.parsed.y);
+                                    return label;
+                                },
+                                footer: (tooltipItems) => {
+                                    const idx = tooltipItems[0].dataIndex;
+                                    let actualTotal = 0;
+                                    let targetTotal = 0;
+                                    tooltipItems[0].chart.data.datasets.forEach(ds => {
+                                        if (ds.stack === 'Actual') actualTotal += (ds.data[idx] || 0);
+                                        if (ds.stack === 'Target') targetTotal += (ds.data[idx] || 0);
+                                    });
+                                    let footerLines = [`ยอดรวมสุทธิ: ${formatCurrency(actualTotal)}`];
+                                    if (targetTotal > 0) {
+                                        const percent = ((actualTotal / targetTotal) * 100).toFixed(1);
+                                        const status = actualTotal >= targetTotal ? ' 🏆 (ผ่านเป้า!)' : '';
+                                        footerLines.push(`เป้าหมาย: ${formatCurrency(targetTotal)}`);
+                                        footerLines.push(`ความสำเร็จ: ${percent}%${status}`);
+                                    }
+                                    return footerLines.join('\n');
+                                }
+                            },
+                            footerColor: '#1e40af',
+                            footerFont: { weight: 'bold', size: 13 }
                         },
-                        x: { grid: { display: false } }
+                        datalabels: {
+                            display: (context) => {
+                                if (context.dataset.stack !== 'Actual') return false;
+                                const actualDSIndices = context.chart.data.datasets.map((d, i) => d.stack === 'Actual' ? i : -1).filter(i => i !== -1);
+                                return showDataLabels && context.datasetIndex === Math.max(...actualDSIndices);
+                            },
+                            anchor: 'end', align: 'top', color: '#1e40af', 
+                            font: (context) => {
+                                const idx = context.dataIndex;
+                                let actualTotal = 0, targetTotal = 0;
+                                context.chart.data.datasets.forEach(ds => {
+                                    if (ds.stack === 'Actual') actualTotal += (ds.data[idx] || 0);
+                                    if (ds.stack === 'Target') targetTotal += (ds.data[idx] || 0);
+                                });
+                                // ถ้าถึงเป้า ให้ขนาดใหญ่ขึ้นนิดหน่อยเพื่อรองรับอีโมจิ
+                                return { weight: 'bold', size: (targetTotal > 0 && actualTotal >= targetTotal) ? 14 : 11 };
+                            },
+                            formatter: (v, context) => {
+                                const idx = context.dataIndex;
+                                let actualTotal = 0, targetTotal = 0;
+                                context.chart.data.datasets.forEach(ds => {
+                                    if (ds.stack === 'Actual') actualTotal += (ds.data[idx] || 0);
+                                    if (ds.stack === 'Target') targetTotal += (ds.data[idx] || 0);
+                                });
+                                
+                                if (actualTotal <= 0) return '';
+                                
+                                const formattedVal = formatCurrencyShort(actualTotal);
+                                // เงื่อนไข: ถ้ามีเป้าหมาย และ ยอดขายรวม >= เป้าหมาย ให้แสดงถ้วยรางวัล
+                                if (targetTotal > 0 && actualTotal >= targetTotal) {
+                                    return `🏆 ${formattedVal}`;
+                                }
+                                return formattedVal;
+                            }
+                        }
+                    },
+                    scales: { 
+                        x: { stacked: true }, 
+                        y: { stacked: true, beginAtZero: true, ticks: { callback: v => formatCurrencyShort(v) } } 
                     }
                 }
             });
         }
 
-        function renderTable(data) {
-            const headerRow = document.getElementById('tableHeader');
-            const tableBody = document.getElementById('tableBody');
-            
-            headerRow.innerHTML = `
-                <th class="px-6 py-4 border-b">บริษัท</th>
-                <th class="px-6 py-4 border-b text-center">เดือนที่ติดตั้ง</th>
-                ${staffNames.map(n => `<th class="px-6 py-4 border-b text-right">${n}</th>`).join('')}
-            `;
-
-            tableBody.innerHTML = data.map(item => `
-                <tr class="hover:bg-indigo-50/30 transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.company === 'GFS' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">
-                            ${item.company}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-center whitespace-nowrap">
-                        <span class="bg-slate-100 px-3 py-1 rounded-md text-xs border border-slate-200">${item.month}</span>
-                    </td>
-                    ${staffNames.map(n => `
-                        <td class="px-6 py-4 text-right tabular-nums text-gray-700 font-medium ${item.sales[n] === 0 ? 'text-gray-300' : ''}">
-                            ${item.sales[n] > 0 ? '฿' + item.sales[n].toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}
-                        </td>
-                    `).join('')}
+        function renderTable() {
+            document.getElementById('data-body').innerHTML = filteredData
+                .sort((a,b) => b.timestamp - a.timestamp)
+                .map(d => `
+                <tr class="hover:bg-gray-50 border-b border-gray-50">
+                    <td class="px-6 py-3">${d.month}</td>
+                    <td class="px-6 py-3 text-gray-400 text-xs font-mono">${d.date}</td>
+                    <td class="px-6 py-3 font-medium text-gray-800">${d.staff}</td>
+                    <td class="px-6 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold" style="background:${companyColors[d.company]}20;color:${companyColors[d.company]}">${d.company}</span></td>
+                    <td class="px-6 py-3 text-right font-bold text-blue-700">${formatCurrency(d.sales)}</td>
                 </tr>
             `).join('');
         }
 
-        function showLoading(isLoading) {
-            document.getElementById('loading').classList.toggle('hidden', !isLoading);
+        function formatCurrency(n) { 
+            return '฿' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
         }
+        function formatCurrencyShort(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+            return n.toFixed(0);
+        }
+
+        document.getElementById('refresh-btn').onclick = fetchData;
+        document.getElementById('filter-month').onchange = applyFilters;
+        document.getElementById('filter-staff').onchange = applyFilters;
+        document.getElementById('filter-company').onchange = applyFilters;
+        document.getElementById('reset-filters').onclick = () => {
+            document.getElementById('filter-month').value = 'all';
+            document.getElementById('filter-staff').value = 'all';
+            document.getElementById('filter-company').value = 'all';
+            filterByGroup('all');
+        };
+        document.getElementById('toggle-table').onclick = () => {
+            document.getElementById('table-content').classList.toggle('hidden');
+        };
+
+        window.onload = fetchData;
     </script>
 </body>
 </html>
