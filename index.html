@@ -1,515 +1,489 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Performance Dashboard</title>
+    <title>GOOD GROUP Management Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
-        .chart-container { position: relative; height: 550px; width: 100%; }
-        .filter-btn-active { background-color: #2563eb !important; color: white !important; border-color: #2563eb !important; }
-        .kpi-card-blue { background-color: #eff6ff; border: 1px solid #dbeafe; }
-        .kpi-card-cyan { background-color: #ecfeff; border: 1px solid #cffafe; }
-        .kpi-card-purple { background-color: #f5f3ff; border: 1px solid #ede9fe; }
-        .kpi-card-orange { background-color: #fff7ed; border: 1px solid #ffedd5; }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #0d1117;
+            color: #ffffff;
+        }
+
+        .sidebar {
+            background-color: #161b22;
+            border-right: 1px solid #30363d;
+        }
+
+        .nav-item {
+            color: #8b949e;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: #ff6b00;
+            color: #ffffff !important;
+        }
+
+        /* Sub-menu Styles */
+        .sub-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding-left: 2.5rem;
+        }
+
+        .sub-menu.open {
+            max-height: 200px;
+        }
+
+        .sub-nav-item {
+            color: #8b949e;
+            font-size: 0.8rem;
+            padding: 0.5rem 1rem;
+            display: block;
+            text-decoration: none;
+            transition: color 0.2s;
+            border-left: 1px solid #30363d;
+        }
+
+        .sub-nav-item:hover {
+            color: #ff6b00;
+            border-left-color: #ff6b00;
+        }
+
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+        }
+
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            background-color: #21262d;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #30363d;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #ff6b00;
+        }
+
+        .file-item {
+            transition: transform 0.2s, background-color 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .file-item:hover {
+            background-color: #1c2128;
+            transform: translateY(-5px);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 10px;
+        }
     </style>
 </head>
-<body class="min-h-screen">
 
-    <div id="app" class="flex flex-col h-screen overflow-hidden">
-        <header class="bg-white border-b px-6 py-4 flex justify-between items-center shrink-0">
-            <div class="flex items-center gap-4">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <i class="fas fa-chart-pie text-xl"></i>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-72 flex flex-col p-6 hidden lg:flex">
+        <div class="flex flex-col items-center mb-10">
+            <div class="logo-container mb-4">
+                <span class="text-white text-3xl font-bold italic tracking-tighter">G</span>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">
+                <span class="text-white">GOOD</span> <span class="text-[#ff6b00]">GROUP</span>
+            </h1>
+        </div>
+
+        <div class="space-y-6 overflow-y-auto pr-2">
+            <div>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4 px-4">Overview</p>
+                <nav class="space-y-2">
+                    <a href="#" class="nav-item active px-4 py-3 gap-3">
+                        <i class="fa-solid fa-chart-pie w-5"></i>
+                        <span class="text-sm">สรุปภาพรวม</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4 px-4">Departments</p>
+                <nav class="space-y-1">
+                    <a href="#" class="nav-item px-4 py-3 gap-3">
+                        <i class="fa-solid fa-user-shield w-5"></i>
+                        <span class="text-sm">ฝ่ายแอดมิน (Admin)</span>
+                    </a>
+
+                    <!-- Sales Menu with Sub-menu -->
+                    <div>
+                        <div onclick="toggleSubMenu('sales-submenu', 'sales-arrow')"
+                            class="nav-item px-4 py-3 gap-3 justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-chart-line w-5"></i>
+                                <span class="text-sm">ฝ่ายขาย (Sales)</span>
+                            </div>
+                            <i id="sales-arrow" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+                        </div>
+                        <div id="sales-submenu" class="sub-menu">
+                            <a href="./sales-dept/" class="sub-nav-item mt-2">ฟิล์มอาคาร</a>
+                            <a href="./sales-cars/" class="sub-nav-item">ฟิล์มรถยนต์</a>
+                        </div>
+                    </div>
+
+                    <!-- MKT Menu with Sub-menu -->
+                    <div>
+                        <div onclick="toggleSubMenu('mkt-submenu', 'mkt-arrow')"
+                            class="nav-item px-4 py-3 gap-3 justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-bullhorn w-5"></i>
+                                <span class="text-sm">ฝ่ายการตลาด (Mkt)</span>
+                            </div>
+                            <i id="mkt-arrow" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+                        </div>
+                        <div id="mkt-submenu" class="sub-menu">
+                            <a href="#" class="sub-nav-item mt-2">ค่าใช้จ่ายการทำโฆษณา</a>
+                            <a href="./mkt-feedback/" class="sub-nav-item">Feedback ลูกค้า</a>
+                        </div>
+                    </div>
+                    
+                    <a href="/stock-3m/" class="nav-item px-4 py-3 gap-3">
+                        <i class="fa-solid fa-warehouse w-5"></i>
+                        <span class="text-sm">คลังสินค้า (Store)</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4 px-4">Others</p>
+                <nav class="space-y-1">
+                    <a href="#" class="nav-item px-4 py-3 gap-3">
+                        <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                        <span class="text-sm">รายงาน (Reports)</span>
+                    </a>
+                    <a href="#" class="nav-item px-4 py-3 gap-3">
+                        <i class="fa-solid fa-gear w-5"></i>
+                        <span class="text-sm">ตั้งค่า</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto">
+        <header class="flex items-center justify-between p-8 border-b border-[#30363d]">
+            <div>
+                <h2 class="text-2xl font-bold">แดชบอร์ดบริหารจัดการ</h2>
+                <p class="text-xs text-gray-400 mt-1">GFS | MHL | MHLCAR</p>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="relative hidden sm:block">
+                    <input type="text" placeholder="ค้นหาข้อมูล..."
+                        class="bg-[#161b22] border border-[#30363d] rounded-full py-2 px-10 text-sm focus:outline-none focus:border-[#ff6b00] w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3 text-gray-500 text-xs"></i>
                 </div>
-                <div>
-                    <h1 class="text-xl font-bold text-gray-800">Sales Dashboard</h1>
-                    <p class="text-xs text-gray-500 font-medium" id="data-status">กำลังโหลดข้อมูล...</p>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-xs font-bold leading-none">Administrator</p>
+                        <p class="text-[10px] text-[#ff6b00] font-bold mt-1">SUPER USER</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-[#21262d] border border-[#30363d] flex items-center justify-center text-xs font-bold">
+                        OIL</div>
                 </div>
             </div>
-            
-            <div id="top-performer" class="hidden md:flex items-center bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-full">
-                <i class="fas fa-crown text-yellow-500 mr-2"></i>
-                <span class="text-sm font-semibold text-yellow-800">Top Performer: <span id="top-performer-name">-</span> (<span id="top-performer-value">0</span>)</span>
-            </div>
-
-            <button id="refresh-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-sm active:scale-95">
-                <i class="fas fa-sync-alt" id="refresh-icon"></i>
-                <span>รีเฟรชข้อมูล</span>
-            </button>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-2 border-l-4 border-blue-600 pl-4 py-1">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800" id="main-report-title">รายงานสรุปยอดขายภาพรวม</h2>
-                    <p class="text-sm text-gray-600" id="report-subtitle">แสดงข้อมูลยอดขายของพนักงานทุกคน ทุกบริษัท</p>
+        <div class="p-8 space-y-8">
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-6">
+                    <p class="text-gray-500 text-[10px] font-bold uppercase mb-4 tracking-widest flex justify-between">
+                        ยอดขายรวมปีนี้ <span class="text-green-500">+12%</span>
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-xl text-gray-500">฿</span>
+                        <h3 class="stat-value">12,450,000</h3>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">ข้อมูลอัปเดตล่าสุด</span>
-                    <p class="text-sm font-bold text-blue-600" id="last-update-date">-</p>
+
+                <div class="card p-6">
+                    <p class="text-gray-500 text-[10px] font-bold uppercase mb-4 tracking-widest flex justify-between">
+                        ลูกค้าใหม่รายเดือน <span class="text-blue-500">+5%</span>
+                    </p>
+                    <h3 class="stat-value">1,248 <span class="text-sm font-normal text-gray-500">ราย</span></h3>
+                </div>
+
+                <div class="card p-6">
+                    <p class="text-gray-500 text-[10px] font-bold uppercase mb-4 tracking-widest flex justify-between">
+                        รายการออเดอร์ค้างส่ง <span class="text-red-500">-2%</span>
+                    </p>
+                    <h3 class="stat-value text-purple-400">42 <span
+                            class="text-sm font-normal text-gray-500">รายการ</span></h3>
+                </div>
+
+                <div class="card p-6">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-3 tracking-widest">Current Goal</p>
+                    <h3 class="text-base font-bold mb-3">เป้าหมายฝ่ายการตลาด</h3>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-lg font-bold">85%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill shadow-[0_0_10px_#ff6b00]" style="width: 85%"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="kpi-card-blue p-6 rounded-xl shadow-sm">
-                    <div class="flex justify-between items-start">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Analytics Chart -->
+                <div class="lg:col-span-8 card p-8">
+                    <div class="flex items-center justify-between mb-10">
                         <div>
-                            <p class="text-sm font-semibold text-blue-600">ยอดรวมทั้งหมด (Net)</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-total">฿0.00</h3>
+                            <h3 class="text-lg font-bold">วิเคราะห์การเติบโตรายเดือน</h3>
+                            <p class="text-[10px] text-gray-500 mt-1 uppercase">เปรียบเทียบข้อมูลฟิล์มอาคารและรถยนต์</p>
                         </div>
-                        <div class="bg-blue-600 p-2 rounded-lg text-white"><i class="fas fa-wallet"></i></div>
+                        <div class="flex bg-[#0d1117] p-1 rounded-xl border border-[#30363d]">
+                            <button class="px-4 py-2 text-[10px] font-bold text-gray-500">รายสัปดาห์</button>
+                            <button
+                                class="px-4 py-2 text-[10px] font-bold bg-[#ff6b00] rounded-lg text-white">รายเดือน</button>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="growthChart"></canvas>
                     </div>
                 </div>
-                <div class="kpi-card-cyan p-6 rounded-xl shadow-sm">
-                    <div class="flex justify-between items-start">
+
+                <!-- ลูกค้าใหม่วันนี้ -->
+                <div class="lg:col-span-4 card p-8 overflow-hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold">ลูกค้าใหม่วันนี้</h3>
+                        <span class="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded">4
+                            รายล่าสุด</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 p-4 bg-[#21262d] rounded-xl border border-[#30363d]">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 font-bold text-xs">
+                                SK</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold truncate">สมชาย การช่าง</p>
+                                <p class="text-[10px] text-orange-400 italic">ฟิล์มรถยนต์ (MHL)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-[#21262d] rounded-xl border border-[#30363d]">
+                            <div
+                                class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 font-bold text-xs">
+                                RR</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold truncate">หจก. รุ่งเรืองทรัพย์</p>
+                                <p class="text-[10px] text-blue-400 italic">ฟิล์มอาคาร (GFS)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-[#21262d] rounded-xl border border-[#30363d]">
+                            <div
+                                class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-bold text-xs">
+                                SCB</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold truncate">ธนาคารไทยพาณิชย์</p>
+                                <p class="text-[10px] text-blue-400 italic">ฟิล์มอาคาร (GFS)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-[#21262d] rounded-xl border border-[#30363d]">
+                            <div
+                                class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 font-bold text-xs">
+                                WP</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold truncate">คุณวิภาดา (รถส่วนตัว)</p>
+                                <p class="text-[10px] text-[#ff6b00] italic">ฟิล์มรถยนต์ (MHLCAR)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        class="w-full mt-6 py-3 text-[10px] text-gray-400 hover:text-[#ff6b00] transition font-bold uppercase tracking-wider">ดูรายชื่อทั้งหมด</button>
+                </div>
+            </div>
+
+            <!-- คลังข้อมูลสำคัญ -->
+            <div class="card p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="text-lg font-bold">คลังข้อมูลสำคัญ</h3>
+                        <p class="text-[10px] text-gray-500 uppercase mt-1">Folders & Resources</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <a href="#" class="file-item p-5 bg-[#21262d] rounded-2xl border border-[#30363d]">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-folder-open text-orange-500 text-xl"></i>
+                            </div>
+                            <i class="fa-solid fa-ellipsis-vertical text-gray-600"></i>
+                        </div>
                         <div>
-                            <p class="text-sm font-semibold text-cyan-600">ยอดขาย GFS</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-gfs">฿0.00</h3>
+                            <p class="text-sm font-bold">image</p>
+                            <p class="text-[10px] text-gray-500 mt-1">ปรับปรุงล่าสุด: 08-Aug-2024</p>
                         </div>
-                        <div class="bg-cyan-500 p-2 rounded-lg text-white"><i class="fas fa-building"></i></div>
-                    </div>
-                </div>
-                <div class="kpi-card-purple p-6 rounded-xl shadow-sm">
-                    <div class="flex justify-between items-start">
+                    </a>
+
+                    <a href="#" class="file-item p-5 bg-[#21262d] rounded-2xl border border-[#30363d]">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-bullhorn text-blue-500 text-xl"></i>
+                            </div>
+                            <i class="fa-solid fa-ellipsis-vertical text-gray-600"></i>
+                        </div>
                         <div>
-                            <p class="text-sm font-semibold text-purple-600">ยอดขาย MHL</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-mhl">฿0.00</h3>
+                            <p class="text-sm font-bold">mkt</p>
+                            <p class="text-[10px] text-gray-500 mt-1">ปรับปรุงล่าสุด: 08-Aug-2024</p>
                         </div>
-                        <div class="bg-purple-500 p-2 rounded-lg text-white"><i class="fas fa-industry"></i></div>
-                    </div>
-                </div>
-                <div class="kpi-card-orange p-6 rounded-xl shadow-sm">
-                    <div class="flex justify-between items-start">
+                    </a>
+
+                    <a href="#" class="file-item p-5 bg-[#21262d] rounded-2xl border border-[#30363d]">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-green-500 text-xl"></i>
+                            </div>
+                            <i class="fa-solid fa-ellipsis-vertical text-gray-600"></i>
+                        </div>
                         <div>
-                            <p class="text-sm font-semibold text-orange-600">ยอดขาย MHLCar</p>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-1" id="kpi-mhlcar">฿0.00</h3>
+                            <p class="text-sm font-bold">sales-all</p>
+                            <p class="text-[10px] text-gray-500 mt-1">ปรับปรุงล่าสุด: 08-Aug-2024</p>
                         </div>
-                        <div class="bg-orange-500 p-2 rounded-lg text-white"><i class="fas fa-car"></i></div>
-                    </div>
+                    </a>
+
+                    <a href="#" class="file-item p-5 bg-[#21262d] rounded-2xl border border-[#30363d]">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-warehouse text-purple-500 text-xl"></i>
+                            </div>
+                            <i class="fa-solid fa-ellipsis-vertical text-gray-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold">store</p>
+                            <p class="text-[10px] text-gray-500 mt-1">ปรับปรุงล่าสุด: 08-Aug-2024</p>
+                        </div>
+                    </a>
                 </div>
             </div>
-
-            <!-- Filter Bar -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 border-b pb-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase">กรองเดือน</label>
-                        <select id="filter-month" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
-                            <option value="all">ทั้งหมด</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase">กรองพนักงาน</label>
-                        <select id="filter-staff" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
-                            <option value="all">ทั้งหมด</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase">กรองบริษัท</label>
-                        <select id="filter-company" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
-                            <option value="all">ทั้งหมด</option>
-                            <option value="GFS">GFS</option>
-                            <option value="MHL">MHL</option>
-                            <option value="MHLCar">MHLCar</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button id="reset-filters" class="text-blue-600 text-sm hover:underline font-medium mb-2">ล้างตัวกรองทั้งหมด</button>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-xs font-semibold text-gray-500 uppercase">ตัวกรองด่วนตามกลุ่มทีม</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="filterByGroup('all')" id="btn-group-all" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all filter-btn-active">ทุกคน</button>
-                        <button onclick="filterByGroup('building')" id="btn-group-building" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all bg-white">ฝ่ายขายอาคาร</button>
-                        <button onclick="filterByGroup('admin')" id="btn-group-admin" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all bg-white">Sales Admin</button>
-                        <button onclick="filterByGroup('car')" id="btn-group-car" class="group-filter-btn px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all bg-white">ฝ่ายขายรถยนต์</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <h3 class="text-lg font-bold text-gray-800" id="chart-title">ยอดขายรายบุคคล</h3>
-                        <button id="toggle-datalabels" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
-                            <i class="fas fa-eye text-[10px]" id="eye-icon"></i>
-                            <span id="toggle-label-text">แสดงยอดรวมบนกราฟ</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="salesChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Table Section -->
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <button id="toggle-table" class="w-full px-6 py-4 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors border-b">
-                    <span class="font-bold text-gray-700 flex items-center gap-2"><i class="fas fa-table"></i>รายละเอียดข้อมูลรายการขาย</span>
-                    <i class="fas fa-chevron-down transform transition-transform" id="table-icon"></i>
-                </button>
-                <div id="table-content" class="hidden overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
-                            <tr>
-                                <th class="px-6 py-3">เดือน</th>
-                                <th class="px-6 py-3">วันที่</th>
-                                <th class="px-6 py-3">พนักงาน</th>
-                                <th class="px-6 py-3">บริษัท</th>
-                                <th class="px-6 py-3 text-right">ยอดขาย</th>
-                            </tr>
-                        </thead>
-                        <tbody id="data-body" class="divide-y divide-gray-100 text-gray-700"></tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-        
-        <div id="loading" class="fixed inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-50">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
-            <p class="text-blue-600 font-medium">กำลังประมวลผลข้อมูลยอดขาย...</p>
         </div>
-    </div>
+    </main>
 
     <script>
-        Chart.register(ChartDataLabels);
-
-        const SHEET_ID = '11Ra0vKh49h12-KYKnnbBoIuQc5nWLqCO3rB3UWZnIQs';
-        const SHEET_NAME_SALES = 'ยอดขายเชลล์';
-        const SHEET_NAME_TARGET = 'เป้ายอดขาย';
-        
-        const SALES_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_SALES)}`;
-        const TARGET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_TARGET)}`;
-
-        const monthOrder = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-        const companyColors = { 'GFS': '#06b6d4', 'MHL': '#8b5cf6', 'MHLCar': '#f97316' };
-        const groups = {
-            building: ['ยา(P)', 'เจ', 'บอม', 'สายฟ้า', 'พัท', 'อิมเมจ'],
-            admin: ['ดาว', 'ก้าว', 'เก็ต'],
-            car: ['นัท', 'พี่เมย์']
-        };
-
-        let rawData = [];
-        let targetData = [];
-        let filteredData = [];
-        let salesChart = null;
-        let currentGroup = 'all';
-        let showDataLabels = true;
-
-        function parseThaiDate(dateStr) {
-            if (!dateStr || typeof dateStr !== 'string') return null;
-            const parts = dateStr.split('/').map(p => p.trim());
-            if (parts.length !== 3) return null;
-            let d = parseInt(parts[0]);
-            let m = parseInt(parts[1]) - 1;
-            let y = parseInt(parts[2]);
-            if (y < 100) y += 2000; 
-            if (y > 2500) y -= 543;
-            const dateObj = new Date(y, m, d);
-            return isNaN(dateObj.getTime()) ? null : dateObj;
+        // Function to toggle sub-menus
+        function toggleSubMenu(menuId, arrowId) {
+            const menu = document.getElementById(menuId);
+            const arrow = document.getElementById(arrowId);
+            menu.classList.toggle('open');
+            arrow.style.transform = menu.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
-        async function fetchData() {
-            document.getElementById('loading').classList.remove('hidden');
-            try {
-                const [salesRes, targetRes] = await Promise.all([
-                    fetch(SALES_CSV_URL + '&cache=' + Date.now()),
-                    fetch(TARGET_CSV_URL + '&cache=' + Date.now())
-                ]);
-                const salesText = await salesRes.text();
-                const targetText = await targetRes.text();
-                parseSalesCSV(salesText);
-                parseTargetCSV(targetText);
-                populateFilters();
-                updateDashboard();
-                document.getElementById('data-status').innerText = 'ข้อมูลซิงค์สำเร็จ (ตรวจสอบความถูกต้องเรียบร้อย)';
-            } catch (error) { 
-                console.error("Fetch Error:", error); 
-                document.getElementById('data-status').innerText = 'เกิดข้อผิดพลาดในการดึงข้อมูล';
-            } finally { 
-                document.getElementById('loading').classList.add('hidden'); 
-            }
-        }
+        const ctx = document.getElementById('growthChart').getContext('2d');
 
-        function parseSalesCSV(csvText) {
-            const lines = csvText.split(/\r?\n/);
-            const result = [];
-            let latestValidDateObj = null;
-            let latestValidDateStr = "-";
+        const orangeGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        orangeGradient.addColorStop(0, 'rgba(255, 107, 0, 0.4)');
+        orangeGradient.addColorStop(1, 'rgba(255, 107, 0, 0)');
 
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                const row = [];
-                let currentField = '';
-                let inQuotes = false;
-                for (let char of line) {
-                    if (char === '"') inQuotes = !inQuotes;
-                    else if (char === ',' && !inQuotes) { row.push(currentField.trim()); currentField = ''; }
-                    else currentField += char;
-                }
-                row.push(currentField.trim());
+        const blueGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        blueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        blueGradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
-                if (row.length >= 5) {
-                    const rawSales = (row[2] || "0").replace(/[^\d.-]/g, '');
-                    const salesVal = parseFloat(rawSales);
-                    const dateStr = row[1];
-                    const dateObj = parseThaiDate(dateStr);
-                    if (!isNaN(salesVal)) {
-                        result.push({
-                            month: row[0], date: dateStr, sales: salesVal, 
-                            staff: row[3] || 'ไม่ระบุชื่อ', company: row[4] || 'ไม่ระบุบริษัท', 
-                            timestamp: dateObj ? dateObj.getTime() : 0
-                        });
-                        if (dateObj && (!latestValidDateObj || dateObj > latestValidDateObj)) {
-                            latestValidDateObj = dateObj;
-                            latestValidDateStr = dateStr;
-                        }
-                    }
-                }
-            }
-            rawData = result;
-            filteredData = [...rawData];
-            document.getElementById('last-update-date').innerText = latestValidDateStr;
-        }
-
-        function parseTargetCSV(csvText) {
-            const lines = csvText.split(/\r?\n/);
-            const result = [];
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                const row = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
-                if (row.length >= 3) {
-                    const targetVal = parseFloat((row[2] || "0").replace(/[^\d.-]/g, '')) || 0;
-                    result.push({ month: row[0], staff: row[1], target: targetVal });
-                }
-            }
-            targetData = result;
-        }
-
-        function populateFilters() {
-            const uniqueMonths = [...new Set(rawData.map(d => d.month))].filter(Boolean);
-            const sortedMonths = uniqueMonths.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-            const staff = [...new Set(rawData.map(d => d.staff))].filter(Boolean).sort();
-            const mSelect = document.getElementById('filter-month'), sSelect = document.getElementById('filter-staff');
-            mSelect.innerHTML = sSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
-            sortedMonths.forEach(m => mSelect.innerHTML += `<option value="${m}">${m}</option>`);
-            staff.forEach(s => sSelect.innerHTML += `<option value="${s}">${s}</option>`);
-        }
-
-        function applyFilters() {
-            const month = document.getElementById('filter-month').value;
-            const staff = document.getElementById('filter-staff').value;
-            const company = document.getElementById('filter-company').value;
-            filteredData = rawData.filter(d => {
-                const mY = month === 'all' || d.month === month;
-                const sY = staff === 'all' || d.staff === staff;
-                const cY = company === 'all' || d.company === company;
-                const gY = currentGroup === 'all' || groups[currentGroup].includes(d.staff);
-                return mY && sY && cY && gY;
-            });
-            updateDashboard();
-        }
-
-        function filterByGroup(groupId) {
-            currentGroup = groupId;
-            document.querySelectorAll('.group-filter-btn').forEach(btn => btn.classList.remove('filter-btn-active'));
-            document.getElementById(groupId === 'all' ? 'btn-group-all' : `btn-group-${groupId}`).classList.add('filter-btn-active');
-            applyFilters();
-        }
-
-        function updateDashboard() {
-            const total = filteredData.reduce((sum, d) => sum + d.sales, 0);
-            document.getElementById('kpi-total').innerText = formatCurrency(total);
-            ['GFS', 'MHL', 'MHLCar'].forEach(c => {
-                const val = filteredData.filter(d => d.company === c).reduce((sum, d) => sum + d.sales, 0);
-                document.getElementById(`kpi-${c.toLowerCase()}`).innerText = formatCurrency(val);
-            });
-            renderChart();
-            renderTable();
-            updateTopPerformer();
-        }
-
-        function updateTopPerformer() {
-            const sSales = {};
-            filteredData.forEach(d => { sSales[d.staff] = (sSales[d.staff] || 0) + d.sales; });
-            let topN = "-", topV = 0;
-            Object.entries(sSales).forEach(([n, v]) => { if (v > topV) { topV = v; topN = n; } });
-            document.getElementById('top-performer-name').innerText = topN;
-            document.getElementById('top-performer-value').innerText = formatCurrency(topV);
-        }
-
-        function renderChart() {
-            const ctx = document.getElementById('salesChart');
-            const currentMonth = document.getElementById('filter-month').value;
-            const staffSalesTotal = {};
-            filteredData.forEach(d => { staffSalesTotal[d.staff] = (staffSalesTotal[d.staff] || 0) + d.sales; });
-            const labels = Object.keys(staffSalesTotal).sort((a, b) => staffSalesTotal[b] - staffSalesTotal[a]);
-            const companies = ['GFS', 'MHL', 'MHLCar'];
-            
-            const datasets = companies.map(c => ({
-                label: `ยอดขาย ${c}`,
-                data: labels.map(s => filteredData.filter(d => d.staff === s && d.company === c).reduce((sum, d) => sum + d.sales, 0)),
-                backgroundColor: companyColors[c],
-                stack: 'Actual'
-            }));
-
-            if (currentGroup === 'building') {
-                datasets.push({
-                    label: 'เป้ายอดขาย',
-                    data: labels.map(s => targetData.filter(t => t.staff === s && (currentMonth === 'all' || t.month === currentMonth)).reduce((sum, t) => sum + t.target, 0)),
-                    backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', borderWidth: 1, stack: 'Target',
-                    datalabels: {
-                        display: (context) => showDataLabels && context.dataset.data[context.dataIndex] > 0,
-                        anchor: 'end', align: 'top', color: '#64748b', font: { size: 10 },
-                        formatter: (v) => v > 0 ? formatCurrencyShort(v) : ''
-                    }
-                });
-            }
-
-            if (salesChart) salesChart.destroy();
-            salesChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                            titleColor: '#1e293b',
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyColor: '#475569',
-                            bodyFont: { size: 13 },
-                            borderColor: '#e2e8f0',
-                            borderWidth: 1,
-                            padding: 12,
-                            boxPadding: 6,
-                            usePointStyle: true,
-                            callbacks: {
-                                title: (tooltipItems) => `พนักงาน: ${tooltipItems[0].label}`,
-                                label: (context) => {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    if (context.parsed.y !== null) label += formatCurrency(context.parsed.y);
-                                    return label;
-                                },
-                                footer: (tooltipItems) => {
-                                    const idx = tooltipItems[0].dataIndex;
-                                    let actualTotal = 0;
-                                    let targetTotal = 0;
-                                    tooltipItems[0].chart.data.datasets.forEach(ds => {
-                                        if (ds.stack === 'Actual') actualTotal += (ds.data[idx] || 0);
-                                        if (ds.stack === 'Target') targetTotal += (ds.data[idx] || 0);
-                                    });
-                                    let footerLines = [`ยอดรวมสุทธิ: ${formatCurrency(actualTotal)}`];
-                                    if (targetTotal > 0) {
-                                        const percent = ((actualTotal / targetTotal) * 100).toFixed(1);
-                                        const status = actualTotal >= targetTotal ? ' 🏆 (ผ่านเป้า!)' : '';
-                                        footerLines.push(`เป้าหมาย: ${formatCurrency(targetTotal)}`);
-                                        footerLines.push(`ความสำเร็จ: ${percent}%${status}`);
-                                    }
-                                    return footerLines.join('\n');
-                                }
-                            },
-                            footerColor: '#1e40af',
-                            footerFont: { weight: 'bold', size: 13 }
-                        },
-                        datalabels: {
-                            display: (context) => {
-                                if (context.dataset.stack !== 'Actual') return false;
-                                const actualDSIndices = context.chart.data.datasets.map((d, i) => d.stack === 'Actual' ? i : -1).filter(i => i !== -1);
-                                return showDataLabels && context.datasetIndex === Math.max(...actualDSIndices);
-                            },
-                            anchor: 'end', align: 'top', color: '#1e40af', 
-                            font: (context) => {
-                                const idx = context.dataIndex;
-                                let actualTotal = 0, targetTotal = 0;
-                                context.chart.data.datasets.forEach(ds => {
-                                    if (ds.stack === 'Actual') actualTotal += (ds.data[idx] || 0);
-                                    if (ds.stack === 'Target') targetTotal += (ds.data[idx] || 0);
-                                });
-                                // ถ้าถึงเป้า ให้ขนาดใหญ่ขึ้นนิดหน่อยเพื่อรองรับอีโมจิ
-                                return { weight: 'bold', size: (targetTotal > 0 && actualTotal >= targetTotal) ? 14 : 11 };
-                            },
-                            formatter: (v, context) => {
-                                const idx = context.dataIndex;
-                                let actualTotal = 0, targetTotal = 0;
-                                context.chart.data.datasets.forEach(ds => {
-                                    if (ds.stack === 'Actual') actualTotal += (ds.data[idx] || 0);
-                                    if (ds.stack === 'Target') targetTotal += (ds.data[idx] || 0);
-                                });
-                                
-                                if (actualTotal <= 0) return '';
-                                
-                                const formattedVal = formatCurrencyShort(actualTotal);
-                                // เงื่อนไข: ถ้ามีเป้าหมาย และ ยอดขายรวม >= เป้าหมาย ให้แสดงถ้วยรางวัล
-                                if (targetTotal > 0 && actualTotal >= targetTotal) {
-                                    return `🏆 ${formattedVal}`;
-                                }
-                                return formattedVal;
-                            }
-                        }
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                datasets: [
+                    {
+                        label: 'ยอดขายฟิล์มอาคาร',
+                        data: [65, 59, 80, 81, 56, 95, 120, 140],
+                        borderColor: '#ff6b00',
+                        backgroundColor: orangeGradient,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#ff6b00'
                     },
-                    scales: { 
-                        x: { stacked: true }, 
-                        y: { stacked: true, beginAtZero: true, ticks: { callback: v => formatCurrencyShort(v) } } 
+                    {
+                        label: 'ยอดขายฟิล์มรถยนต์',
+                        data: [42, 78, 50, 65, 88, 75, 92, 110],
+                        borderColor: '#3b82f6',
+                        backgroundColor: blueGradient,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#3b82f6'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#8b949e',
+                            font: { family: 'Kanit', size: 10 },
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#8b949e', font: { size: 10 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#8b949e', font: { size: 10 } }
                     }
                 }
-            });
-        }
-
-        function renderTable() {
-            document.getElementById('data-body').innerHTML = filteredData
-                .sort((a,b) => b.timestamp - a.timestamp)
-                .map(d => `
-                <tr class="hover:bg-gray-50 border-b border-gray-50">
-                    <td class="px-6 py-3">${d.month}</td>
-                    <td class="px-6 py-3 text-gray-400 text-xs font-mono">${d.date}</td>
-                    <td class="px-6 py-3 font-medium text-gray-800">${d.staff}</td>
-                    <td class="px-6 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold" style="background:${companyColors[d.company]}20;color:${companyColors[d.company]}">${d.company}</span></td>
-                    <td class="px-6 py-3 text-right font-bold text-blue-700">${formatCurrency(d.sales)}</td>
-                </tr>
-            `).join('');
-        }
-
-        function formatCurrency(n) { 
-            return '฿' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
-        }
-        function formatCurrencyShort(n) {
-            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
-            return n.toFixed(0);
-        }
-
-        document.getElementById('refresh-btn').onclick = fetchData;
-        document.getElementById('filter-month').onchange = applyFilters;
-        document.getElementById('filter-staff').onchange = applyFilters;
-        document.getElementById('filter-company').onchange = applyFilters;
-        document.getElementById('reset-filters').onclick = () => {
-            document.getElementById('filter-month').value = 'all';
-            document.getElementById('filter-staff').value = 'all';
-            document.getElementById('filter-company').value = 'all';
-            filterByGroup('all');
-        };
-        document.getElementById('toggle-table').onclick = () => {
-            document.getElementById('table-content').classList.toggle('hidden');
-        };
-
-        window.onload = fetchData;
+            }
+        });
     </script>
 </body>
+
 </html>

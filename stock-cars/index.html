@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แผนกคลังสินค้า</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .loader {
+            border: 3px solid #f1f5f9;
+            border-radius: 50%;
+            border-top: 3px solid #f97316;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .nav-dark {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1rem;
+            height: 64px;
+            font-weight: 400;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            color: #cbd5e1;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: white;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #f97316;
+        }
+
+        .logo-box {
+            background-color: #f97316;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .group-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+
+<body>
+
+    <nav class="nav-dark sticky top-0 z-50 shadow-md text-white">
+        <div class="max-w-7xl mx-auto px-4 flex items-center h-16 relative">
+            <div class="flex items-center gap-3 absolute left-4">
+                <div class="logo-box">M</div>
+                <span class="text-xl font-bold tracking-tight hidden sm:block">แผนกคลังสินค้า</span>
+            </div>
+
+            <div class="flex items-center justify-center h-full w-full text-nowrap overflow-x-auto no-scrollbar px-24">
+                <div class="hidden md:flex h-full">
+                    <a href="/" class="nav-item">
+                        <i class="fa-solid fa-house text-sm"></i> หน้าแรก
+                    </a>
+                    <a href="/stock-3m/" class="nav-item">
+                        <i class="fa-solid fa-boxes text-sm"></i> Stock film 3M
+                    </a>
+                    <a href="/stock-mhl/" class="nav-item">
+                        <i class="fa-solid fa-boxes text-sm"></i> Stock film MHL
+                    </a>
+                    <a  class="nav-item active">
+                        <i class="fa-solid fa-car-side text-sm"></i> Stock film รถยนต์
+                    </a>
+                </div>
+            </div>
+
+            <div class="absolute right-4 flex items-center">
+                <button onclick="fetchData()"
+                    class="text-slate-400 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-800"
+                    title="รีเฟรชข้อมูล">
+                    <i class="fa-solid fa-rotate text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                    MHL | Stock film รถยนต์
+                    <span class="text-sm font-normal text-slate-400 border-l pl-3 hidden md:inline">รายการทั้งหมด</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-4 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200 w-full md:w-auto">
+                <div class="px-3 border-r border-slate-100 flex-grow md:flex-grow-0 text-nowrap">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">อัปเดตวันที่</p>
+                    <p id="time-display" class="text-sm font-semibold text-slate-700">กำลังโหลด...</p>
+                </div>
+                <button onclick="fetchData()" id="refresh-btn"
+                    class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all active:scale-95 shadow-lg shadow-orange-100 min-w-[140px]">
+                    <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+                    <span>ดึงข้อมูลใหม่</span>
+                    <div id="btn-loader" class="loader !w-4 !h-4 !border-2 hidden"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 transition-all hover:border-orange-200">
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">จำนวนรายการ</p>
+                <div class="flex items-end gap-2">
+                    <h3 id="stat-count" class="text-2xl font-bold text-slate-800">-</h3>
+                    <span class="text-slate-400 text-xs mb-1">รายการ</span>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 transition-all hover:border-orange-200">
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">ม้วนเต็มรวม</p>
+                <div class="flex items-end gap-2">
+                    <h3 id="stat-full-rolls" class="text-2xl font-bold text-slate-800">-</h3>
+                    <span class="text-slate-400 text-xs mb-1">ม้วน</span>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 transition-all hover:border-orange-200">
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">ม้วนเปิดรวม</p>
+                <div class="flex items-end gap-2">
+                    <h3 id="stat-open-rolls" class="text-2xl font-bold text-slate-800">-</h3>
+                    <span class="text-slate-400 text-xs mb-1">นิ้ว</span>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-orange-500 transition-all hover:shadow-md">
+                <p class="text-orange-500 text-[10px] font-bold uppercase tracking-widest mb-1 text-nowrap">Total Stock :</p>
+                <div class="flex items-end gap-2">
+                    <h3 id="stat-stock" class="text-2xl font-bold text-slate-800">-</h3>
+                    <span class="text-slate-400 text-xs mb-1">นิ้ว</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6 flex flex-col gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="relative w-full md:w-96">
+                    <input type="text" id="search-input" onkeyup="filterTable()"
+                        placeholder="ค้นหาชื่อฟิล์ม ประเภท หรือหน้ากว้าง..."
+                        class="pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 w-full transition-all">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                </div>
+                <div class="text-slate-500 text-sm font-medium">
+                    พบข้อมูล <span id="count-display" class="font-bold text-orange-600 text-lg mx-1">0</span> รายการ
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                <button onclick="setFilterGroup('ALL')" class="group-btn active px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-ALL">ทั้งหมด</button>
+                <button onclick="setFilterGroup('CLAIM')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-CLAIM">ฟิล์มเคลม 3M</button>
+                <button onclick="setFilterGroup('PREMIUM')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-PREMIUM">3M Premium</button>
+                <button onclick="setFilterGroup('CERAMIC')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-CERAMIC">3M Ceramic</button>
+                <button onclick="setFilterGroup('GTEC')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-GTEC">G-TEC Ceramic</button>
+                <button onclick="setFilterGroup('HK_CERAMIC')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-HK_CERAMIC">Hi-Kool Ceramic</button>
+                <button onclick="setFilterGroup('HK_R')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-HK_R">Hi-Kool R</button>
+                <button onclick="setFilterGroup('OTHER')" class="group-btn px-4 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white hover:bg-slate-50 transition-all" id="btn-OTHER">อื่นๆ</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto min-h-[400px]">
+                <table class="w-full text-left border-collapse" id="main-table">
+                    <thead>
+                        <tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 bg-slate-50/50">
+                            <th class="px-6 py-4 font-bold">กลุ่มฟิล์ม</th>
+                            <th class="px-6 py-4 font-bold">รายชื่อฟิล์ม</th>
+                            <th class="px-6 py-4 font-bold text-nowrap">หน้ากว้าง</th>
+                            <th class="px-6 py-4 font-bold text-center text-nowrap">ม้วนเต็ม (ม้วน)</th>
+                            <th class="px-6 py-4 font-bold text-center text-nowrap">ม้วนเปิด (นิ้ว)</th>
+                            <th class="px-6 py-4 font-bold text-right text-nowrap">Total Stock (นิ้ว)</th>
+                            <th class="px-6 py-4 font-bold text-center">ประเภท (Col E)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-50">
+                        <tr>
+                            <td colspan="7" class="px-6 py-20 text-center">
+                                <div class="loader mx-auto mb-4"></div>
+                                <p class="text-slate-400 animate-pulse">กำลังจัดเตรียมข้อมูลตามประเภท...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-12 py-8 border-t border-slate-200 text-center">
+            <p class="text-slate-400 text-xs">© <span id="current-year"></span> แผนกคลังสินค้า MHL | ระบบรายงานสต็อกสินค้า</p>
+        </div>
+    </div>
+
+    <style>
+        .group-btn.active {
+            background-color: #f97316;
+            color: white;
+            border-color: #f97316;
+            box-shadow: 0 4px 6px -1px rgb(249 115 22 / 0.2);
+        }
+    </style>
+
+    <script>
+        const SPREADSHEET_ID = '1QTctZGHosnBs_izX1rTRe_ZkJPYjanTcsMxdG28hIHg';
+        const SHEET_NAME = '#CAR';
+
+        // Column Indexes
+        const COL_FILM_NAME = 1;   // B
+        const COL_WIDTH = 2;       // C
+        const COL_TOTAL_STOCK = 3; // D
+        const COL_TYPE_E = 4;      // E (ประเภท)
+        const COL_FULL_ROLL = 6;   // G
+        const COL_OPEN_ROLL = 35;  // AJ
+
+        let currentFilterGroup = 'ALL';
+
+        // Updated Group Configurations
+        const GROUP_MAP = {
+            'CLAIM': { 
+                name: 'ฟิล์มเคลม 3M', 
+                color: 'bg-blue-100 text-blue-700', 
+                items: ['CR50','CR40','CR70','CM IR15','CM IR35','BC20','BC35','BC40','FX5','FX15','FX20','FX30','FX50'] 
+            },
+            'PREMIUM': { 
+                name: '3M Premium', 
+                color: 'bg-red-100 text-red-700', 
+                items: ['CR20','CR40','CR50'] 
+            },
+            'CERAMIC': { 
+                name: '3M Ceramic', 
+                color: 'bg-orange-100 text-orange-700', 
+                items: ['AS 05','AS 15','AS 35','CRM 5','CRM 15','CRM 35','CM+ 5','CM+ 15','CM+ 35','CM IR5','CM IR15','CM IR25','CM IR35','CM IR50'] 
+            },
+            'GTEC': { 
+                name: 'G-TEC Ceramic', 
+                color: 'bg-emerald-100 text-emerald-700', 
+                items: ['CM 05','CM 15','CM 20','CM 30','CM 40'] 
+            },
+            'HK_CERAMIC': { 
+                name: 'Hi-Kool Ceramic', 
+                color: 'bg-indigo-100 text-indigo-700', 
+                items: ['BY05','BY15','BY20','BY30','CM05','CM20','CM35','CT05','CT20','CT35','BA60'] 
+            },
+            'HK_R': { 
+                name: 'Hi-Kool R', 
+                color: 'bg-purple-100 text-purple-700', 
+                // Moved SF-7M out of here
+                items: ['BO35','MO5 HC','R10HC','R25HC','R30HC','R34HC','R35HC','R45HC','R50HC','R55HC','R60HC','R65HC','R75HC','R85HC','R90HC','R91HC','R95HC','UV CARE 15'] 
+            },
+            'OTHER': { name: 'อื่นๆ', color: 'bg-slate-100 text-slate-700', items: [] }
+        };
+
+        function getFilmGroupKey(filmName, typeColE) {
+            const name = (filmName || "").toUpperCase().trim();
+            const typeE = (typeColE || "").toUpperCase().trim();
+
+            // 1. Check if Type E contains "ฟิล์มเคลม3M"
+            if (typeE.includes("ฟิล์มเคลม3M")) {
+                return 'CLAIM';
+            }
+
+            // 2. Check "ฟิล์มขาย" subgroups or empty type
+            if (typeE.includes("ฟิล์มขาย") || typeE === "") {
+                // Special check for SF-7M to ensure it goes to OTHER as requested
+                if (name.includes('SF-7M')) return 'OTHER';
+
+                // Check other defined groups
+                if (GROUP_MAP.PREMIUM.items.some(item => name.includes(item))) return 'PREMIUM';
+                if (GROUP_MAP.CERAMIC.items.some(item => name.includes(item))) return 'CERAMIC';
+                if (GROUP_MAP.GTEC.items.some(item => name.includes(item))) return 'GTEC';
+                if (GROUP_MAP.HK_CERAMIC.items.some(item => name.includes(item))) return 'HK_CERAMIC';
+                if (GROUP_MAP.HK_R.items.some(item => name.includes(item))) return 'HK_R';
+            }
+
+            return 'OTHER';
+        }
+
+        async function fetchData() {
+            const btn = document.getElementById('refresh-btn');
+            const icon = document.getElementById('refresh-icon');
+            const loader = document.getElementById('btn-loader');
+            const tbody = document.getElementById('table-body');
+
+            btn.disabled = true;
+            icon.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                const response = await fetch(url);
+                const csvData = await response.text();
+                const allRows = parseCSV(csvData);
+
+                const updateDate = allRows[0] ? allRows[0][6] : 'ไม่ระบุ';
+                document.getElementById('time-display').textContent = updateDate || 'ไม่ระบุ';
+
+                const dataRows = allRows.slice(3).filter(row => row[COL_FILM_NAME] && row[COL_FILM_NAME].trim() !== "");
+
+                renderTable(dataRows);
+                updateSummary(dataRows);
+                filterTable();
+
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-20 text-center bg-red-50 text-red-500">ผิดพลาด: ${error.message}</td></tr>`;
+            } finally {
+                btn.disabled = false;
+                icon.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            const lines = text.split(/\r?\n/);
+            for (let line of lines) {
+                const parts = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    let char = line[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) { parts.push(current.trim()); current = ''; }
+                    else current += char;
+                }
+                parts.push(current.trim());
+                rows.push(parts);
+            }
+            return rows;
+        }
+
+        function renderTable(rows) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            rows.forEach(row => {
+                const filmName = row[COL_FILM_NAME] || '-';
+                const typeE = row[COL_TYPE_E] || '';
+                const groupKey = getFilmGroupKey(filmName, typeE);
+                const group = GROUP_MAP[groupKey];
+                
+                const width = row[COL_WIDTH] || '-';
+                const fullRoll = parseFloat(row[COL_FULL_ROLL]?.replace(/,/g, '')) || 0;
+                const openRoll = parseFloat(row[COL_OPEN_ROLL]?.replace(/,/g, '')) || 0;
+                const totalStock = row[COL_TOTAL_STOCK] || '0';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-orange-50 transition-colors data-row";
+                tr.dataset.group = groupKey;
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-sm">
+                        <span class="group-badge ${group.color}">${group.name}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium text-slate-800">${filmName}</td>
+                    <td class="px-6 py-4 text-sm text-slate-500 text-nowrap">${width}</td>
+                    <td class="px-6 py-4 text-sm text-center font-mono">${fullRoll.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-sm text-center font-mono">${openRoll.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-sm text-right">
+                        <span class="font-bold text-lg text-orange-600">${totalStock}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-center">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-medium">${typeE || '-'}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSummary(rows) {
+            let totalFullRolls = 0;
+            let totalOpenRolls = 0;
+            let totalStockSum = 0;
+
+            rows.forEach(row => {
+                totalFullRolls += parseFloat(row[COL_FULL_ROLL]?.replace(/,/g, '')) || 0;
+                totalOpenRolls += parseFloat(row[COL_OPEN_ROLL]?.replace(/,/g, '')) || 0;
+                const stockVal = row[COL_TOTAL_STOCK] ? parseFloat(row[COL_TOTAL_STOCK].replace(/,/g, '')) : 0;
+                totalStockSum += stockVal;
+            });
+
+            document.getElementById('stat-full-rolls').textContent = totalFullRolls.toLocaleString();
+            document.getElementById('stat-open-rolls').textContent = totalOpenRolls.toLocaleString();
+            document.getElementById('stat-stock').textContent = totalStockSum.toLocaleString();
+        }
+
+        function setFilterGroup(groupKey) {
+            currentFilterGroup = groupKey;
+            document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${groupKey}`).classList.add('active');
+            filterTable();
+        }
+
+        function filterTable() {
+            const search = document.getElementById('search-input').value.toUpperCase();
+            const rows = document.querySelectorAll('#table-body .data-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.textContent.toUpperCase();
+                const rowGroup = row.dataset.group;
+                const matchesSearch = text.indexOf(search) > -1;
+                const matchesGroup = (currentFilterGroup === 'ALL' || rowGroup === currentFilterGroup);
+
+                if (matchesSearch && matchesGroup) {
+                    row.style.display = "";
+                    visibleCount++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            document.getElementById('count-display').textContent = visibleCount;
+            document.getElementById('stat-count').textContent = visibleCount.toLocaleString();
+        }
+
+        window.onload = fetchData;
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

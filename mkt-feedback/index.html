@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Feedback Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .loader {
+            border: 3px solid #f1f5f9;
+            border-radius: 50%;
+            border-top: 3px solid #f97316;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .nav-dark { background-color: #0f172a; }
+
+        .nav-link {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #f97316;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+        .nav-link.active { color: #f97316; }
+
+        .feedback-card { transition: all 0.3s ease; }
+        .feedback-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        .feedback-text-huge {
+            font-size: 2.5rem;
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header-label-double {
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .text-complaint { color: #dc2626 !important; }
+        .text-compliment { color: #059669 !important; }
+        .text-mixed { color: #d97706 !important; }
+        .text-default { color: #1e293b !important; }
+
+        .summary-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .pill-blue { background-color: #eff6ff; border: 1px solid #dbeafe; color: #2563eb; }
+        .pill-green { background-color: #f0fdf4; border: 1px solid #dcfce7; color: #166534; }
+
+        #back-to-top {
+            position: fixed; bottom: 30px; right: 30px;
+            opacity: 0; visibility: hidden; transition: all 0.4s ease; z-index: 999;
+        }
+        #back-to-top.show { opacity: 0.8; visibility: visible; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Top Navigation -->
+    <nav class="nav-dark sticky top-0 z-50 shadow-lg text-white">
+        <div class="max-w-[1600px] mx-auto px-6 flex items-center h-16 justify-between">
+            <!-- Left: Logo/Title -->
+            <div class="flex items-center gap-3 w-1/4">
+                <div class="bg-orange-600 p-2 rounded-lg text-white">
+                    <i class="fa-solid fa-comments text-xl"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight hidden lg:block">Customer Monitoring</span>
+            </div>
+
+            <!-- Middle: Menu Links -->
+            <div class="flex items-center gap-10 font-medium text-sm lg:text-base">
+                <a href="/" class="nav-link flex items-center gap-2 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-house-chimney text-xs"></i>
+                    <span>หน้าแรก</span>
+                </a>
+                <a class="nav-link active flex items-center gap-2">
+                    <i class="fa-solid fa-comment-dots w-5 text-xs"></i>
+                    <span>FEEDBACK ลูกค้าฟิล์มอาคาร</span>
+                </a>
+                <a href="#" class="nav-link flex items-center gap-2 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-rectangle-ad text-xs"></i>
+                    <span>ค่าใช้จ่ายการทำโฆษณา</span>
+                </a>
+            </div>
+            
+            <!-- Right: Actions -->
+            <div class="flex items-center justify-end gap-6 w-1/4">
+                <span id="update-time" class="text-[10px] lg:text-xs text-slate-400 hidden sm:block">อัปเดตล่าสุด: -</span>
+                <button onclick="fetchData()" class="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg text-xs lg:text-sm font-medium flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap">
+                    <i class="fa-solid fa-rotate" id="refresh-icon"></i>
+                    <span class="hidden xs:block">รีเฟรชข้อมูล</span>
+                    <div id="btn-loader" class="loader !w-4 !h-4 hidden"></div>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+
+    <main class="max-w-[1600px] mx-auto p-6">
+        <!-- Summary Stats Section -->
+        <div id="summary-bar" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center gap-4 text-sm overflow-hidden">
+            <div class="flex items-center gap-2 pr-4 border-r border-slate-200">
+                <i class="fa-solid fa-chart-simple text-blue-600"></i>
+                <span class="font-bold text-blue-700 text-lg">สรุป (<span id="total-items">0</span> รายการ)</span>
+            </div>
+            <div id="company-summary" class="flex gap-2"></div>
+            <div id="sales-summary" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="md:col-span-3 relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="search-input" onkeyup="filterData()" placeholder="ค้นหาชื่อบริษัท, ID, ลูกค้า, ฝ่ายขาย, ทีมช่าง..." 
+                    class="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none shadow-sm text-lg">
+            </div>
+            <select id="week-filter" onchange="filterData()" class="bg-white border border-slate-200 rounded-2xl px-6 py-4 font-bold text-slate-700 shadow-sm outline-none cursor-pointer">
+                <option value="">ทุกสัปดาห์ (AI Week)</option>
+            </select>
+        </div>
+
+        <!-- Cards Display Area -->
+        <div id="cards-container" class="grid grid-cols-1 gap-8">
+            <div class="flex flex-col items-center justify-center py-32">
+                <div class="loader mb-4 !w-12 !h-12 border-4"></div>
+                <p class="text-slate-500">กำลังดึงข้อมูลจากระบบ...</p>
+            </div>
+        </div>
+    </main>
+
+    <button id="back-to-top" onclick="scrollToTop()" class="bg-slate-800 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-600 transition-all">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <script>
+        const SHEET_ID = '1HaOmTLOl1YaaEIf_9WatknaAwIJGI8AZI1H-QO7CvHM';
+        const SHEET_NAME = 'Feedback';
+
+        const COL = {
+            ID: 1, CUSTOMER: 2, COMPANY: 3, PHONE: 4, LOCATION: 7, 
+            INSTALL_DATE: 9, SALES: 12, OTHER_NOTE_AD: 29, 
+            AI_WEEK: 34, QUERY_DATE: 35, 
+            FB_SALES_1: 36, FB_SALES_2: 37, 
+            FB_TECH_1: 38, FB_TECH_2: 39, 
+            FB_TECH_3_AO: 40, TECH_TEAM: 41
+        };
+
+        const KEYWORDS_COMPLAINT = ["คอมเพลน", "ช้า", "ปรับปรุง", "ไม่สุภาพ", "เสียหาย", "สกปรก", "แย่", "แก้ไข", "ชำรุด"];
+        const KEYWORDS_COMPLIMENT = ["ดี", "เยี่ยม", "ประทับใจ", "เร็ว", "ขอบคุณ", "เรียบร้อย", "เก่ง", "สุภาพ", "ถูกใจ", "คำชม"];
+
+        const getStatus = (t) => {
+            if (!t) return 'none';
+            const txt = t.toLowerCase();
+            const hasGood = KEYWORDS_COMPLIMENT.some(k => txt.includes(k.toLowerCase()));
+            const hasBad = KEYWORDS_COMPLAINT.some(k => txt.includes(k.toLowerCase()));
+            if (hasGood && hasBad) return 'mixed';
+            if (hasGood) return 'good';
+            if (hasBad) return 'cmpl';
+            return 'none';
+        };
+
+        let allData = [];
+
+        async function fetchData() {
+            const btnIcon = document.getElementById('refresh-icon');
+            const btnLoader = document.getElementById('btn-loader');
+            btnIcon.classList.add('hidden'); btnLoader.classList.remove('hidden');
+
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                const response = await fetch(url);
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+                
+                allData = rows.slice(1).filter(r => {
+                    const check = (v) => v && v.trim() !== "" && v.trim() !== "-" && v.trim().toLowerCase() !== "null";
+                    return check(r[COL.FB_SALES_1]) || check(r[COL.FB_SALES_2]) || 
+                           check(r[COL.FB_TECH_1]) || check(r[COL.FB_TECH_2]) || 
+                           check(r[COL.FB_TECH_3_AO]) || check(r[COL.OTHER_NOTE_AD]);
+                });
+
+                allData.sort((a, b) => (b[COL.AI_WEEK] || "").localeCompare(a[COL.AI_WEEK] || "", undefined, {numeric: true}));
+                
+                renderCards(allData);
+                updateWeekOptions(allData);
+                calculateSummary(allData);
+                document.getElementById('update-time').textContent = `อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')} น.`;
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btnIcon.classList.remove('hidden'); btnLoader.classList.add('hidden');
+            }
+        }
+
+        function parseCSV(text) {
+            const rows = []; let row = []; let curr = ''; let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { row.push(curr.trim()); curr = ''; }
+                else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (curr || row.length > 0) { row.push(curr.trim()); rows.push(row); row = []; curr = ''; }
+                    if (char === '\r' && text[i+1] === '\n') i++;
+                } else curr += char;
+            }
+            if (curr || row.length > 0) { row.push(curr.trim()); rows.push(row); }
+            return rows;
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('cards-container');
+            if (data.length === 0) {
+                container.innerHTML = `<div class='py-40 text-center text-slate-400 bg-white rounded-3xl border-2 border-dashed'>ไม่พบข้อมูลตามเงื่อนไขที่ระบุ</div>`;
+                return;
+            }
+
+            container.innerHTML = data.map((row, idx) => {
+                const check = (v) => v && v.trim() !== "" && v.trim() !== "-" && v.trim().toLowerCase() !== "null";
+                const salesFeedback = [row[COL.FB_SALES_1], row[COL.FB_SALES_2]].filter(check).join(' | ');
+                const techFeedback = [row[COL.FB_TECH_1], row[COL.FB_TECH_2]].filter(check).join(' | ');
+                const suggestAO = row[COL.FB_TECH_3_AO]; 
+                const otherAD = row[COL.OTHER_NOTE_AD]; 
+
+                const getUI = (txt) => {
+                    const status = getStatus(txt);
+                    if (status === 'mixed') return { cls: 'text-mixed', icon: '<i class="fa-solid fa-circle-info text-amber-500"></i>' };
+                    if (status === 'good') return { cls: 'text-compliment', icon: '<i class="fa-solid fa-circle-check text-green-600"></i>' };
+                    if (status === 'cmpl') return { cls: 'text-complaint', icon: '<i class="fa-solid fa-triangle-exclamation text-red-600"></i>' };
+                    return { cls: 'text-default', icon: '' };
+                };
+
+                return `
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden feedback-card flex flex-col lg:flex-row" data-index="${idx}">
+                        <div class="lg:w-80 p-8 bg-slate-50 border-r border-slate-100 flex flex-col">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-black week-label">${row[COL.AI_WEEK]}</span>
+                                <span class="text-[10px] font-bold text-slate-400"># ${idx + 1}</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-800 mb-1 leading-tight">${row[COL.COMPANY]}</h2>
+                            <div class="space-y-3 text-sm mt-4">
+                                <div class="flex gap-3"><i class="fa-solid fa-id-badge text-slate-400 w-4"></i><span>ID: <b>${row[COL.ID]}</b></span></div>
+                                <div class="flex gap-3"><i class="fa-solid fa-user text-slate-400 w-4"></i><span>ชื่อลูกค้า: <b>${row[COL.CUSTOMER]}</b></span></div>
+                                <div class="flex gap-3"><i class="fa-solid fa-phone text-slate-400 w-4"></i><span>เบอร์โทร: <b>${row[COL.PHONE]}</b></span></div>
+                                <div class="flex gap-3"><i class="fa-solid fa-location-dot text-slate-400 w-4"></i><span>สถานที่ติดตั้ง: <b>${row[COL.LOCATION]}</b></span></div>
+                            </div>
+                            <div class="space-y-3 text-sm mt-6 pt-6 border-t border-slate-200">
+                                <div class="flex gap-3"><i class="fa-solid fa-calendar-check text-slate-400 w-4"></i><span>วันที่ติดตั้ง: <b>${row[COL.INSTALL_DATE]}</b></span></div>
+                                <div class="flex gap-3"><i class="fa-solid fa-user-tie text-slate-400 w-4"></i><span>ฝ่ายขาย: <b>${row[COL.SALES]}</b></span></div>
+                                <div class="flex gap-3"><i class="fa-solid fa-wrench text-slate-400 w-4"></i><span>ทีมช่าง: <b>${row[COL.TECH_TEAM]}</b></span></div>
+                                <div class="flex gap-3"><i class="fa-solid fa-clock text-slate-400 w-4"></i><span>วันที่สอบถาม: <b>${row[COL.QUERY_DATE]}</b></span></div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 p-10 flex flex-col gap-10">
+                            ${check(salesFeedback) ? `
+                            <div>
+                                <div class="flex items-center gap-3 mb-4 text-slate-400">
+                                    <span class="header-label-double uppercase">FEEDBACK ฝ่ายขาย :</span>
+                                    <span>${getUI(salesFeedback).icon}</span>
+                                </div>
+                                <div class="feedback-text-huge ${getUI(salesFeedback).cls}">${salesFeedback}</div>
+                            </div>` : ''}
+
+                            ${check(techFeedback) ? `
+                            <div class="pt-10 border-t border-slate-100">
+                                <div class="flex items-center gap-3 mb-4 text-slate-400">
+                                    <span class="header-label-double uppercase">FEEDBACK ทีมช่าง :</span>
+                                    <span>${getUI(techFeedback).icon}</span>
+                                </div>
+                                <div class="feedback-text-huge ${getUI(techFeedback).cls}">${techFeedback}</div>
+                            </div>` : ''}
+
+                            ${check(suggestAO) ? `
+                            <div class="pt-10 border-t border-slate-100">
+                                <div class="flex items-center gap-3 mb-4 text-slate-400">
+                                    <span class="header-label-double uppercase">ข้อแนะนำอื่นๆ :</span>
+                                </div>
+                                <div class="feedback-text-huge text-default">${suggestAO}</div>
+                            </div>` : ''}
+
+                            ${check(otherAD) ? `
+                            <div class="mt-4 bg-orange-50 p-8 rounded-[2.5rem] border-2 border-dashed border-orange-200">
+                                <div class="flex items-center gap-3 mb-4 text-orange-600">
+                                    <i class="fa-solid fa-comment-dots text-xl"></i>
+                                    <span class="header-label-double uppercase">ข้อแนะนำอื่นๆ (AD)</span>
+                                </div>
+                                <div class="text-3xl font-semibold italic text-slate-700 leading-relaxed">${otherAD}</div>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateSummary(data) {
+            document.getElementById('total-items').textContent = data.length;
+            const compCounts = {};
+            data.forEach(r => { const c = r[COL.COMPANY] || 'ไม่ระบุ'; compCounts[c] = (compCounts[c] || 0) + 1; });
+            document.getElementById('company-summary').innerHTML = Object.entries(compCounts).sort((a,b)=>b[1]-a[1]).slice(0, 5).map(([n, c]) => `
+                <div class="summary-pill pill-blue"><span class="font-bold">${n}</span><span class="bg-blue-600 text-white px-2 rounded-full text-[10px] ml-1">${c}</span></div>
+            `).join('');
+            const salesCounts = {};
+            data.forEach(r => { const s = r[COL.SALES] || 'ไม่ระบุ'; salesCounts[s] = (salesCounts[s] || 0) + 1; });
+            document.getElementById('sales-summary').innerHTML = Object.entries(salesCounts).sort((a,b)=>b[1]-a[1]).map(([n, c]) => `
+                <div class="summary-pill pill-green"><span class="font-bold">${n}</span><span class="bg-green-600 text-white px-2 rounded-full text-[10px] ml-1">${c}</span></div>
+            `).join('');
+        }
+
+        function updateWeekOptions(data) {
+            const weeks = [...new Set(data.map(r => r[COL.AI_WEEK]).filter(w => w))].sort((a,b)=>b.localeCompare(a, undefined, {numeric:true}));
+            const select = document.getElementById('week-filter');
+            const current = select.value;
+            select.innerHTML = '<option value="">ทุกสัปดาห์ (AI Week)</option>' + weeks.map(w => `<option value="${w}">${w}</option>`).join('');
+            select.value = current;
+        }
+
+        function filterData() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const week = document.getElementById('week-filter').value;
+            const cards = document.querySelectorAll('.feedback-card');
+            let visible = [];
+            cards.forEach(card => {
+                const idx = card.getAttribute('data-index');
+                const row = allData[idx];
+                const cardText = card.innerText.toLowerCase();
+                const cardWeek = card.querySelector('.week-label').innerText;
+                if (cardText.includes(search) && (!week || cardWeek === week)) { card.style.display = 'flex'; visible.push(row); } 
+                else { card.style.display = 'none'; }
+            });
+            calculateSummary(visible);
+        }
+
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        window.onscroll = () => document.getElementById("back-to-top").classList.toggle("show", window.scrollY > 500);
+        window.onload = fetchData;
+    </script>
+</body>
+</html>

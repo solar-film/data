@@ -1,0 +1,27 @@
+.top-navbar {
+    background: #0f172a;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: #94a3b8;
+    height: 100%;
+    transition: 0.2s;
+}
+
+.nav-item:hover {
+    color: white;
+    background: rgba(255,255,255,0.05);
+}
+
+.nav-item.active {
+    color: white;
+    border-bottom: 3px solid #f97316;
+}

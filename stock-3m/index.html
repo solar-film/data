@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard แผนกคลังสินค้า - Stock Film 3M</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .loader {
+            border: 3px solid #f1f5f9;
+            border-radius: 50%;
+            border-top: 3px solid #f97316;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .nav-dark {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 25px;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1.1rem;
+            height: 64px;
+            font-weight: 400;
+        }
+
+        .nav-item:hover {
+            color: #cbd5e1;
+        }
+
+        .nav-item.active {
+            color: white;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #f97316;
+        }
+
+        .logo-box {
+            background-color: #f97316;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .badge-model {
+            background-color: #f97316;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+        }
+
+        .filter-pill {
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .filter-pill:hover {
+            border-color: #f97316;
+            color: #f97316;
+        }
+
+        .filter-pill.active {
+            background: #f97316;
+            color: white;
+            border-color: #f97316;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+        }
+
+        .group-section {
+            transition: transform 0.2s ease;
+        }
+
+        .group-section:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="nav-dark sticky top-0 z-50 shadow-md text-white">
+        <div class="max-w-7xl mx-auto px-4 flex items-center h-16 relative">
+            <div class="flex items-center gap-3 absolute left-4">
+                <div class="logo-box">C</div>
+                <span class="text-xl font-bold tracking-tight hidden sm:block">แผนกคลังสินค้า</span>
+            </div>
+
+            <div class="flex items-center justify-center h-full w-full">
+                <div class="flex h-full">
+                    <div class="hidden md:flex h-full">
+                        <a href="/" class="nav-item">
+                            <i class="fa-solid fa-house text-sm"></i> หน้าแรก
+                        </a>
+                        <div class="nav-item active">
+                            <i class="fa-solid fa-boxes-stacked"></i> Stock film 3M
+                        </div>
+                        <a href="/stock-mhl/" class="nav-item">
+                            <i class="fa-solid fa-boxes text-sm"></i> Stock film MHL
+                        </a>
+                        <a href="/stock-cars/" class="nav-item">
+                            <i class="fa-solid fa-boxes text-sm"></i> Stock film รถยนต์
+                        </a>  
+                    </div>
+                </div>
+
+                <div class="absolute right-4 flex items-center">
+                    <button onclick="fetchData()" class="text-slate-400 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-800">
+                        <i class="fa-solid fa-rotate text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                    GFS | Stock film รถยนต์
+                    <span class="text-sm font-normal text-slate-400 border-l pl-3">แยกตามรุ่นสินค้า (3M)</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-4 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="px-3 border-r border-slate-100">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">อัปเดตวันที่</p>
+                    <p id="time-display" class="text-sm font-semibold text-slate-700">กำลังดึงข้อมูล...</p>
+                </div>
+                <button onclick="fetchData()" id="refresh-btn"
+                    class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all active:scale-95 shadow-lg shadow-orange-100">
+                    <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+                    <span>ดึงข้อมูลใหม่</span>
+                    <div id="btn-loader" class="loader !w-4 !h-4 !border-2 hidden"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">จำนวนกลุ่มสินค้า</p>
+                <h3 id="stat-groups" class="text-3xl font-bold text-slate-800">-</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-green-500">
+                <p class="text-green-600 text-xs font-bold uppercase tracking-widest mb-2">Stock (ม้วนเต็ม)</p>
+                <h3 id="stat-stock" class="text-3xl font-bold text-slate-800">-</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-orange-500">
+                <p class="text-orange-500 text-xs font-bold uppercase tracking-widest mb-2">สั่งแล้ว (ม้วน)</p>
+                <h3 id="stat-ordered" class="text-3xl font-bold text-slate-800">-</h3>
+            </div>
+        </div>
+
+        <!-- Quick Filter Pills -->
+        <div class="mb-4 flex flex-wrap gap-2" id="series-filters">
+            <button onclick="applySeriesFilter('ALL')" class="filter-pill active" data-series="ALL">
+                ทั้งหมด <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px]" id="count-ALL">0</span>
+            </button>
+            <!-- ซีรีส์จะถูกเพิ่มเข้ามาอัตโนมัติจาก JS -->
+        </div>
+
+        <!-- Filter and Search -->
+        <div class="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="relative w-full md:w-96">
+                <input type="text" id="search-input" onkeyup="filterTable()" placeholder="ค้นหารหัส SKU หรือชื่อรุ่น..."
+                    class="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-orange-500/10 w-full shadow-sm transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-4.5 top-4 text-slate-400"></i>
+            </div>
+            <div class="text-slate-400 text-sm">
+                แสดงผล <span id="count-display" class="font-bold text-slate-700">0</span> รายการ
+            </div>
+        </div>
+
+        <!-- Dynamic Content Area -->
+        <div id="models-container" class="space-y-8">
+            <div class="bg-white p-20 rounded-3xl border border-dashed border-slate-300 text-center">
+                <div class="loader mx-auto mb-4"></div>
+                <p class="text-slate-400">กำลังดึงข้อมูลและจัดเรียงตามรุ่นสินค้า...</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 py-8 border-t border-slate-200 text-center text-slate-400 text-xs">
+            <p>© แผนกคลังสินค้า | ระบบรายงานสต็อกสินค้าแบบแยกกลุ่มอัตโนมัติ</p>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1QTctZGHosnBs_izX1rTRe_ZkJPYjanTcsMxdG28hIHg';
+        const SHEET_NAME_DATA = '#3M';
+        const SHEET_NAME_TIME = '#STOCK'; // ชีตที่มีข้อมูลอัปเดตที่ L1
+
+        let currentActiveSeries = 'ALL';
+
+        async function fetchData() {
+            const btn = document.getElementById('refresh-btn');
+            const icon = document.getElementById('refresh-icon');
+            const loader = document.getElementById('btn-loader');
+            const container = document.getElementById('models-container');
+
+            btn.disabled = true;
+            icon.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            try {
+                // 1. ดึงข้อมูลเวลาอัปเดตจากชีต #STOCK เซลล์ L1
+                const timeUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_TIME)}&range=L1:L1`;
+                const timeResponse = await fetch(timeUrl);
+                const timeData = await timeResponse.text();
+                // ล้างเครื่องหมายอัญประกาศที่อาจมากับ CSV
+                document.getElementById('time-display').textContent = timeData.replace(/"/g, '').trim() || '-';
+
+                // 2. ดึงข้อมูลสินค้าจากชีต #3M
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_DATA)}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const csvData = await response.text();
+                const allRows = parseCSV(csvData);
+
+                // เริ่มที่แถวข้อมูลจริง (แถวที่ 3 เป็นต้นไป)
+                const dataRows = allRows.slice(2).filter(row => row[2] && row[2].trim() !== "");
+
+                renderModelGroups(dataRows);
+                updateSummary(dataRows);
+                updateFilters(dataRows);
+
+                document.getElementById('count-display').textContent = dataRows.length;
+                document.getElementById('count-ALL').textContent = dataRows.length;
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                container.innerHTML = `
+                    <div class="p-20 text-center text-red-500">
+                        <i class="fa-solid fa-circle-exclamation text-4xl mb-4"></i>
+                        <p class="font-bold text-lg">ไม่สามารถเชื่อมต่อ Google Sheets ได้</p>
+                        <p class="text-sm opacity-70">กรุณาตรวจสอบสิทธิ์การเข้าถึงไฟล์หรือการเชื่อมต่ออินเทอร์เน็ต</p>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                icon.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            const lines = text.split(/\r?\n/);
+            for (let line of lines) {
+                const parts = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    let char = line[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) {
+                        parts.push(current.trim());
+                        current = '';
+                    } else current += char;
+                }
+                parts.push(current.trim());
+                if (parts.some(p => p !== "")) rows.push(parts);
+            }
+            return rows;
+        }
+
+        function getGroupKey(modelName) {
+            const upperModel = modelName.trim().toUpperCase();
+            if (upperModel.startsWith('CM') || upperModel.startsWith('IR')) return 'CM IR SERIES';
+            if (upperModel.startsWith('PR')) return 'PR SERIES';
+            if (upperModel.startsWith('SAS')) return 'SAS SERIES';
+            if (upperModel.startsWith('BC')) return 'BC SERIES';
+            
+            const match = modelName.trim().match(/^[a-zA-Z]+/);
+            return match ? match[0].toUpperCase() + ' SERIES' : 'OTHER';
+        }
+
+        function renderModelGroups(rows) {
+            const container = document.getElementById('models-container');
+            container.innerHTML = '';
+
+            const groups = {};
+            rows.forEach(row => {
+                const groupKey = getGroupKey(row[2] || '');
+                if (!groups[groupKey]) groups[groupKey] = [];
+                groups[groupKey].push(row);
+            });
+
+            const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+                const priorities = { 'CM IR SERIES': 1, 'PR SERIES': 2, 'SAS SERIES': 3, 'BC SERIES': 4 };
+                return (priorities[a] || 99) - (priorities[b] || 99) || a.localeCompare(b);
+            });
+
+            document.getElementById('stat-groups').textContent = sortedGroupKeys.length;
+
+            sortedGroupKeys.forEach(key => {
+                const items = groups[key];
+                const section = document.createElement('div');
+                section.className = "bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden model-section group-section";
+                section.setAttribute('data-group-key', key);
+
+                let tableHtml = `
+                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                        <div class="badge-model">
+                            <i class="fa-solid fa-tag"></i>
+                            ${key}
+                        </div>
+                        <span class="text-xs text-slate-400 font-medium">${items.length} รายการ</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                <tr>
+                                    <th class="px-6 py-3">รหัส SKU</th>
+                                    <th class="px-6 py-3">ชื่อรุ่นสินค้า</th>
+                                    <th class="px-6 py-3 text-center">หน้ากว้าง</th>
+                                    <th class="px-6 py-3 text-right">Stock (คงเหลือ)</th>
+                                    <th class="px-6 py-3 text-right text-orange-600">สั่งแล้ว</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                `;
+
+                items.forEach(row => {
+                    const stock = parseFloat(row[0]?.replace(/,/g, '')) || 0;
+                    const sku = row[1] || '-';
+                    const name = row[2] || '-';
+                    const width = row[3] || '-';
+                    const ordered = parseFloat(row[4]?.replace(/,/g, '')) || 0;
+
+                    tableHtml += `
+                        <tr class="hover:bg-slate-50/80 transition-colors data-row">
+                            <td class="px-6 py-4 font-bold text-xs text-blue-600">${sku}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-slate-700">${name}</td>
+                            <td class="px-6 py-4 text-sm text-center text-slate-500 font-mono">${width}</td>
+                            <td class="px-6 py-4 text-sm text-right font-semibold text-slate-600">${stock.toLocaleString()}</td>
+                            <td class="px-6 py-4 text-sm text-right font-semibold text-orange-500">${ordered.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `</tbody></table></div>`;
+                section.innerHTML = tableHtml;
+                container.appendChild(section);
+            });
+            
+            if (currentActiveSeries !== 'ALL') applySeriesFilter(currentActiveSeries);
+        }
+
+        function updateSummary(rows) {
+            let totalStock = 0;
+            let totalOrdered = 0;
+            rows.forEach(row => {
+                totalStock += parseFloat(row[0]?.replace(/,/g, '')) || 0;
+                totalOrdered += parseFloat(row[4]?.replace(/,/g, '')) || 0;
+            });
+            document.getElementById('stat-stock').textContent = totalStock.toLocaleString();
+            document.getElementById('stat-ordered').textContent = totalOrdered.toLocaleString();
+        }
+
+        function updateFilters(rows) {
+            const filterContainer = document.getElementById('series-filters');
+            const counts = {};
+            
+            rows.forEach(row => {
+                const key = getGroupKey(row[2] || '');
+                counts[key] = (counts[key] || 0) + 1;
+            });
+
+            // เก็บปุ่ม "ทั้งหมด" ไว้
+            const allBtnHtml = filterContainer.querySelector('[data-series="ALL"]').outerHTML;
+            filterContainer.innerHTML = allBtnHtml;
+
+            Object.keys(counts).sort().forEach(series => {
+                const btn = document.createElement('button');
+                btn.onclick = () => applySeriesFilter(series);
+                btn.className = `filter-pill ${currentActiveSeries === series ? 'active' : ''}`;
+                btn.setAttribute('data-series', series);
+                btn.innerHTML = `${series} <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px]">${counts[series]}</span>`;
+                filterContainer.appendChild(btn);
+            });
+        }
+
+        function applySeriesFilter(series) {
+            currentActiveSeries = series;
+            
+            // UI Update
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-series') === series);
+            });
+
+            filterTable();
+        }
+
+        function filterTable() {
+            const searchFilter = document.getElementById('search-input').value.toUpperCase();
+            const sections = document.querySelectorAll('.model-section');
+            let visibleCount = 0;
+
+            sections.forEach(section => {
+                const groupKey = section.getAttribute('data-group-key');
+                const rows = section.querySelectorAll('.data-row');
+                let hasVisibleInGroup = false;
+
+                // ตรวจสอบ Group Filter ก่อน
+                const groupMatches = (currentActiveSeries === 'ALL' || currentActiveSeries === groupKey);
+
+                rows.forEach(row => {
+                    const rowText = row.textContent.toUpperCase();
+                    const searchMatches = rowText.indexOf(searchFilter) > -1;
+
+                    if (groupMatches && searchMatches) {
+                        row.style.display = "";
+                        hasVisibleInGroup = true;
+                        visibleCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                section.style.display = hasVisibleInGroup ? "" : "none";
+            });
+
+            document.getElementById('count-display').textContent = visibleCount;
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+
+</html>

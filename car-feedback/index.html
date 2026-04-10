@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบวิเคราะห์ Feedback ลูกค้าฟิล์มรถยนต์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            scroll-behavior: smooth;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-dark {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+            height: 64px;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            color: #cbd5e1;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: white;
+            position: relative;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #f97316;
+        }
+
+        .card-feedback {
+            background-color: #ffffff;
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-feedback:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #f97316;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .rating-badge {
+            background: linear-gradient(135deg, #f97316 0%, #ed64a6 100%);
+        }
+
+        #backToTop {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #backToTop.show {
+            opacity: 0.6;
+            visibility: visible;
+        }
+
+        #backToTop:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Navbar แบบ Full Width 100% -->
+    <nav class="nav-dark sticky top-0 z-50 shadow-lg text-white">
+        <div class="max-w-[1600px] mx-auto px-6 flex items-center h-16 justify-between">
+
+            <!-- Left -->
+            <div class="flex items-center gap-3">
+                <div
+                    class="bg-orange-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg shadow-orange-500/30">
+                    C
+                </div>
+                <span class="text-xl font-bold tracking-tight">แผนกฟิล์มรถยนต์</span>
+            </div>
+
+            <!-- Menu -->
+            <div class="hidden md:flex h-full">
+                <a href="/" class="nav-item">
+                    <i class="fa-solid fa-house mr-2 text-sm"></i> หน้าแรก
+                </a>
+
+                <a href="/sales-cars/" class="nav-item">
+                    <i class="fa-solid fa-chart-line mr-2 text-sm"></i> วิเคราะห์ยอดขาย
+                </a>
+
+                <a class="nav-item active">
+                    <i class="fa-solid fa-user-check mr-2 text-sm"></i> Feedback ลูกค้าฟิล์มรถยนต์
+                </a>
+
+                <a href="/que-cars/" class="nav-item">
+                    <i class="fa-solid fa-calendar mr-2 text-sm"></i> ปฏิทินคิวงาน
+                </a>
+
+                <a href="/stock-cars-dept/" class="nav-item">
+                    <i class="fa-solid fa-boxes-stacked mr-2 text-sm"></i> Stock ฟิล์มรถยนต์
+                </a>
+            </div>
+
+            <!-- Right -->
+            <div class="flex items-center gap-4">
+                <div id="currentTime" class="text-slate-400 text-xs font-mono bg-slate-800/50 px-3 py-1.5 rounded-full">
+                    --:--:--
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <button id="backToTop" onclick="window.scrollTo(0, 0)"
+        class="bg-gray-800 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:bg-orange-600 focus:outline-none">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Main Content ปรับเป็น Full Width แต่มี Padding ด้านข้าง -->
+    <main class="w-full p-4 md:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Feedback จากลูกค้า</h1>
+                <p class="text-gray-500 text-sm">การ์ดแสดงความเห็นล่าสุดเรียงจากใหม่ไปเก่า (ข้อมูลสดจาก Google Sheet)
+                </p>
+            </div>
+            <button onclick="fetchData()"
+                class="bg-orange-600 hover:bg-orange-500 text-white px-8 py-3 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20 transition-all active:scale-95">
+                <i class="fas fa-sync-alt mr-2" id="refreshIcon"></i> ดึงข้อมูลล่าสุด
+            </button>
+        </div>
+
+        <!-- Dashboard Summary Grid แบบ Full Width -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-center">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <div class="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-wider">จำนวนผู้ประเมิน</div>
+                <div class="text-3xl font-bold text-gray-800" id="totalFeedback">0</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-orange-200 bg-orange-50/20">
+                <div class="text-[10px] uppercase font-bold text-orange-500 mb-1 tracking-wider">ทีมขาย</div>
+                <div class="text-3xl font-bold text-orange-600" id="avgSales">0.0</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-200 bg-blue-50/20">
+                <div class="text-[10px] uppercase font-bold text-blue-500 mb-1 tracking-wider">ทีมช่าง</div>
+                <div class="text-3xl font-bold text-blue-600" id="avgTechnician">0.0</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-indigo-200 bg-indigo-50/20">
+                <div class="text-[10px] uppercase font-bold text-indigo-500 mb-1 tracking-wider">งานบริการ</div>
+                <div class="text-3xl font-bold text-indigo-600" id="avgService">0.0</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-teal-200 bg-teal-50/20">
+                <div class="text-[10px] uppercase font-bold text-teal-500 mb-1 tracking-wider">สถานที่</div>
+                <div class="text-3xl font-bold text-teal-600" id="avgLocation">0.0</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-green-200 bg-green-50/20">
+                <div class="text-[10px] uppercase font-bold text-green-500 mb-1 tracking-wider">คุณภาพสินค้า</div>
+                <div class="text-3xl font-bold text-green-600" id="avgProduct">0.0</div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden py-32 flex flex-col items-center justify-center">
+            <div class="spinner mb-6"></div>
+            <p class="text-gray-500 animate-pulse text-lg">กำลังโหลดข้อมูลล่าสุด...</p>
+        </div>
+
+        <!-- Feedback Cards Grid แบบ Full Width -->
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            <!-- Cards will be injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden py-32 text-center">
+            <div class="bg-gray-200 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-folder-open text-4xl text-gray-400"></i>
+            </div>
+            <p class="text-gray-500 text-xl font-light">ยังไม่พบข้อมูล Feedback ในระบบ</p>
+        </div>
+    </main>
+
+    <script>
+        const SPREADSHEET_ID = '1uSHvGuFr8FqezwoXg1VOYdiW-8bzmS9k82qrX0xKW_g';
+        const SHEET_NAME = 'การตอบแบบฟอร์ม 1';
+
+        window.onscroll = function () {
+            const btn = document.getElementById("backToTop");
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                btn.classList.add("show");
+            } else {
+                btn.classList.remove("show");
+            }
+        };
+
+        function parseStarRating(cellValue) {
+            if (!cellValue) return 0;
+            const str = String(cellValue);
+            // นับจำนวนอีโมจิดาว
+            const starCount = (str.match(/⭐/g) || []).length;
+            if (starCount > 0) return starCount;
+            // ดึงตัวเลขจากข้อความ (เช่น "5 คะแนน" หรือ "5 ⭐ มากที่สุด")
+            const match = str.match(/\d+/);
+            if (match) return parseFloat(match[0]);
+            return 0;
+        }
+
+        async function fetchData() {
+            const loading = document.getElementById('loading');
+            const cardsGrid = document.getElementById('cardsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const refreshIcon = document.getElementById('refreshIcon');
+
+            loading.classList.remove('hidden');
+            cardsGrid.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            refreshIcon.classList.add('fa-spin');
+            cardsGrid.innerHTML = '';
+
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                const response = await fetch(url);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                const rows = json.table.rows;
+
+                let stats = {
+                    total: 0,
+                    sales: 0,
+                    tech: 0,
+                    serv: 0,
+                    loc: 0,
+                    prod: 0
+                };
+
+                // กรองเฉพาะแถวที่มีข้อมูลชื่อ/เบอร์โทร (Col H = index 7)
+                const validRows = rows.filter(row => row.c && row.c[7] && row.c[7].v).reverse();
+
+                if (validRows.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    validRows.forEach(row => {
+                        const c = row.c;
+                        const customer = c[7].v || '-';
+                        const date = c[0] ? (c[0].f || c[0].v) : '-';
+                        const feedbackText = c[6] ? (c[6].v || 'ไม่มีข้อเสนอแนะ') : 'ไม่มีข้อเสนอแนะ';
+
+                        const vSales = parseStarRating(c[1] ? c[1].v : 0);
+                        const vTech = parseStarRating(c[2] ? c[2].v : 0);
+                        const vServ = parseStarRating(c[3] ? c[3].v : 0);
+                        const vLoc = parseStarRating(c[4] ? c[4].v : 0);
+                        const vProd = parseStarRating(c[5] ? c[5].v : 0);
+                        const vTotal = c[8] ? parseFloat(c[8].v || 0) : (vSales + vTech + vServ + vLoc + vProd);
+
+                        stats.total++;
+                        stats.sales += vSales;
+                        stats.tech += vTech;
+                        stats.serv += vServ;
+                        stats.loc += vLoc;
+                        stats.prod += vProd;
+
+                        const card = document.createElement('div');
+                        card.className = "card-feedback p-6 flex flex-col h-full shadow-sm";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-11 h-11 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border border-orange-200">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 leading-tight text-sm">${customer}</h3>
+                                        <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">${date}</span>
+                                    </div>
+                                </div>
+                                <div class="rating-badge text-white px-3 py-1 rounded-lg text-sm font-bold shadow-md">
+                                    ${vTotal}
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-4 mb-5 flex-grow italic text-gray-600 text-sm border-l-4 border-orange-400">
+                                "${feedbackText}"
+                            </div>
+
+                            <div class="space-y-3 mt-auto pt-4 border-t border-gray-100">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-gray-500">ทีมขาย</span>
+                                    <div class="flex text-orange-400">${renderStars(vSales)}</div>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-gray-500">ทีมช่าง</span>
+                                    <div class="flex text-blue-500">${renderStars(vTech)}</div>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-gray-500">คุณภาพสินค้า</span>
+                                    <div class="flex text-green-500">${renderStars(vProd)}</div>
+                                </div>
+                            </div>
+                        `;
+                        cardsGrid.appendChild(card);
+                    });
+
+                    // อัปเดต Summary Stats
+                    const updateAvg = (id, sum) => {
+                        const val = (sum / stats.total);
+                        document.getElementById(id).innerText = isNaN(val) ? "0.0" : val.toFixed(1);
+                    };
+
+                    document.getElementById('totalFeedback').innerText = stats.total;
+                    updateAvg('avgSales', stats.sales);
+                    updateAvg('avgTechnician', stats.tech);
+                    updateAvg('avgService', stats.serv);
+                    updateAvg('avgLocation', stats.loc);
+                    updateAvg('avgProduct', stats.prod);
+
+                    cardsGrid.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                emptyState.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                refreshIcon.classList.remove('fa-spin');
+            }
+        }
+
+        function renderStars(count) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += `<i class="${i <= count ? 'fas' : 'far'} fa-star mx-0.5"></i>`;
+            }
+            return stars;
+        }
+
+        // นาฬิกาดิจิทัล
+        setInterval(() => {
+            document.getElementById('currentTime').innerText = new Date().toLocaleTimeString('th-TH', { hour12: false });
+        }, 1000);
+
+        window.onload = fetchData;
+    </script>
+</body>
+
+</html>
