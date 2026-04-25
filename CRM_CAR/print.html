@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ใบส่งงาน</title>
+
+<style>
+body {
+  font-family: "Prompt", sans-serif;
+  margin: 20px;
+  color: #000;
+}
+
+.header {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 10px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.section {
+  margin-top: 15px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.box {
+  border: 1px solid #000;
+  padding: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.table th, .table td {
+  border: 1px solid #000;
+  padding: 6px;
+  text-align: left;
+}
+
+.total {
+  font-size: 22px;
+  font-weight: bold;
+  color: red;
+}
+
+.print-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+@media print {
+  .print-btn { display: none; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="title">ใบรับ / ส่งรถยนต์</div>
+</div>
+
+<div class="section">
+  <div class="row">
+    <div>ชื่อลูกค้า: <b id="name"></b></div>
+    <div>เบอร์: <b id="phone"></b></div>
+  </div>
+
+  <div class="row">
+    <div>รถยนต์: <b id="car"></b></div>
+    <div>ทะเบียน: <b id="plate"></b></div>
+  </div>
+
+  <div class="row">
+    <div>วันติดตั้ง: <b id="date"></b></div>
+    <div>เวลา: <b id="time"></b></div>
+  </div>
+</div>
+
+<div class="section box">
+  <b>รายการติดตั้งฟิล์ม</b>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ตำแหน่ง</th>
+        <th>รุ่นฟิล์ม</th>
+      </tr>
+    </thead>
+    <tbody id="filmTable"></tbody>
+  </table>
+</div>
+
+<div class="section">
+  ยอดเงิน: <span class="total" id="price"></span> บาท
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 ปริ้น</button>
+
+<script>
+// รับค่าจาก URL
+const p = new URLSearchParams(window.location.search);
+
+document.getElementById("name").innerText = p.get("name");
+document.getElementById("phone").innerText = p.get("phone");
+document.getElementById("car").innerText = p.get("car");
+document.getElementById("plate").innerText = p.get("plate");
+document.getElementById("date").innerText = p.get("date");
+document.getElementById("time").innerText = p.get("time");
+document.getElementById("price").innerText = p.get("price");
+
+// ตัวอย่างรายการฟิล์ม
+const films = (p.get("films") || "").split("|");
+
+let html = "";
+films.forEach(f => {
+  if(f){
+    let [pos, model] = f.split(",");
+    html += `<tr><td>${pos}</td><td>${model}</td></tr>`;
+  }
+});
+
+document.getElementById("filmTable").innerHTML = html;
+</script>
+
+</body>
+</html>

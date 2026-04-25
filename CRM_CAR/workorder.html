@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ใบรับส่งรถยนต์</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Prompt', sans-serif;
+  margin: 20px;
+  color: #000;
+}
+
+.container {
+  border: 1px solid #ccc;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.small {
+  font-size: 12px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0;
+}
+
+.section {
+  margin-top: 10px;
+}
+
+.box {
+  border: 1px solid #000;
+  padding: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.table th, .table td {
+  border: 1px solid #000;
+  padding: 6px;
+  font-size: 13px;
+}
+
+.right {
+  text-align: right;
+}
+
+.total {
+  font-size: 24px;
+  color: red;
+  font-weight: bold;
+}
+
+.footer {
+  margin-top: 20px;
+  font-size: 12px;
+}
+
+.qr {
+  text-align: center;
+}
+
+.print-btn {
+  margin-top: 20px;
+}
+
+@media print {
+  .print-btn { display:none; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="small">(สำหรับลูกค้า)</div>
+    <div class="title">ใบรับ/ส่งรถยนต์</div>
+    <div class="small">โทร 02-055-6886</div>
+  </div>
+
+  <!-- INFO -->
+  <div class="section">
+    <div class="row">
+      <div>ชื่อลูกค้า: <b id="name"></b></div>
+      <div>เบอร์: <b id="phone"></b></div>
+    </div>
+
+    <div class="row">
+      <div>รถยนต์: <b id="car"></b></div>
+      <div>ทะเบียน: <b id="plate"></b></div>
+    </div>
+
+    <div class="row">
+      <div>วัน: <b id="date"></b></div>
+      <div>เวลา: <b id="time"></b></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="section box">
+    <b>ข้อมูลติดตั้งฟิล์ม</b>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ตำแหน่ง</th>
+          <th>ยี่ห้อ/รุ่น</th>
+          <th>รหัสฟิล์ม</th>
+          <th>หมายเหตุ</th>
+        </tr>
+      </thead>
+      <tbody id="filmTable"></tbody>
+    </table>
+  </div>
+
+  <!-- PAYMENT -->
+  <div class="section row">
+    <div>
+      <div>ยอดเงินที่ต้องชำระ</div>
+      <div class="total" id="price"></div>
+    </div>
+
+    <div class="qr">
+      <canvas id="qrcode"></canvas>
+      <div>PromptPay</div>
+    </div>
+  </div>
+
+  <!-- SIGN -->
+  <div class="section row">
+    <div>ลูกค้ารับรถ __________________</div>
+    <div>พนักงาน __________________</div>
+  </div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 ปริ้น</button>
+
+<!-- QR LIB -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<script>
+// รับค่า URL
+const p = new URLSearchParams(window.location.search);
+
+document.getElementById("name").innerText = p.get("name");
+document.getElementById("phone").innerText = p.get("phone");
+document.getElementById("car").innerText = p.get("car");
+document.getElementById("plate").innerText = p.get("plate");
+document.getElementById("date").innerText = p.get("date");
+document.getElementById("time").innerText = p.get("time");
+document.getElementById("price").innerText = p.get("price");
+
+// ตารางฟิล์ม
+const films = (p.get("films") || "").split("|");
+
+let html = "";
+films.forEach(f => {
+  if(f){
+    let [pos, model, code] = f.split(",");
+    html += `<tr>
+      <td>${pos}</td>
+      <td>${model}</td>
+      <td>${code}</td>
+      <td></td>
+    </tr>`;
+  }
+});
+document.getElementById("filmTable").innerHTML = html;
+
+// QR PromptPay (เบอร์คุณ)
+const phone = "0800000000"; // 🔥 แก้ตรงนี้
+const amount = p.get("price");
+
+const payload = `00020101021129370016A00000067701011101130066${phone}5802TH5303764540${amount}6304`;
+
+QRCode.toCanvas(document.getElementById('qrcode'), payload);
+</script>
+
+</body>
+</html>
