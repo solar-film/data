@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="th" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales & Ads Dashboard - รายวัน</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .btn-active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent !important;
+    }
+
+    .rotate-180 {
+      transform: rotate(180deg);
+    }
+
+    .refresh-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Custom Scrollbar for small areas */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Tooltip styles for Floating Action Buttons */
+    .tooltip {
+      position: absolute;
+      right: 4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #1f2937;
+      color: white;
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .group:hover .tooltip {
+      opacity: 1;
+    }
+
+    select,
+    input[type="date"] {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+    }
+
+    input[type="date"] {
+      background-image: none;
+      padding-right: 0.75rem;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.6;
+      transition: 0.2s;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
+  </style>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+  <div id="app" class="h-full overflow-auto">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-md">
+      <div class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h1 id="dashboardTitle" class="text-xl font-bold">Sales & Advertising Dashboard - รายวัน</h1>
+            <p class="text-white/70 text-sm">วิเคราะห์ยอดขายและค่าโฆษณารายวัน</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="lastUpdate" class="text-white/70 text-sm hidden md:block"></span>
+          <button id="refreshBtn" onclick="refreshData()"
+            class="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all">
+            <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg><span>รีเฟรช</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 py-6 mx-auto">
+      <!-- Loading State -->
+      <div id="loadingState" class="flex flex-col items-center justify-center py-20">
+        <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full refresh-spin mb-4"></div>
+        <p class="text-gray-600 text-lg">กำลังโหลดข้อมูล...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="hidden">
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-red-800 font-semibold text-lg mb-2">ไม่สามารถโหลดข้อมูลได้</h3>
+          <p id="errorMessage" class="text-red-600 mb-4"></p>
+          <button onclick="refreshData()"
+            class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-all"> ลองใหม่อีกครั้ง
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div id="mainContent" class="hidden space-y-6">
+
+        <!-- Filters Section -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-6 fade-in">
+          <div class="p-5 border-b border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <h2 class="font-semibold text-gray-800">ตัวกรองข้อมูล</h2>
+            </div>
+          </div>
+          <div class="p-5">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <!-- Date/Month Filter -->
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">ช่วงเวลา</label>
+                <select id="filterMonth" onchange="applyFilters()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                  <option value="">ทั้งหมด</option>
+                  <optgroup label="เลือกช่วงเวลา">
+                    <option value="custom_range" class="font-semibold text-indigo-600">📌 กำหนดช่วงเวลาเอง</option>
+                    <option value="3_months">3 เดือนย้อนหลัง</option>
+                    <option value="6_months">6 เดือนย้อนหลัง</option>
+                    <option value="12_months">12 เดือนย้อนหลัง</option>
+                    <option value="this_year">ปีนี้</option>
+                  </optgroup>
+                  <optgroup label="เลือกเดือนระบุ" id="monthOptions"></optgroup>
+                </select>
+              </div>
+
+              <!-- Company Filter -->
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">บริษัท</label>
+                <select id="filterCompany" onchange="applyFilters()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                  <option value="">ทั้งหมด</option>
+                </select>
+              </div>
+
+              <!-- Channel Filter (Hidden logically but kept for JS structure, or can be repurposed) -->
+              <div class="hidden">
+                <label class="block text-xs font-medium text-gray-500 mb-1">ช่องทางโฆษณา</label>
+                <select id="filterChannel" onchange="applyFilters()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                  <option value="">ทั้งหมด</option>
+                  <option value="google">Google AD</option>
+                  <option value="facebook">Facebook AD</option>
+                  <option value="line">Line AD</option>
+                  <option value="tiktok">Tiktok AD</option>
+                </select>
+              </div>
+
+              <!-- Chart Type -->
+              <div class="md:col-span-2">
+                <label class="block text-xs font-medium text-gray-500 mb-1">ประเภทกราฟ</label>
+                <div class="flex gap-2">
+                  <button id="chartLine" onclick="setChartType('line')"
+                    class="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition-all btn-active text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4" />
+                    </svg> เส้น
+                  </button>
+                  <button id="chartBar" onclick="setChartType('bar')"
+                    class="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition-all hover:bg-gray-50 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19V6h6v13M5 19v-4h4v4m10 0v-8h4v8" />
+                    </svg> แท่ง
+                  </button>
+                </div>
+              </div>
+
+              <!-- Custom Date Range Picker (Hidden by default) -->
+              <div id="customDateRangeContainer"
+                class="hidden col-span-1 md:col-span-4 grid-cols-1 md:grid-cols-2 gap-4 mt-2 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 fade-in">
+                <div>
+                  <label class="block text-xs font-semibold text-indigo-700 mb-1 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                      </path>
+                    </svg> ตั้งแต่วันที่
+                  </label>
+                  <input type="date" id="startDate" onchange="applyFilters()"
+                    class="w-full px-3 py-1.5 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm text-gray-700">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-indigo-700 mb-1 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                      </path>
+                    </svg> ถึงวันที่
+                  </label>
+                  <input type="date" id="endDate" onchange="applyFilters()"
+                    class="w-full px-3 py-1.5 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm text-gray-700">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Company Charts Dynamic Container -->
+        <div id="companyChartsContainer" class="space-y-6">
+          <!-- Injected via JS -->
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Floating Action Buttons for Navigation -->
+    <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-[100]">
+      <!-- ภาพรวม -->
+      <a href="index.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
+        <span class="tooltip">ภาพรวม</span>
+      </a>
+
+      <!-- Lead -->
+      <a href="lead.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group relative">
+
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-purple-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
+          Lead
+        </span>
+      </a>
+
+      <!-- รายวัน -->
+      <a href="#"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span class="tooltip">รายวัน</span>
+      </a>
+
+      <!-- รายเดือน -->
+      <a href="month.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M3 8h18M8 3v2m8-2v2M5 21h14a2 2 0 002-2V8H3v11a2 2 0 002 2z" />
+        </svg>
+        <span class="tooltip">รายเดือน</span>
+      </a>
+
+      <!-- รายปี -->
+      <a href="year.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 3v18m-4-4v4m8-10v10m4-6v6" />
+        </svg>
+        <span class="tooltip">รายปี</span>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const SHEET_ID = '1eiiCH6GcEl2iP3JcAAZciK2on4EHJVbybPFdTSNoTbM';
+    const SHEET_NAME = 'รายวัน';
+
+    // State
+    let rawData = [];
+    let filteredData = [];
+    let chartType = 'line';
+    let companyCharts = {};
+
+    // Element SDK configuration
+    const defaultConfig = {
+      dashboard_title: 'Sales & Advertising Dashboard - รายวัน',
+      background_color: '#f8fafc',
+      primary_color: '#667eea',
+      text_color: '#1e293b',
+      accent_color: '#10b981',
+      secondary_color: '#6366f1'
+    };
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('dashboardTitle').textContent = config.dashboard_title || defaultConfig.dashboard_title;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['dashboard_title', config.dashboard_title || defaultConfig.dashboard_title]
+        ])
+      });
+    }
+
+    // Metrics Configuration for the unified chart
+    const chartMetricsConfig = [
+      { id: 'googleAd', label: 'ค่าโฆษณา-Google AD.', color: '#3b82f6', yAxis: 'y' },
+      { id: 'contactLine', label: 'การติดต่อ-Line OA', color: '#10b981', yAxis: 'y1' },
+      { id: 'contactCall', label: 'การติดต่อ-โทร', color: '#f59e0b', yAxis: 'y1' },
+      { id: 'facebookAd', label: 'ค่าโฆณา-FB AD.', color: '#6366f1', yAxis: 'y' },
+      { id: 'contactFB', label: 'การติดต่อ-Chat FB', color: '#ec4899', yAxis: 'y1' },
+      { id: 'lineAd', label: 'ค่าโฆษณา-Line AD', color: '#059669', yAxis: 'y' },
+      { id: 'tiktokAd', label: 'ค่าโฆษณา-Tiktok AD', color: '#06b6d4', yAxis: 'y' },
+      { id: 'newLead', label: 'New Lead(ลูกค้าใหม่)', color: '#8b5cf6', yAxis: 'y1' },
+      { id: 'totalAds', label: 'ค่าโฆษณา-รวม', color: '#ef4444', yAxis: 'y' },
+      { id: 'totalContacts', label: 'การติดต่อรวม', color: '#64748b', yAxis: 'y1' },
+      { id: 'totalSales', label: 'ยอดขาย', color: '#eab308', yAxis: 'y' }
+    ];
+
+    function parseSheetDate(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        let year = parseInt(parts[2], 10);
+        if (year < 100) year += 2000;
+        return new Date(year, month, day).getTime();
+      }
+      return null;
+    }
+
+    function toISODate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        let year = parseInt(parts[2], 10);
+        if (year < 100) year += 2000;
+        return `${year}-${month}-${day}`;
+      }
+      return '';
+    }
+
+    // UI State Management Helpers
+    function showLoading() {
+      const loadingState = document.getElementById('loadingState');
+      const mainContent = document.getElementById('mainContent');
+      const errorState = document.getElementById('errorState');
+      if (loadingState) loadingState.classList.remove('hidden');
+      if (mainContent) mainContent.classList.add('hidden');
+      if (errorState) errorState.classList.add('hidden');
+    }
+
+    function showContent() {
+      const loadingState = document.getElementById('loadingState');
+      const mainContent = document.getElementById('mainContent');
+      const errorState = document.getElementById('errorState');
+      if (loadingState) loadingState.classList.add('hidden');
+      if (mainContent) mainContent.classList.remove('hidden');
+      if (errorState) errorState.classList.add('hidden');
+    }
+
+    function showError(message) {
+      const loadingState = document.getElementById('loadingState');
+      const mainContent = document.getElementById('mainContent');
+      const errorState = document.getElementById('errorState');
+      const errorMessage = document.getElementById('errorMessage');
+      if (loadingState) loadingState.classList.add('hidden');
+      if (mainContent) mainContent.classList.add('hidden');
+      if (errorState) errorState.classList.remove('hidden');
+      if (errorMessage) errorMessage.textContent = message;
+    }
+
+    async function fetchSheetData() {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+      const response = await fetch(url);
+      const text = await response.text();
+      const json = JSON.parse(text.substring(47, text.length - 2));
+
+      const rows = json.table.rows;
+      const data = [];
+      let currentMonth = '';
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i].c;
+        if (!row) continue;
+
+        const getValue = (cell) => {
+          if (!cell) return 0;
+          let val = (cell.v !== null && cell.v !== undefined) ? cell.v : cell.f;
+          if (typeof val === 'number') return val;
+          if (typeof val === 'string') {
+            const cleanStr = val.replace(/[^0-9.-]+/g, '');
+            if (cleanStr === '' || cleanStr === '-') return 0;
+            const num = Number(cleanStr);
+            return isNaN(num) ? 0 : num;
+          }
+          return 0;
+        };
+
+        const getStringValue = (cell) => {
+          if (!cell) return '';
+          if (cell.f) return String(cell.f).trim();
+          if (cell.v !== null && cell.v !== undefined) return String(cell.v).trim();
+          return '';
+        };
+
+        let m = getStringValue(row[0]);
+        if (m) {
+          currentMonth = m;
+        } else {
+          m = currentMonth;
+        }
+
+        data.push({
+          month: m,
+          date: getStringValue(row[1]),
+          company: getStringValue(row[2]),
+          googleAd: getValue(row[3]),
+          contactLine: getValue(row[4]),
+          contactCall: getValue(row[5]),
+          facebookAd: getValue(row[6]),
+          contactFB: getValue(row[7]),
+          lineAd: getValue(row[8]),
+          tiktokAd: getValue(row[9]),
+          newLead: getValue(row[10]),
+          salesGFS: getValue(row[11]),
+          salesMHL: getValue(row[12]),
+          salesCAR: getValue(row[13])
+        });
+      }
+
+      return data.filter(d => d.company || d.date);
+    }
+
+    function getReferenceMonth(monthsArray) {
+      if (!monthsArray || monthsArray.length === 0) return null;
+
+      const now = new Date();
+      const mIdx = now.getMonth();
+      const y2 = now.getFullYear().toString().slice(-2);
+      const yTH2 = (now.getFullYear() + 543).toString().slice(-2);
+      const m1 = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][mIdx];
+      const m2 = ['มค', 'กพ', 'มีค', 'เมย', 'พค', 'มิย', 'กค', 'สค', 'กย', 'ตค', 'พย', 'ธค'][mIdx];
+
+      let match = monthsArray.find(m =>
+        (m.includes(m1) || m.includes(m2)) && (m.includes(y2) || m.includes(yTH2))
+      );
+      if (match) return match;
+
+      for (let i = rawData.length - 1; i >= 0; i--) {
+        const d = rawData[i];
+        if (d.month && (d.salesCAR > 0 || d.salesGFS > 0 || d.salesMHL > 0 ||
+          d.googleAd > 0 || d.facebookAd > 0 || d.lineAd > 0 || d.tiktokAd > 0 ||
+          d.contactLine > 0 || d.contactCall > 0 || d.contactFB > 0 || d.newLead > 0)) {
+          return d.month;
+        }
+      }
+
+      return monthsArray[monthsArray.length - 1];
+    }
+
+    function populateFilters() {
+      const months = [...new Set(rawData.map(d => d.month).filter(Boolean))];
+      let companies = [...new Set(rawData.map(d => d.company).filter(Boolean))].sort();
+
+      const carIdx = companies.findIndex(c => c.toUpperCase() === 'CAR');
+      if (carIdx !== -1) companies.push(companies.splice(carIdx, 1)[0]);
+
+      const dates = [...new Set(rawData.map(d => d.date).filter(Boolean))];
+
+      const monthOptions = document.getElementById('monthOptions');
+      monthOptions.innerHTML = months.map(m => `<option value="${m}">${m}</option>`).join('');
+
+      const companySelect = document.getElementById('filterCompany');
+      companySelect.innerHTML = '<option value="">ทั้งหมด</option>' + companies.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      const startDateInput = document.getElementById('startDate');
+      const endDateInput = document.getElementById('endDate');
+
+      let isoDates = dates.map(toISODate).filter(Boolean).sort();
+      if (isoDates.length > 0) {
+        const minDate = isoDates[0];
+        const maxDate = isoDates[isoDates.length - 1];
+
+        startDateInput.min = minDate;
+        startDateInput.max = maxDate;
+        startDateInput.value = minDate;
+
+        endDateInput.min = minDate;
+        endDateInput.max = maxDate;
+        endDateInput.value = maxDate;
+      }
+
+      const defaultMonth = getReferenceMonth(months);
+      document.getElementById('filterMonth').value = defaultMonth || '';
+    }
+
+    function applyFilters() {
+      const monthFilter = document.getElementById('filterMonth').value;
+      const company = document.getElementById('filterCompany').value;
+      const channel = document.getElementById('filterChannel').value;
+
+      const allMonths = [...new Set(rawData.map(d => d.month).filter(Boolean))];
+      let allowedMonths = null;
+      let isCustomRange = false;
+
+      const customDateRangeContainer = document.getElementById('customDateRangeContainer');
+      if (monthFilter === 'custom_range') {
+        customDateRangeContainer.classList.remove('hidden');
+        customDateRangeContainer.classList.add('grid');
+        isCustomRange = true;
+      } else {
+        customDateRangeContainer.classList.add('hidden');
+        customDateRangeContainer.classList.remove('grid');
+      }
+
+      if (monthFilter && !isCustomRange) {
+        if (['3_months', '6_months', '12_months', 'this_year'].includes(monthFilter)) {
+          const referenceMonth = getReferenceMonth(allMonths);
+          let latestIndex = allMonths.indexOf(referenceMonth);
+          if (latestIndex === -1) latestIndex = allMonths.length - 1;
+
+          if (monthFilter === '3_months') allowedMonths = allMonths.slice(Math.max(0, latestIndex - 2), latestIndex + 1);
+          else if (monthFilter === '6_months') allowedMonths = allMonths.slice(Math.max(0, latestIndex - 5), latestIndex + 1);
+          else if (monthFilter === '12_months') allowedMonths = allMonths.slice(Math.max(0, latestIndex - 11), latestIndex + 1);
+          else if (monthFilter === 'this_year') {
+            if (referenceMonth) {
+              const yearMatch = referenceMonth.match(/\d+$/);
+              if (yearMatch) allowedMonths = allMonths.filter(m => m.endsWith(yearMatch[0]));
+              else allowedMonths = allMonths;
+            }
+          }
+        } else {
+          allowedMonths = [monthFilter];
+        }
+      }
+
+      filteredData = rawData.filter(d => {
+        if (isCustomRange) {
+          const startVal = document.getElementById('startDate').value;
+          const endVal = document.getElementById('endDate').value;
+
+          if (startVal && endVal) {
+            const rowTime = parseSheetDate(d.date);
+            const startObj = new Date(startVal).setHours(0, 0, 0, 0);
+            const endObj = new Date(endVal).setHours(23, 59, 59, 999);
+
+            if (!rowTime || rowTime < startObj || rowTime > endObj) {
+              return false;
+            }
+          }
+        } else {
+          if (allowedMonths && !allowedMonths.includes(d.month)) return false;
+        }
+
+        if (company && d.company !== company) return false;
+
+        return true;
+      });
+
+      renderCharts();
+    }
+
+    function formatBaht(value) {
+      if (value >= 1000000) return (value / 1000000).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M ฿';
+      return value.toLocaleString('th-TH', { maximumFractionDigits: 0 }) + ' ฿';
+    }
+
+    function formatNumber(value) {
+      return value.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+    }
+
+    function setChartType(type) {
+      chartType = type;
+      document.getElementById('chartLine').className = type === 'line'
+        ? 'flex-1 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition-all btn-active text-sm'
+        : 'flex-1 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition-all hover:bg-gray-50 text-sm';
+      document.getElementById('chartBar').className = type === 'bar'
+        ? 'flex-1 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition-all btn-active text-sm'
+        : 'flex-1 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition-all hover:bg-gray-50 text-sm';
+      renderCharts();
+    }
+
+    function renderCharts() {
+      const container = document.getElementById('companyChartsContainer');
+      container.innerHTML = '';
+
+      Object.values(companyCharts).forEach(chart => chart.destroy());
+      companyCharts = {};
+
+      const channelFilter = document.getElementById('filterChannel').value;
+      let companies = [...new Set(filteredData.map(d => d.company).filter(Boolean))].sort();
+
+      const carIdx = companies.findIndex(c => c.toUpperCase() === 'CAR');
+      if (carIdx !== -1) companies.push(companies.splice(carIdx, 1)[0]);
+
+      if (companies.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl card-shadow overflow-hidden p-10 text-center">
+            <p class="text-gray-500">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</p>
+          </div>
+        `;
+        return;
+      }
+
+      companies.forEach((company, cIdx) => {
+        const companyData = filteredData.filter(d => d.company === company);
+        const chartId = `chart-company-${cIdx}`;
+
+        let totalAdsAgg = 0, totalSalesAgg = 0, totalContactsAgg = 0, totalLeadsAgg = 0;
+        let cGoogleAd = 0, cFbAd = 0, cLineAd = 0, cTiktokAd = 0;
+        let cGoogleContact = 0, cFbContact = 0;
+        const dateMap = {};
+
+        companyData.forEach(d => {
+          const gAd = (!channelFilter || channelFilter === 'google') ? d.googleAd : 0;
+          const fAd = (!channelFilter || channelFilter === 'facebook') ? d.facebookAd : 0;
+          const lAd = (!channelFilter || channelFilter === 'line') ? d.lineAd : 0;
+          const tAd = (!channelFilter || channelFilter === 'tiktok') ? d.tiktokAd : 0;
+
+          const gContact = (!channelFilter || channelFilter === 'google') ? (d.contactLine + d.contactCall) : 0;
+          const fContact = (!channelFilter || channelFilter === 'facebook') ? d.contactFB : 0;
+
+          const dTotalAds = gAd + fAd + lAd + tAd;
+          const dTotalSales = d.salesCAR + d.salesGFS + d.salesMHL;
+          const dTotalContacts = gContact + fContact;
+
+          totalAdsAgg += dTotalAds;
+          totalSalesAgg += dTotalSales;
+          totalContactsAgg += dTotalContacts;
+          totalLeadsAgg += d.newLead;
+
+          cGoogleAd += gAd;
+          cFbAd += fAd;
+          cLineAd += lAd;
+          cTiktokAd += tAd;
+          cGoogleContact += gContact;
+          cFbContact += fContact;
+
+          const key = d.date || 'Unknown';
+          if (!dateMap[key]) {
+            dateMap[key] = {
+              googleAd: 0, contactLine: 0, contactCall: 0,
+              facebookAd: 0, contactFB: 0, lineAd: 0, tiktokAd: 0,
+              newLead: 0, totalAds: 0, totalContacts: 0, totalSales: 0
+            };
+          }
+
+          dateMap[key].googleAd += gAd;
+          dateMap[key].facebookAd += fAd;
+          dateMap[key].lineAd += lAd;
+          dateMap[key].tiktokAd += tAd;
+
+          dateMap[key].contactLine += (!channelFilter || channelFilter === 'google') ? d.contactLine : 0;
+          dateMap[key].contactCall += (!channelFilter || channelFilter === 'google') ? d.contactCall : 0;
+          dateMap[key].contactFB += (!channelFilter || channelFilter === 'facebook') ? d.contactFB : 0;
+          dateMap[key].newLead += d.newLead;
+
+          dateMap[key].totalAds += dTotalAds;
+          dateMap[key].totalContacts += dTotalContacts;
+          dateMap[key].totalSales += dTotalSales;
+        });
+
+        const avgContactAgg = totalContactsAgg > 0 ? (totalAdsAgg / totalContactsAgg) : 0;
+        const avgLeadAgg = totalLeadsAgg > 0 ? (totalAdsAgg / totalLeadsAgg) : 0;
+
+        const avgGContact = cGoogleContact > 0 ? (cGoogleAd / cGoogleContact) : 0;
+        const avgFContact = cFbContact > 0 ? (cFbAd / cFbContact) : 0;
+
+        const labels = Object.keys(dateMap).sort();
+
+        const datasets = chartMetricsConfig.map(config => {
+          const data = labels.map(l => dateMap[l][config.id]);
+          return buildDatasetInfo(config.label, data, config.color, config.yAxis);
+        });
+
+        const cardHTML = `
+          <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-6 fade-in">
+            <div class="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+               <div class="flex items-center gap-3">
+                 <div class="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-50 border border-indigo-100">
+                   <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                 </div>
+                 <div>
+                   <h3 class="font-bold text-gray-800 text-lg">${company}</h3>
+                   <p class="text-xs text-gray-500">ข้อมูลภาพรวมบริษัท</p>
+                 </div>
+               </div>
+               <button onclick="toggleChartVisibility('${chartId}')" class="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg shadow-sm transition-all text-gray-700 text-xs font-medium">
+                 <span id="toggleText-${chartId}">แสดงกราฟ</span>
+                 <svg id="toggleIcon-${chartId}" class="w-4 h-4 transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+               </button>
+            </div>
+
+            <div class="p-5">
+              <!-- Summary Metrics -->
+              <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6 text-center">
+                 <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border border-blue-100 rounded-xl py-4 px-3 shadow-sm">
+                    <p class="text-[11px] md:text-xs text-blue-700 mb-1 font-medium">ยอดขายรวม</p>
+                    <p class="font-bold text-blue-600 text-lg md:text-xl">${formatBaht(totalSalesAgg)}</p>
+                 </div>
+                 <div class="bg-gradient-to-br from-purple-50 to-pink-50 border border-pink-100 rounded-xl py-4 px-3 shadow-sm">
+                    <p class="text-[11px] md:text-xs text-pink-700 mb-1 font-medium">ค่าโฆษณารวม</p>
+                    <p class="font-bold text-pink-600 text-lg md:text-xl">${formatBaht(totalAdsAgg)}</p>
+                 </div>
+                 <div class="bg-gradient-to-br from-slate-50 to-gray-100 border border-gray-200 rounded-xl py-4 px-3 shadow-sm">
+                    <p class="text-[11px] md:text-xs text-gray-700 mb-1 font-medium">การติดต่อรวม</p>
+                    <p class="font-bold text-gray-800 text-lg md:text-xl">${formatNumber(totalContactsAgg)} <span class="text-xs font-normal text-gray-500">ครั้ง</span></p>
+                 </div>
+                 <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-teal-100 rounded-xl py-4 px-3 shadow-sm">
+                    <p class="text-[11px] md:text-xs text-teal-700 mb-1 font-medium">ลูกค้าใหม่ (New Lead)</p>
+                    <p class="font-bold text-teal-600 text-lg md:text-xl">${formatNumber(totalLeadsAgg)} <span class="text-xs font-normal text-teal-500">คน</span></p>
+                 </div>
+                 <div class="bg-white border border-gray-200 rounded-xl py-4 px-3 shadow-sm">
+                    <p class="text-[11px] md:text-xs text-gray-500 mb-1 font-medium">เฉลี่ย / การติดต่อ</p>
+                    <p class="font-bold text-indigo-500 text-lg md:text-xl">${formatBaht(avgContactAgg)}</p>
+                 </div>
+                 <div class="bg-white border border-gray-200 rounded-xl py-4 px-3 shadow-sm">
+                    <p class="text-[11px] md:text-xs text-gray-500 mb-1 font-medium">เฉลี่ย / ลูกค้าใหม่</p>
+                    <p class="font-bold text-emerald-500 text-lg md:text-xl">${formatBaht(avgLeadAgg)}</p>
+                 </div>
+              </div>
+
+              <!-- Details per Channel -->
+              <div class="bg-gray-50 rounded-xl p-4 mb-2 border border-gray-200">
+                 <h4 class="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
+                   <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                   รายละเอียดแยกตามช่องทางโฆษณา
+                 </h4>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Google -->
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                       <div class="flex items-center gap-2 mb-3">
+                          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                          <span class="font-bold text-gray-800 text-sm">Google AD</span>
+                       </div>
+                       <div class="space-y-2">
+                           <div class="flex justify-between items-center text-xs text-gray-600"><span class="text-gray-500">ค่าโฆษณา</span> <span class="font-semibold text-gray-800">${formatBaht(cGoogleAd)}</span></div>
+                           <div class="flex justify-between items-center text-xs text-gray-600"><span class="text-gray-500">การติดต่อ</span> <span class="font-semibold text-gray-800">${formatNumber(cGoogleContact)} ครั้ง</span></div>
+                       </div>
+                       <div class="flex justify-between items-center text-xs text-blue-600 font-bold pt-3 border-t border-gray-100 mt-3">
+                           <span>เฉลี่ย / ติดต่อ</span> <span>${formatBaht(avgGContact)}</span>
+                       </div>
+                    </div>
+                    <!-- Facebook -->
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                       <div class="flex items-center gap-2 mb-3">
+                          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                          <span class="font-bold text-gray-800 text-sm">Facebook AD</span>
+                       </div>
+                       <div class="space-y-2">
+                           <div class="flex justify-between items-center text-xs text-gray-600"><span class="text-gray-500">ค่าโฆษณา</span> <span class="font-semibold text-gray-800">${formatBaht(cFbAd)}</span></div>
+                           <div class="flex justify-between items-center text-xs text-gray-600"><span class="text-gray-500">การติดต่อ</span> <span class="font-semibold text-gray-800">${formatNumber(cFbContact)} ครั้ง</span></div>
+                       </div>
+                       <div class="flex justify-between items-center text-xs text-indigo-600 font-bold pt-3 border-t border-gray-100 mt-3">
+                           <span>เฉลี่ย / ติดต่อ</span> <span>${formatBaht(avgFContact)}</span>
+                       </div>
+                    </div>
+                    <!-- Line -->
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between ${(!channelFilter || channelFilter === 'line') ? '' : 'opacity-50 grayscale'}">
+                       <div class="flex items-center gap-2 mb-3">
+                          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                          <span class="font-bold text-gray-800 text-sm">Line AD</span>
+                       </div>
+                       <div class="space-y-2">
+                           <div class="flex justify-between items-center text-xs text-gray-600"><span class="text-gray-500">ค่าโฆษณา</span> <span class="font-semibold text-gray-800">${formatBaht(cLineAd)}</span></div>
+                           <div class="flex justify-between items-center text-xs text-gray-400 italic"><span class="text-gray-400">การติดต่อ</span> <span>(ไม่มีข้อมูล)</span></div>
+                       </div>
+                       <div class="flex justify-between items-center text-xs text-emerald-600 font-bold pt-3 border-t border-gray-100 mt-3">
+                           <span>เฉลี่ย / ติดต่อ</span> <span>-</span>
+                       </div>
+                    </div>
+                    <!-- Tiktok -->
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between ${(!channelFilter || channelFilter === 'tiktok') ? '' : 'opacity-50 grayscale'}">
+                       <div class="flex items-center gap-2 mb-3">
+                          <span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+                          <span class="font-bold text-gray-800 text-sm">Tiktok AD</span>
+                       </div>
+                       <div class="space-y-2">
+                           <div class="flex justify-between items-center text-xs text-gray-600"><span class="text-gray-500">ค่าโฆษณา</span> <span class="font-semibold text-gray-800">${formatBaht(cTiktokAd)}</span></div>
+                           <div class="flex justify-between items-center text-xs text-gray-400 italic"><span class="text-gray-400">การติดต่อ</span> <span>(ไม่มีข้อมูล)</span></div>
+                       </div>
+                       <div class="flex justify-between items-center text-xs text-cyan-600 font-bold pt-3 border-t border-gray-100 mt-3">
+                           <span>เฉลี่ย / ติดต่อ</span> <span>-</span>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <!-- Expandable Chart Section (Hidden by default) -->
+              <div id="chartSection-${chartId}" style="display: none;" class="border-t border-gray-100 pt-6 mt-6">
+                <!-- Legend Controls -->
+                <div class="flex items-center justify-between mb-4">
+                   <span class="text-sm font-bold text-gray-700">เส้นข้อมูลกราฟ</span>
+                   <div class="flex gap-3">
+                     <button onclick="showAllDatasets('${chartId}')" class="text-xs text-indigo-600 hover:text-indigo-800 transition-colors font-medium flex items-center gap-1">
+                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> 
+                       แสดงทั้งหมด
+                     </button>
+                     <button onclick="hideAllDatasets('${chartId}')" class="text-xs text-gray-500 hover:text-gray-700 transition-colors font-medium flex items-center gap-1">
+                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg> 
+                       เคลียร์กราฟ (ซ่อนทั้งหมด)
+                     </button>
+                   </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-6">
+                  ${chartMetricsConfig.map((config, idx) => `
+                      <button id="btn-${chartId}-${idx}" onclick="toggleCompanyDataset('${chartId}', ${idx})" 
+                              class="px-2.5 py-1 rounded-full border text-[11px] flex items-center gap-1.5 transition-all font-medium bg-white hover:bg-gray-50 shadow-sm"
+                              style="color: ${config.color}; border-color: ${config.color};">
+                         <span class="w-2 h-2 rounded-full" style="background-color: ${config.color};"></span>
+                         ${config.label}
+                      </button>
+                  `).join('')}
+                </div>
+
+                <div class="h-[350px] relative w-full">
+                   <canvas id="${chartId}"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', cardHTML);
+
+        setTimeout(() => {
+          const ctx = document.getElementById(chartId).getContext('2d');
+
+          Chart.defaults.font.family = "'Sarabun', sans-serif";
+
+          companyCharts[chartId] = new Chart(ctx, {
+            type: chartType,
+            data: {
+              labels: labels,
+              datasets: datasets
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: { intersect: false, mode: 'index' },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  titleColor: '#1e293b',
+                  bodyColor: '#334155',
+                  borderColor: '#e2e8f0',
+                  borderWidth: 1,
+                  padding: 12,
+                  boxPadding: 6,
+                  usePointStyle: true,
+                  callbacks: {
+                    label: function (context) {
+                      let label = context.dataset.label || '';
+                      if (label) { label += ': '; }
+                      if (context.parsed.y !== null) {
+                        if (context.dataset.yAxisID === 'y') {
+                          label += '฿' + context.parsed.y.toLocaleString();
+                        } else {
+                          label += context.parsed.y.toLocaleString();
+                        }
+                      }
+                      return label;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false, drawBorder: false },
+                  ticks: { font: { family: "'Sarabun', sans-serif", size: 11 }, color: '#64748b', maxRotation: 45, minRotation: 45 }
+                },
+                y: {
+                  type: 'linear',
+                  display: true,
+                  position: 'left',
+                  title: { display: true, text: 'จำนวนเงิน (บาท)', color: '#64748b', font: { family: "'Sarabun', sans-serif", size: 12, weight: 500 } },
+                  grid: { color: '#f1f5f9' },
+                  ticks: {
+                    font: { family: "'Sarabun', sans-serif", size: 11 }, color: '#64748b', callback: v => {
+                      if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+                      if (v >= 1000) return (v / 1000).toFixed(0) + 'k';
+                      return v;
+                    }
+                  }
+                },
+                y1: {
+                  type: 'linear',
+                  display: true,
+                  position: 'right',
+                  title: { display: true, text: 'จำนวนครั้ง / คน', color: '#64748b', font: { family: "'Sarabun', sans-serif", size: 12, weight: 500 } },
+                  grid: { drawOnChartArea: false },
+                  ticks: { font: { family: "'Sarabun', sans-serif", size: 11 }, color: '#64748b', callback: v => v.toLocaleString() }
+                }
+              }
+            }
+          });
+        }, 0);
+
+      });
+    }
+
+    function buildDatasetInfo(label, data, color, yAxisID) {
+      return {
+        label: label,
+        data: data,
+        borderColor: color,
+        backgroundColor: chartType === 'bar' ? color : color + '22',
+        borderWidth: chartType === 'line' ? 2 : 0,
+        fill: chartType === 'line' ? false : true,
+        tension: 0.3,
+        yAxisID: yAxisID,
+        pointRadius: chartType === 'line' ? 4 : 0,
+        pointBackgroundColor: color,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1.5,
+        pointHoverRadius: 6,
+        borderRadius: chartType === 'bar' ? 4 : 0
+      };
+    }
+
+    window.showAllDatasets = function (chartId) {
+      const chart = companyCharts[chartId];
+      if (!chart) return;
+
+      chart.data.datasets.forEach((_, idx) => {
+        const meta = chart.getDatasetMeta(idx);
+        meta.hidden = false;
+
+        const btn = document.getElementById(`btn-${chartId}-${idx}`);
+        if (btn) {
+          btn.classList.remove('opacity-40', 'bg-gray-50');
+          btn.classList.add('bg-white');
+        }
+      });
+      chart.update();
+    };
+
+    window.hideAllDatasets = function (chartId) {
+      const chart = companyCharts[chartId];
+      if (!chart) return;
+
+      chart.data.datasets.forEach((_, idx) => {
+        const meta = chart.getDatasetMeta(idx);
+        meta.hidden = true;
+
+        const btn = document.getElementById(`btn-${chartId}-${idx}`);
+        if (btn) {
+          btn.classList.add('opacity-40', 'bg-gray-50');
+          btn.classList.remove('bg-white');
+        }
+      });
+      chart.update();
+    };
+
+    window.toggleCompanyDataset = function (chartId, datasetIndex) {
+      const chart = companyCharts[chartId];
+      if (!chart) return;
+
+      const isHidden = chart.getDatasetMeta(datasetIndex).hidden;
+      chart.getDatasetMeta(datasetIndex).hidden = isHidden === null ? true : !isHidden;
+      chart.update();
+
+      const btn = document.getElementById(`btn-${chartId}-${datasetIndex}`);
+      if (chart.getDatasetMeta(datasetIndex).hidden) {
+        btn.classList.add('opacity-40', 'bg-gray-50');
+        btn.classList.remove('bg-white');
+      } else {
+        btn.classList.remove('opacity-40', 'bg-gray-50');
+        btn.classList.add('bg-white');
+      }
+    };
+
+    window.toggleChartVisibility = function (chartId) {
+      const section = document.getElementById(`chartSection-${chartId}`);
+      const text = document.getElementById(`toggleText-${chartId}`);
+      const icon = document.getElementById(`toggleIcon-${chartId}`);
+
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        text.textContent = 'ซ่อนกราฟ';
+        icon.classList.remove('rotate-180');
+        if (companyCharts[chartId]) {
+          companyCharts[chartId].resize();
+        }
+      } else {
+        section.style.display = 'none';
+        text.textContent = 'แสดงกราฟ';
+        icon.classList.add('rotate-180');
+      }
+    };
+
+    async function initDashboard() {
+      showLoading();
+      try {
+        rawData = await fetchSheetData();
+        filteredData = [...rawData];
+
+        populateFilters();
+        applyFilters();
+
+        const now = new Date();
+        const lastUpdate = document.getElementById('lastUpdate');
+        if (lastUpdate) {
+          lastUpdate.textContent = `อัพเดทล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
+        }
+        showContent();
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+
+    async function refreshData() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      const refreshIcon = document.getElementById('refresh-icon');
+
+      if (refreshBtn) refreshBtn.disabled = true;
+      if (refreshIcon) refreshIcon.classList.add('refresh-spin');
+
+      await initDashboard();
+
+      if (refreshBtn) refreshBtn.disabled = false;
+      if (refreshIcon) refreshIcon.classList.remove('refresh-spin');
+    }
+
+    initDashboard();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="th" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales &amp; Ads Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .tab-btn {
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      border-b-color: #667eea;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .tab-content.hidden {
+      display: none;
+    }
+
+    .refresh-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .table-row:hover {
+      background: #f1f5f9;
+    }
+
+    .collapse-arrow {
+      transition: transform 0.3s ease;
+    }
+
+    .collapse-arrow.rotated {
+      transform: rotate(180deg);
+    }
+
+    .tooltip {
+      position: absolute;
+      right: 4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #1f2937;
+      color: white;
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .group:hover .tooltip {
+      opacity: 1;
+    }
+
+    select,
+    input[type="date"] {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+    }
+
+    input[type="date"] {
+      background-image: none;
+      padding-right: 0.75rem;
+    }
+  </style>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+</head>
+
+<body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+  <div id="app" class="h-full overflow-auto">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-md">
+      <div class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h1 id="dashboard-title" class="text-xl font-bold">Sales &amp; Advertising Dashboard - รายปี</h1>
+            <p class="text-white/70 text-sm">วิเคราะห์ยอดขายและค่าโฆษณา</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3"><span id="last-update"
+            class="text-white/70 text-sm hidden md:block"></span> <button id="refresh-btn" onclick="refreshData()"
+            class="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all">
+            <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg><span>รีเฟรช</span> </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 py-6 mx-auto">
+      <!-- Loading State -->
+      <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full refresh-spin mb-4"></div>
+        <p class="text-gray-600 text-lg">กำลังโหลดข้อมูล...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="hidden">
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-red-800 font-semibold text-lg mb-2">ไม่สามารถโหลดข้อมูลได้</h3>
+          <p id="error-message" class="text-red-600 mb-4"></p><button onclick="refreshData()"
+            class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-all"> ลองใหม่อีกครั้ง
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div id="dashboard-content" class="hidden space-y-6">
+        <!-- Independent Year-over-Year Comparison Section -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-6">
+          <div class="p-5 border-b border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <h2 class="font-semibold text-gray-800">เปรียบเทียบผลงานปีต่อปี</h2>
+            </div>
+          </div>
+          <div class="p-5">
+            <!-- YoY Filters -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
+              <div><label class="block text-xs font-medium text-gray-500 mb-1">เลือกบริษัท</label> <select
+                  id="yoy-company" onchange="updateYoYChart()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                  <option value="all">ทุกบริษัท</option>
+                </select>
+              </div>
+              <div><label class="block text-xs font-medium text-gray-500 mb-1">ช่องทางโฆษณา</label> <select
+                  id="yoy-channel" onchange="updateYoYChart()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                  <option value="all">ทั้งหมด</option>
+                  <option value="google">Google</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="line">Line</option>
+                  <option value="tiktok">TikTok</option>
+                </select>
+              </div>
+              <div><label class="block text-xs font-medium text-gray-500 mb-1">ปีที่ 1 (หลัก)</label> <select
+                  id="yoy-year1" onchange="updateYoYChart()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500"></select>
+              </div>
+              <div><label class="block text-xs font-medium text-gray-500 mb-1">ปีที่ 2 (เปรียบเทียบ)</label> <select
+                  id="yoy-year2" onchange="updateYoYChart()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500"></select>
+              </div>
+              <div><label class="block text-xs font-medium text-gray-500 mb-1">ปีที่ 3 (เปรียบเทียบเพิ่ม)</label>
+                <select id="yoy-year3" onchange="updateYoYChart()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                  <option value="none">ไม่ระบุ</option>
+                </select>
+              </div>
+              <div><label class="block text-xs font-medium text-gray-500 mb-1">ประเภทกราฟ</label> <select
+                  id="chart-type-filter" onchange="updateYoYChart()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                  <option value="bar">แท่ง (Bar Chart)</option>
+                  <option value="line">เส้น (Line Chart)</option>
+                </select>
+              </div>
+              <!-- ปุ่มเคลียร์ -->
+              <div class="flex items-end pb-[1px]">
+                <button onclick="resetFilters()"
+                  class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-slate-500 transition-all flex items-center justify-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                  </svg>
+                  เคลียร์
+                </button>
+              </div>
+            </div>
+            <div class="h-80 mb-6">
+              <canvas id="yoy-chart-canvas"></canvas>
+            </div>
+
+            <!-- YoY Summary Cards -->
+            <div id="yoy-summary-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <!-- Sales Row -->
+              <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-4 border border-cyan-200"><span
+                  id="label-yoy-y1-sales" class="text-xs font-medium text-cyan-600">ปี 1 - ยอดขาย</span>
+                <p id="yoy-current-sales" class="text-lg font-bold text-cyan-800 mt-2">฿0</p>
+              </div>
+              <div class="bg-gradient-to-br from-sky-50 to-sky-100 rounded-xl p-4 border border-sky-200"><span
+                  id="label-yoy-y2-sales" class="text-xs font-medium text-sky-600">ปี 2 - ยอดขาย</span>
+                <p id="yoy-previous-sales" class="text-lg font-bold text-sky-800 mt-2">฿0</p>
+              </div>
+              <div id="card-yoy-y3-sales"
+                class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 hidden"><span
+                  id="label-yoy-y3-sales" class="text-xs font-medium text-blue-600">ปี 3 - ยอดขาย</span>
+                <p id="yoy-third-sales" class="text-lg font-bold text-blue-800 mt-2">฿0</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+                <span class="text-xs font-medium text-emerald-600">เปลี่ยนแปลง - ยอดขาย (ปี1/ปี2)</span>
+                <p id="yoy-sales-change" class="text-lg font-bold text-emerald-800 mt-2">0%</p>
+              </div>
+
+              <!-- Target Row -->
+              <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200"><span
+                  id="label-yoy-y1-target" class="text-xs font-medium text-amber-600">ปี 1 - เป้ายอดขาย</span>
+                <p id="yoy-current-target" class="text-lg font-bold text-amber-800 mt-2">฿0</p>
+              </div>
+              <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200"><span
+                  id="label-yoy-y2-target" class="text-xs font-medium text-orange-600">ปี 2 - เป้ายอดขาย</span>
+                <p id="yoy-previous-target" class="text-lg font-bold text-orange-800 mt-2">฿0</p>
+              </div>
+              <div id="card-yoy-y3-target"
+                class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200 hidden">
+                <span id="label-yoy-y3-target" class="text-xs font-medium text-yellow-600">ปี 3 - เป้ายอดขาย</span>
+                <p id="yoy-third-target" class="text-lg font-bold text-yellow-800 mt-2">฿0</p>
+              </div>
+              <div class="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-4 border border-stone-200">
+                <span class="text-xs font-medium text-stone-600">เปลี่ยนแปลง - เป้ายอดขาย (ปี1/ปี2)</span>
+                <p id="yoy-target-change" class="text-lg font-bold text-stone-800 mt-2">0%</p>
+              </div>
+
+              <!-- Ads Row -->
+              <div class="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-4 border border-rose-200"><span
+                  id="label-yoy-y1-ads" class="text-xs font-medium text-rose-600">ปี 1 - ค่าโฆษณา</span>
+                <p id="yoy-current-ads" class="text-lg font-bold text-rose-800 mt-2">฿0</p>
+              </div>
+              <div class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-4 border border-pink-200"><span
+                  id="label-yoy-y2-ads" class="text-xs font-medium text-pink-600">ปี 2 - ค่าโฆษณา</span>
+                <p id="yoy-previous-ads" class="text-lg font-bold text-pink-800 mt-2">฿0</p>
+              </div>
+              <div id="card-yoy-y3-ads"
+                class="bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 rounded-xl p-4 border border-fuchsia-200 hidden">
+                <span id="label-yoy-y3-ads" class="text-xs font-medium text-fuchsia-600">ปี 3 - ค่าโฆษณา</span>
+                <p id="yoy-third-ads" class="text-lg font-bold text-fuchsia-800 mt-2">฿0</p>
+              </div>
+              <div class="bg-gradient-to-br from-lime-50 to-lime-100 rounded-xl p-4 border border-lime-200"><span
+                  class="text-xs font-medium text-lime-600">เปลี่ยนแปลง - ค่าโฆษณา (ปี1/ปี2)</span>
+                <p id="yoy-ads-change" class="text-lg font-bold text-lime-800 mt-2">0%</p>
+              </div>
+
+              <!-- ROI Row -->
+              <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200"><span
+                  id="label-yoy-y1-roi" class="text-xs font-medium text-indigo-600">ปี 1 - ROI</span>
+                <p id="yoy-current-roi" class="text-lg font-bold text-indigo-800 mt-2">0%</p>
+              </div>
+              <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200"><span
+                  id="label-yoy-y2-roi" class="text-xs font-medium text-purple-600">ปี 2 - ROI</span>
+                <p id="yoy-previous-roi" class="text-lg font-bold text-purple-800 mt-2">0%</p>
+              </div>
+              <div id="card-yoy-y3-roi"
+                class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200 hidden">
+                <span id="label-yoy-y3-roi" class="text-xs font-medium text-violet-600">ปี 3 - ROI</span>
+                <p id="yoy-third-roi" class="text-lg font-bold text-violet-800 mt-2">0%</p>
+              </div>
+              <div class="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border border-teal-200"><span
+                  class="text-xs font-medium text-teal-600">เปลี่ยนแปลง - ROI (ปี1/ปี2)</span>
+                <p id="yoy-roi-change" class="text-lg font-bold text-teal-800 mt-2">0%</p>
+              </div>
+            </div>
+
+            <!-- Breakdown by Company & Channel -->
+            <div class="mt-8 border-t border-gray-100 pt-6">
+              <div class="flex items-center gap-2 mb-4">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                  </path>
+                </svg>
+                <h3 class="text-sm font-bold text-gray-800">ยอดขายแยกตามบริษัท (เปรียบเทียบ <span
+                    id="yoy-company-years"></span>)</h3>
+              </div>
+              <div id="yoy-company-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+
+              <div class="flex items-center gap-2 mb-4 mt-8">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                </svg>
+                <h3 class="text-sm font-bold text-gray-800">ค่าโฆษณาแยกตามช่องทาง (เปรียบเทียบ <span
+                    id="yoy-channel-years"></span>)</h3>
+              </div>
+              <div id="yoy-channel-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Floating Action Buttons for Navigation -->
+    <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-[100]">
+
+      <!-- ภาพรวม -->
+      <a href="index.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Dashboard Icon -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
+        <span class="tooltip">ภาพรวม</span>
+      </a>
+
+      <!-- Lead -->
+      <a href="lead.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group relative">
+
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-purple-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
+          Lead
+        </span>
+      </a>
+
+      <!-- รายวัน -->
+      <a href="date.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Calendar Day -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span class="tooltip">รายวัน</span>
+      </a>
+
+      <!-- รายเดือน -->
+      <a href="month.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Calendar Month -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M3 8h18M8 3v2m8-2v2M5 21h14a2 2 0 002-2V8H3v11a2 2 0 002 2z" />
+        </svg>
+        <span class="tooltip">รายเดือน</span>
+      </a>
+
+      <!-- รายปี -->
+      <a href="#"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+
+        <!-- Chart Icon -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 3v18m-4-4v4m8-10v10m4-6v6" />
+        </svg>
+        <span class="tooltip">รายปี</span>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const SHEET_ID = '1eiiCH6GcEl2iP3JcAAZciK2on4EHJVbybPFdTSNoTbM';
+    const SHEET_NAME = 'update';
+    const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+    const TARGET_SHEET_NAME = 'Traget';
+    const TARGET_API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TARGET_SHEET_NAME}`;
+
+    // Global state
+    let rawData = [];
+    let rawTargetData = [];
+    let yoyChart = null;
+    let datasetVisibility = {}; // ตัวแปรสำหรับเก็บสถานะการเปิด/ปิดของเส้นกราฟ
+
+    // Default config for Element SDK
+    const defaultConfig = {
+      dashboard_title: '📊 Sales & Advertising Dashboard',
+      background_color: '#f8fafc',
+      primary_color: '#667eea',
+      text_color: '#1e293b',
+      accent_color: '#10b981',
+      secondary_color: '#6366f1'
+    };
+
+    // Element SDK initialization
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('dashboard-title').textContent = config.dashboard_title || defaultConfig.dashboard_title;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => window.elementSdk.setConfig({ background_color: value })
+            },
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => window.elementSdk.setConfig({ primary_color: value })
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => window.elementSdk.setConfig({ text_color: value })
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => window.elementSdk.setConfig({ accent_color: value })
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => window.elementSdk.setConfig({ secondary_color: value })
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['dashboard_title', config.dashboard_title || defaultConfig.dashboard_title]
+        ])
+      });
+    }
+
+    // Fetch data from Google Sheets
+    async function fetchData() {
+      try {
+        const response = await fetch(API_URL);
+        const text = await response.text();
+
+        // Parse Google Sheets JSON response
+        const jsonString = text.substring(47, text.length - 2);
+        const json = JSON.parse(jsonString);
+
+        const rows = json.table.rows;
+        const data = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i].c;
+          if (!row) continue;
+
+          const record = {
+            company: row[0]?.v || '',
+            month: row[9]?.v || '',
+            googleAd: parseFloat(row[2]?.v) || 0,
+            facebookAd: parseFloat(row[3]?.v) || 0,
+            lineAd: parseFloat(row[4]?.v) || 0,
+            tiktokAd: parseFloat(row[5]?.v) || 0,
+            salesCar: parseFloat(row[6]?.v) || 0,
+            salesGfs: parseFloat(row[7]?.v) || 0,
+            salesMhl: parseFloat(row[8]?.v) || 0
+          };
+
+          // Calculate totals
+          record.totalAds = record.googleAd + record.facebookAd + record.lineAd + record.tiktokAd;
+          record.totalSales = record.salesCar + record.salesGfs + record.salesMhl;
+          record.roi = record.totalAds > 0 ? ((record.totalSales - record.totalAds) / record.totalAds * 100) : 0;
+
+          if (record.company && record.month) {
+            data.push(record);
+          }
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+      }
+    }
+
+    // Fetch target data from 'Traget' sheet
+    async function fetchTargetData() {
+      try {
+        const response = await fetch(TARGET_API_URL);
+        if (!response.ok) return [];
+        const text = await response.text();
+
+        // Handle case where sheet might be empty or missing temporarily
+        if (!text.includes('google.visualization.Query.setResponse')) return [];
+
+        const jsonString = text.substring(47, text.length - 2);
+        const json = JSON.parse(jsonString);
+
+        const rows = json.table.rows;
+        const data = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i].c;
+          if (!row) continue;
+
+          // Col A: เดือน, Col B: บริษัท, Col C: เป้ายอดขาย
+          const month = row[0]?.f || row[0]?.v || '';
+          const company = row[1]?.v || '';
+          const targetSales = parseFloat(row[2]?.v) || 0;
+
+          if (month && company) {
+            data.push({ month, company, targetSales });
+          }
+        }
+        return data;
+      } catch (error) {
+        console.warn('Error fetching target data (may not exist yet):', error);
+        return []; // Return empty array so main app doesn't break if sheet is missing
+      }
+    }
+
+    // Format currency
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('th-TH', {
+        style: 'currency',
+        currency: 'THB',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    // Format number
+    function formatNumber(value) {
+      return new Intl.NumberFormat('th-TH').format(value);
+    }
+
+    // Populate company filters and Year Dropdowns
+    function populateFilters(data) {
+      const companies = [...new Set(data.map(d => d.company))].sort();
+
+      const yoyCompanySelect = document.getElementById('yoy-company');
+
+      yoyCompanySelect.innerHTML = '<option value="all">ทุกบริษัท</option>';
+
+      companies.forEach(company => {
+        yoyCompanySelect.innerHTML += `<option value="${company}">${company}</option>`;
+      });
+
+      // Populate Year Options for YoY section
+      const years = [...new Set(data.map(d => {
+        const date = parseMonth(d.month);
+        return date ? date.getFullYear() : null;
+      }).filter(y => y !== null))].sort((a, b) => b - a); // เรียงจากปีล่าสุดไปเก่าสุด
+
+      const year1Select = document.getElementById('yoy-year1');
+      const year2Select = document.getElementById('yoy-year2');
+      const year3Select = document.getElementById('yoy-year3');
+
+      year1Select.innerHTML = '';
+      year2Select.innerHTML = '';
+      year3Select.innerHTML = '<option value="none">ไม่ระบุ</option>';
+
+      years.forEach(year => {
+        year1Select.innerHTML += `<option value="${year}">${year}</option>`;
+        year2Select.innerHTML += `<option value="${year}">${year}</option>`;
+        year3Select.innerHTML += `<option value="${year}">${year}</option>`;
+      });
+
+      // ตั้งค่า Default
+      if (years.length > 0) year1Select.value = years[0];
+      if (years.length > 1) year2Select.value = years[1];
+      if (years.length > 2) year3Select.value = years[2];
+    }
+
+    // Parse month string to date
+    function parseMonth(monthStr) {
+      if (!monthStr) return null;
+
+      // Try to parse as is (ISO format or standard date)
+      const date = new Date(monthStr);
+      if (!isNaN(date.getTime())) return date;
+
+      // Try Thai month format (e.g., "ม.ค. 67" or "ม.ค.67")
+      const thaiMonths = {
+        'ม.ค.': 0, 'ก.พ.': 1, 'มี.ค.': 2, 'เม.ย.': 3,
+        'พ.ค.': 4, 'มิ.ย.': 5, 'ก.ค.': 6, 'ส.ค.': 7,
+        'ก.ย.': 8, 'ต.ค.': 9, 'พ.ย.': 10, 'ธ.ค.': 11
+      };
+
+      for (const [key, monthIndex] of Object.entries(thaiMonths)) {
+        if (monthStr.includes(key)) {
+          const yearMatch = monthStr.match(/(\d+)/);
+          if (yearMatch) {
+            let year = parseInt(yearMatch[1]);
+            // Convert Buddhist Era to CE if needed
+            if (year >= 2400 && year <= 2600) {
+              year -= 543;
+            } else if (year < 100) {
+              year += 2000;
+            }
+            return new Date(year, monthIndex, 1);
+          }
+        }
+      }
+
+      // Try other common formats
+      const parts = monthStr.split(/[-\/\s]+/);
+      if (parts.length >= 2) {
+        let month = parseInt(parts[0]) - 1;
+        let year = parseInt(parts[1]);
+        if (year >= 2400 && year <= 2600) year -= 543;
+        if (year < 100) year += 2000;
+        if (month >= 0 && month <= 11 && year > 1900) {
+          return new Date(year, month, 1);
+        }
+      }
+
+      return null;
+    }
+
+    // กำหนดสีของกราฟตามปีที่เลือก (ปี 2024 = สีแดง, ปี 2025 = สีน้ำเงิน, ปี 2026 = สีเขียว)
+    function getYearColors(year) {
+      if (year === 2024) {
+        return {
+          sales: { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)', bgBar: 'rgba(239, 68, 68, 0.8)' }, // สีแดง
+          ads: { border: '#f87171', bg: 'rgba(248, 113, 113, 0.1)', bgBar: 'rgba(248, 113, 113, 0.8)' },  // สีแดง (อ่อนกว่าสำหรับ Ads เผื่อใช้)
+          target: { border: '#991b1b', bg: 'transparent', bgBar: 'transparent' } // สีแดงเข้ม (สำหรับเป้า)
+        };
+      }
+      if (year === 2025) {
+        return {
+          sales: { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)', bgBar: 'rgba(59, 130, 246, 0.8)' }, // สีน้ำเงิน
+          ads: { border: '#60a5fa', bg: 'rgba(96, 165, 250, 0.1)', bgBar: 'rgba(96, 165, 250, 0.8)' },  // สีน้ำเงินอ่อน
+          target: { border: '#1e40af', bg: 'transparent', bgBar: 'transparent' } // สีน้ำเงินเข้ม (สำหรับเป้า)
+        };
+      }
+      if (year === 2026) {
+        return {
+          sales: { border: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)', bgBar: 'rgba(34, 197, 94, 0.8)' }, // สีเขียว
+          ads: { border: '#4ade80', bg: 'rgba(74, 222, 128, 0.1)', bgBar: 'rgba(74, 222, 128, 0.8)' },  // สีเขียวอ่อน
+          target: { border: '#166534', bg: 'transparent', bgBar: 'transparent' } // สีเขียวเข้ม (สำหรับเป้า)
+        };
+      }
+
+      // สำหรับปีอื่นๆ ให้สุ่มสีจากค่าตัวเลขปี
+      const hash = (year * 137) % 360;
+      return {
+        sales: { border: `hsl(${hash}, 70%, 50%)`, bg: `hsla(${hash}, 70%, 50%, 0.1)`, bgBar: `hsla(${hash}, 70%, 50%, 0.8)` },
+        ads: { border: `hsl(${hash}, 70%, 65%)`, bg: `hsla(${hash}, 70%, 65%, 0.1)`, bgBar: `hsla(${hash}, 70%, 65%, 0.8)` },
+        target: { border: `hsl(${hash}, 70%, 30%)`, bg: 'transparent', bgBar: 'transparent' }
+      }
+    }
+
+    // Update Year-over-Year chart
+    // รับ Parameter mode: 'normal' (อัปเดตปกติ), 'init' (ตอนโหลดหน้าเว็บ), 'clear' (ตอนกดปุ่มเคลียร์)
+    function updateYoYChart(mode = 'normal') {
+      const yoyCompany = document.getElementById('yoy-company').value;
+      const yoyChannel = document.getElementById('yoy-channel').value;
+      const chartType = document.getElementById('chart-type-filter').value;
+      const yoyYear1Select = document.getElementById('yoy-year1');
+      const yoyYear2Select = document.getElementById('yoy-year2');
+      const yoyYear3Select = document.getElementById('yoy-year3');
+
+      // ตรวจสอบความปลอดภัยหากข้อมูลปีใน Dropdown ยังไม่พร้อม
+      if (!yoyYear1Select.value || !yoyYear2Select.value) return;
+
+      // จัดการระบบจำสถานะการเปิดปิดเส้นกราฟ (Visibility)
+      if (mode === 'init' || mode === 'clear') {
+        // ถ้าโหลดใหม่หรือเคลียร์ ให้ล้างการจำสถานะเดิมทิ้งไป
+        datasetVisibility = {};
+      } else if (yoyChart) {
+        // ก่อนวาดใหม่ ให้บันทึกไว้ว่าผู้ใช้กำลังเปิด/ปิดเส้นไหนอยู่
+        yoyChart.data.datasets.forEach((ds, index) => {
+          datasetVisibility[ds.label] = yoyChart.isDatasetVisible(index);
+        });
+      }
+
+      const currentYear = parseInt(yoyYear1Select.value);
+      const previousYear = parseInt(yoyYear2Select.value);
+      const hasYear3 = yoyYear3Select.value && yoyYear3Select.value !== 'none';
+      const thirdYear = hasYear3 ? parseInt(yoyYear3Select.value) : null;
+
+      // Update new dynamic labels for breakdown section
+      let yearsComparedText = `${currentYear}, ${previousYear}`;
+      if (hasYear3) yearsComparedText += `, ${thirdYear}`;
+
+      document.getElementById('yoy-company-years').textContent = yearsComparedText;
+      document.getElementById('yoy-channel-years').textContent = yearsComparedText;
+
+      // ให้ YoY ทำงานเป็นอิสระ โดยใช้ข้อมูลตั้งต้นทั้งหมด (rawData) แทน filteredData
+      let dataToUse = rawData;
+      let targetDataToUse = rawTargetData;
+      if (yoyCompany !== 'all') {
+        dataToUse = rawData.filter(d => d.company === yoyCompany);
+        targetDataToUse = rawTargetData.filter(d => d.company === yoyCompany);
+      }
+
+      // Group data by month and year
+      const monthlyDataByYear = {};
+      const targetDataByYear = {};
+
+      // Stats for new breakdown cards
+      const companyStats = {};
+      const channelStats = {
+        google: { name: 'Google AD', y1: 0, y2: 0, y3: 0, bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', valText: 'text-amber-900', valText2: 'text-amber-700' },
+        facebook: { name: 'Facebook AD', y1: 0, y2: 0, y3: 0, bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', valText: 'text-blue-900', valText2: 'text-blue-700' },
+        line: { name: 'Line AD', y1: 0, y2: 0, y3: 0, bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-800', valText: 'text-green-900', valText2: 'text-green-700' },
+        tiktok: { name: 'TikTok AD', y1: 0, y2: 0, y3: 0, bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-800', valText: 'text-pink-900', valText2: 'text-pink-700' }
+      };
+
+      dataToUse.forEach(d => {
+        const date = parseMonth(d.month);
+        if (!date) return;
+
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const monthKey = month; // 0-11
+
+        // Monthly aggregation for charts
+        if (!monthlyDataByYear[year]) monthlyDataByYear[year] = {};
+        if (!monthlyDataByYear[year][monthKey]) {
+          monthlyDataByYear[year][monthKey] = {
+            sales: 0, ads: 0, month: d.month
+          };
+        }
+
+        const yearData = monthlyDataByYear[year][monthKey];
+        yearData.sales += d.totalSales;
+
+        if (yoyChannel === 'all') {
+          yearData.ads += d.totalAds;
+        } else if (yoyChannel === 'google') {
+          yearData.ads += d.googleAd;
+        } else if (yoyChannel === 'facebook') {
+          yearData.ads += d.facebookAd;
+        } else if (yoyChannel === 'line') {
+          yearData.ads += d.lineAd;
+        } else if (yoyChannel === 'tiktok') {
+          yearData.ads += d.tiktokAd;
+        }
+
+        // Breakdown aggregations
+        if (!companyStats[d.company]) {
+          companyStats[d.company] = { name: d.company, y1Sales: 0, y2Sales: 0, y3Sales: 0, y1Target: 0, y2Target: 0, y3Target: 0 };
+        }
+
+        if (year === currentYear) {
+          companyStats[d.company].y1Sales += d.totalSales;
+          channelStats.google.y1 += d.googleAd;
+          channelStats.facebook.y1 += d.facebookAd;
+          channelStats.line.y1 += d.lineAd;
+          channelStats.tiktok.y1 += d.tiktokAd;
+        } else if (year === previousYear) {
+          companyStats[d.company].y2Sales += d.totalSales;
+          channelStats.google.y2 += d.googleAd;
+          channelStats.facebook.y2 += d.facebookAd;
+          channelStats.line.y2 += d.lineAd;
+          channelStats.tiktok.y2 += d.tiktokAd;
+        } else if (hasYear3 && year === thirdYear) {
+          companyStats[d.company].y3Sales += d.totalSales;
+          channelStats.google.y3 += d.googleAd;
+          channelStats.facebook.y3 += d.facebookAd;
+          channelStats.line.y3 += d.lineAd;
+          channelStats.tiktok.y3 += d.tiktokAd;
+        }
+      });
+
+      // Process Target Data
+      targetDataToUse.forEach(d => {
+        const date = parseMonth(d.month);
+        if (!date) return;
+
+        const year = date.getFullYear();
+        const monthKey = date.getMonth(); // 0-11
+
+        if (!targetDataByYear[year]) targetDataByYear[year] = {};
+        if (!targetDataByYear[year][monthKey]) targetDataByYear[year][monthKey] = 0;
+
+        targetDataByYear[year][monthKey] += d.targetSales;
+
+        // Breakdown aggregations for target
+        if (!companyStats[d.company]) {
+          companyStats[d.company] = { name: d.company, y1Sales: 0, y2Sales: 0, y3Sales: 0, y1Target: 0, y2Target: 0, y3Target: 0 };
+        }
+
+        if (year === currentYear) {
+          companyStats[d.company].y1Target += d.targetSales;
+        } else if (year === previousYear) {
+          companyStats[d.company].y2Target += d.targetSales;
+        } else if (hasYear3 && year === thirdYear) {
+          companyStats[d.company].y3Target += d.targetSales;
+        }
+      });
+
+      // Calculate totals for years based on selections
+      const currentYearData = monthlyDataByYear[currentYear] || {};
+      const previousYearData = monthlyDataByYear[previousYear] || {};
+      const thirdYearData = hasYear3 ? (monthlyDataByYear[thirdYear] || {}) : {};
+
+      let currentTotalSales = 0, currentTotalAds = 0;
+      let previousTotalSales = 0, previousTotalAds = 0;
+      let thirdTotalSales = 0, thirdTotalAds = 0;
+
+      Object.values(currentYearData).forEach(m => {
+        currentTotalSales += m.sales;
+        currentTotalAds += m.ads;
+      });
+
+      Object.values(previousYearData).forEach(m => {
+        previousTotalSales += m.sales;
+        previousTotalAds += m.ads;
+      });
+
+      if (hasYear3) {
+        Object.values(thirdYearData).forEach(m => {
+          thirdTotalSales += m.sales;
+          thirdTotalAds += m.ads;
+        });
+      }
+
+      // Calculate differences for Total Cards (Y1 vs Y2)
+      const totalSalesDiff = previousTotalSales > 0 ? ((currentTotalSales - previousTotalSales) / previousTotalSales * 100) : (currentTotalSales > 0 ? 100 : 0);
+      const totalSalesDiffClass = totalSalesDiff >= 0 ? 'text-emerald-700 bg-emerald-100/50' : 'text-red-700 bg-red-100/50';
+      const totalSalesDiffSign = totalSalesDiff >= 0 ? '+' : '';
+
+      const totalAdsDiff = previousTotalAds > 0 ? ((currentTotalAds - previousTotalAds) / previousTotalAds * 100) : (currentTotalAds > 0 ? 100 : 0);
+      const totalAdsDiffClass = totalAdsDiff > 0 ? 'text-red-700 bg-red-100/50' : 'text-emerald-700 bg-emerald-100/50'; // For ads, + is red, - is green
+      const totalAdsDiffSign = totalAdsDiff > 0 ? '+' : '';
+
+      // Calculate Target Totals
+      let currentTotalTarget = 0, previousTotalTarget = 0, thirdTotalTarget = 0;
+      Object.values(targetDataByYear[currentYear] || {}).forEach(v => currentTotalTarget += v);
+      Object.values(targetDataByYear[previousYear] || {}).forEach(v => previousTotalTarget += v);
+      if (hasYear3) Object.values(targetDataByYear[thirdYear] || {}).forEach(v => thirdTotalTarget += v);
+
+      const totalTargetDiff = previousTotalTarget > 0 ? ((currentTotalTarget - previousTotalTarget) / previousTotalTarget * 100) : (currentTotalTarget > 0 ? 100 : 0);
+
+      const currentROI = currentTotalAds > 0 ? ((currentTotalSales - currentTotalAds) / currentTotalAds * 100) : 0;
+      const previousROI = previousTotalAds > 0 ? ((previousTotalSales - previousTotalAds) / previousTotalAds * 100) : 0;
+      const thirdROI = thirdTotalAds > 0 ? ((thirdTotalSales - thirdTotalAds) / thirdTotalAds * 100) : 0;
+
+      const roiChange = currentROI - previousROI;
+
+      // Handle Grid Layout for Summary Cards based on 3rd year
+      const yoySummaryGrid = document.getElementById('yoy-summary-grid');
+      if (hasYear3) {
+        yoySummaryGrid.className = "grid grid-cols-2 md:grid-cols-4 gap-3";
+        document.getElementById('card-yoy-y3-sales').classList.remove('hidden');
+        document.getElementById('card-yoy-y3-target').classList.remove('hidden');
+        document.getElementById('card-yoy-y3-ads').classList.remove('hidden');
+        document.getElementById('card-yoy-y3-roi').classList.remove('hidden');
+
+        document.getElementById('label-yoy-y3-sales').textContent = `ปี ${thirdYear} - ยอดขาย`;
+        document.getElementById('yoy-third-sales').textContent = formatCurrency(thirdTotalSales);
+        document.getElementById('label-yoy-y3-target').textContent = `ปี ${thirdYear} - เป้ายอดขาย`;
+        document.getElementById('yoy-third-target').textContent = formatCurrency(thirdTotalTarget);
+        document.getElementById('label-yoy-y3-ads').textContent = `ปี ${thirdYear} - ค่าโฆษณา`;
+        document.getElementById('yoy-third-ads').textContent = formatCurrency(thirdTotalAds);
+        document.getElementById('label-yoy-y3-roi').textContent = `ปี ${thirdYear} - ROI`;
+        document.getElementById('yoy-third-roi').textContent = thirdROI.toFixed(1) + '%';
+      } else {
+        yoySummaryGrid.className = "grid grid-cols-2 md:grid-cols-3 gap-3";
+        document.getElementById('card-yoy-y3-sales').classList.add('hidden');
+        document.getElementById('card-yoy-y3-target').classList.add('hidden');
+        document.getElementById('card-yoy-y3-ads').classList.add('hidden');
+        document.getElementById('card-yoy-y3-roi').classList.add('hidden');
+      }
+
+      // Update Summary Cards Dynamic Labels
+      document.getElementById('label-yoy-y1-sales').textContent = `ปี ${currentYear} - ยอดขาย`;
+      document.getElementById('label-yoy-y2-sales').textContent = `ปี ${previousYear} - ยอดขาย`;
+      document.getElementById('label-yoy-y1-target').textContent = `ปี ${currentYear} - เป้ายอดขาย`;
+      document.getElementById('label-yoy-y2-target').textContent = `ปี ${previousYear} - เป้ายอดขาย`;
+      document.getElementById('label-yoy-y1-ads').textContent = `ปี ${currentYear} - ค่าโฆษณา`;
+      document.getElementById('label-yoy-y2-ads').textContent = `ปี ${previousYear} - ค่าโฆษณา`;
+      document.getElementById('label-yoy-y1-roi').textContent = `ปี ${currentYear} - ROI`;
+      document.getElementById('label-yoy-y2-roi').textContent = `ปี ${previousYear} - ROI`;
+
+      // Update summary cards values
+      document.getElementById('yoy-current-sales').textContent = formatCurrency(currentTotalSales);
+      document.getElementById('yoy-previous-sales').textContent = formatCurrency(previousTotalSales);
+      document.getElementById('yoy-current-target').textContent = formatCurrency(currentTotalTarget);
+      document.getElementById('yoy-previous-target').textContent = formatCurrency(previousTotalTarget);
+      document.getElementById('yoy-current-ads').textContent = formatCurrency(currentTotalAds);
+      document.getElementById('yoy-previous-ads').textContent = formatCurrency(previousTotalAds);
+      document.getElementById('yoy-sales-change').textContent = (totalSalesDiff >= 0 ? '+' : '') + totalSalesDiff.toFixed(1) + '%';
+      document.getElementById('yoy-target-change').textContent = (totalTargetDiff >= 0 ? '+' : '') + totalTargetDiff.toFixed(1) + '%';
+      document.getElementById('yoy-ads-change').textContent = (totalAdsDiff >= 0 ? '+' : '') + totalAdsDiff.toFixed(1) + '%';
+      document.getElementById('yoy-current-roi').textContent = currentROI.toFixed(1) + '%';
+      document.getElementById('yoy-previous-roi').textContent = previousROI.toFixed(1) + '%';
+      document.getElementById('yoy-roi-change').textContent = (roiChange >= 0 ? '+' : '') + roiChange.toFixed(1) + '%';
+
+      // Change color based on positive/negative
+      const salesChangeEl = document.getElementById('yoy-sales-change');
+      const targetChangeEl = document.getElementById('yoy-target-change');
+      const adsChangeEl = document.getElementById('yoy-ads-change');
+      const roiChangeEl = document.getElementById('yoy-roi-change');
+      salesChangeEl.className = (totalSalesDiff >= 0 ? 'text-emerald-800' : 'text-red-800') + ' text-lg font-bold mt-2';
+      targetChangeEl.className = (totalTargetDiff >= 0 ? 'text-emerald-800' : 'text-red-800') + ' text-lg font-bold mt-2';
+      adsChangeEl.className = (totalAdsDiff > 0 ? 'text-red-800' : 'text-emerald-800') + ' text-lg font-bold mt-2';
+      roiChangeEl.className = (roiChange >= 0 ? 'text-teal-800' : 'text-red-800') + ' text-lg font-bold mt-2';
+
+      // Helper สำหรับแสดงเป้าหมายและ % ความสำเร็จในการ์ด Breakdown
+      const getAchieveText = (actual, target) => {
+        if (!target) return `<span class="text-[10px] text-gray-400">เป้า: -</span>`;
+        const pct = (actual / target * 100).toFixed(1);
+        const colorClass = actual >= target ? 'text-emerald-600' : 'text-orange-500';
+        return `<span class="text-[10px] text-gray-500">เป้า: ${formatCurrency(target)} <span class="${colorClass} font-medium">(${pct}%)</span></span>`;
+      };
+
+      // Build Total Company Card
+      const totalCompanyCard = `
+        <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-200 shadow-sm transition-all hover:shadow-md md:col-span-2 lg:col-span-1">
+          <div class="font-bold text-indigo-800 mb-3 text-sm flex items-center justify-between">
+            <span>🌟 รวมยอดขายทั้งหมด</span>
+            <span class="text-xs font-medium ${totalSalesDiffClass} rounded px-2 py-0.5 border border-white">
+              ${totalSalesDiffSign}${totalSalesDiff.toFixed(1)}%
+            </span>
+          </div>
+          <div class="space-y-2 mt-3">
+            <div class="flex flex-col">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-indigo-600">ปี ${currentYear}</span>
+                <span class="font-bold text-indigo-900">${formatCurrency(currentTotalSales)}</span>
+              </div>
+              <div class="flex justify-end">${getAchieveText(currentTotalSales, currentTotalTarget)}</div>
+            </div>
+            <div class="flex flex-col">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-indigo-500">ปี ${previousYear}</span>
+                <span class="font-medium text-indigo-600">${formatCurrency(previousTotalSales)}</span>
+              </div>
+              <div class="flex justify-end">${getAchieveText(previousTotalSales, previousTotalTarget)}</div>
+            </div>
+            ${hasYear3 ? `
+            <div class="flex flex-col">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-indigo-400">ปี ${thirdYear}</span>
+                <span class="font-medium text-indigo-500">${formatCurrency(thirdTotalSales)}</span>
+              </div>
+              <div class="flex justify-end">${getAchieveText(thirdTotalSales, thirdTotalTarget)}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      // Build Total Channel Card
+      const totalChannelCard = `
+        <div class="bg-orange-50 rounded-xl p-4 border border-orange-200 shadow-sm transition-all hover:shadow-md md:col-span-2 lg:col-span-1">
+          <div class="font-bold text-orange-800 mb-3 text-sm flex items-center justify-between">
+            <span>📢 รวมค่าโฆษณาทั้งหมด</span>
+            <span class="text-xs font-medium ${totalAdsDiffClass} rounded px-2 py-0.5 border border-white">
+              ${totalAdsDiffSign}${totalAdsDiff.toFixed(1)}%
+            </span>
+          </div>
+          <div class="space-y-1 mt-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-orange-600">ปี ${currentYear}</span>
+              <span class="font-bold text-orange-900">${formatCurrency(currentTotalAds)}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-orange-500">ปี ${previousYear}</span>
+              <span class="font-medium text-orange-600">${formatCurrency(previousTotalAds)}</span>
+            </div>
+            ${hasYear3 ? `
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-orange-400">ปี ${thirdYear}</span>
+              <span class="font-medium text-orange-500">${formatCurrency(thirdTotalAds)}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      // Render Breakdown Company Cards with Total
+      const companyCardsContainer = document.getElementById('yoy-company-cards');
+      const companyCardsHTML = Object.values(companyStats).map(c => {
+        const diff = c.y2Sales > 0 ? ((c.y1Sales - c.y2Sales) / c.y2Sales * 100) : (c.y1Sales > 0 ? 100 : 0);
+        const diffClass = diff >= 0 ? 'text-emerald-700 bg-emerald-100/50' : 'text-red-700 bg-red-100/50';
+        const diffSign = diff >= 0 ? '+' : '';
+        return `
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-sm transition-all hover:shadow-md">
+            <div class="font-bold text-slate-800 mb-3 text-sm flex items-center justify-between">
+              <span>${c.name}</span>
+              <span class="text-xs font-medium ${diffClass} rounded px-2 py-0.5 border border-white">
+                ${diffSign}${diff.toFixed(1)}%
+              </span>
+            </div>
+            <div class="space-y-2 mt-3">
+              <div class="flex flex-col">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">ปี ${currentYear}</span>
+                  <span class="font-bold text-slate-800">${formatCurrency(c.y1Sales)}</span>
+                </div>
+                <div class="flex justify-end">${getAchieveText(c.y1Sales, c.y1Target)}</div>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-slate-400">ปี ${previousYear}</span>
+                  <span class="font-medium text-slate-500">${formatCurrency(c.y2Sales)}</span>
+                </div>
+                <div class="flex justify-end">${getAchieveText(c.y2Sales, c.y2Target)}</div>
+              </div>
+              ${hasYear3 ? `
+              <div class="flex flex-col">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-slate-400">ปี ${thirdYear}</span>
+                  <span class="font-medium text-slate-500">${formatCurrency(c.y3Sales)}</span>
+                </div>
+                <div class="flex justify-end">${getAchieveText(c.y3Sales, c.y3Target)}</div>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      companyCardsContainer.innerHTML = totalCompanyCard + companyCardsHTML;
+
+      // Render Breakdown Channel Cards with Total
+      const channelCardsContainer = document.getElementById('yoy-channel-cards');
+      const channelCardsHTML = Object.values(channelStats).map(c => {
+        const diff = c.y2 > 0 ? ((c.y1 - c.y2) / c.y2 * 100) : (c.y1 > 0 ? 100 : 0);
+        // Ads logic: Increase is red, Decrease is green
+        const diffClass = diff > 0 ? 'text-red-700 bg-red-100/50' : 'text-emerald-700 bg-emerald-100/50';
+        const diffSign = diff > 0 ? '+' : '';
+        return `
+          <div class="${c.bg} rounded-xl p-4 border ${c.border} shadow-sm transition-all hover:shadow-md">
+            <div class="font-bold ${c.text} mb-3 text-sm flex items-center justify-between">
+              <span>${c.name}</span>
+              <span class="text-xs font-medium ${diffClass} rounded px-2 py-0.5 border border-white">
+                ${diffSign}${diff.toFixed(1)}%
+              </span>
+            </div>
+            <div class="space-y-1 mt-3">
+              <div class="flex justify-between items-center text-sm">
+                <span class="${c.valText2} opacity-80">ปี ${currentYear}</span>
+                <span class="font-bold ${c.valText}">${formatCurrency(c.y1)}</span>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span class="${c.valText2} opacity-60">ปี ${previousYear}</span>
+                <span class="font-medium ${c.valText2}">${formatCurrency(c.y2)}</span>
+              </div>
+              ${hasYear3 ? `
+              <div class="flex justify-between items-center text-xs">
+                <span class="${c.valText2} opacity-60">ปี ${thirdYear}</span>
+                <span class="font-medium ${c.valText2}">${formatCurrency(c.y3)}</span>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      channelCardsContainer.innerHTML = totalChannelCard + channelCardsHTML;
+
+      // Prepare data for chart (แกน X เรียงตั้งแต่เดือน ม.ค. ถึง ธ.ค.)
+      const labels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      const currentData = labels.map((_, i) => currentYearData[i]?.sales || 0);
+      const previousSalesData = labels.map((_, i) => previousYearData[i]?.sales || 0);
+      const currentAdsData = labels.map((_, i) => currentYearData[i]?.ads || 0);
+      const previousAdsData = labels.map((_, i) => previousYearData[i]?.ads || 0);
+      const currentTargetData = labels.map((_, i) => targetDataByYear[currentYear]?.[i] || 0);
+      const previousTargetData = labels.map((_, i) => targetDataByYear[previousYear]?.[i] || 0);
+
+      const thirdData = labels.map((_, i) => hasYear3 ? (thirdYearData[i]?.sales || 0) : 0);
+      const thirdAdsData = labels.map((_, i) => hasYear3 ? (thirdYearData[i]?.ads || 0) : 0);
+      const thirdTargetData = labels.map((_, i) => hasYear3 ? (targetDataByYear[thirdYear]?.[i] || 0) : 0);
+
+      // สร้างตัวแปร ChartDatasets ไว้ล่วงหน้า
+      const chartDatasets = [];
+
+      // ดึงสีตามปีที่ถูกเลือก
+      const y1Colors = getYearColors(currentYear);
+      const y2Colors = getYearColors(previousYear);
+      const y3Colors = hasYear3 ? getYearColors(thirdYear) : null;
+
+      // 1. กลุ่มข้อมูลยอดขาย (เรียงปี 1 -> ปี 2 -> ปี 3)
+      chartDatasets.push(
+        {
+          label: `ปี ${currentYear} - ยอดขาย`,
+          data: currentData,
+          borderColor: y1Colors.sales.border,
+          backgroundColor: chartType === 'bar' ? y1Colors.sales.bgBar : y1Colors.sales.bg,
+          fill: chartType === 'line',
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: chartType === 'line' ? 4 : 0,
+          pointBackgroundColor: y1Colors.sales.border
+        },
+        {
+          label: `ปี ${previousYear} - ยอดขาย`,
+          data: previousSalesData,
+          borderColor: y2Colors.sales.border,
+          backgroundColor: chartType === 'bar' ? y2Colors.sales.bgBar : y2Colors.sales.bg,
+          fill: chartType === 'line',
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: chartType === 'line' ? 4 : 0,
+          pointBackgroundColor: y2Colors.sales.border
+        }
+      );
+      if (hasYear3) {
+        chartDatasets.push({
+          label: `ปี ${thirdYear} - ยอดขาย`,
+          data: thirdData,
+          borderColor: y3Colors.sales.border,
+          backgroundColor: chartType === 'bar' ? y3Colors.sales.bgBar : y3Colors.sales.bg,
+          fill: chartType === 'line',
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: chartType === 'line' ? 4 : 0,
+          pointBackgroundColor: y3Colors.sales.border
+        });
+      }
+
+      // 2. กลุ่มข้อมูลเป้ายอดขาย (เรียงปี 1 -> ปี 2 -> ปี 3)
+      chartDatasets.push(
+        {
+          type: 'line',
+          label: `ปี ${currentYear} - เป้ายอดขาย`,
+          data: currentTargetData,
+          borderColor: y1Colors.target.border,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        },
+        {
+          type: 'line',
+          label: `ปี ${previousYear} - เป้ายอดขาย`,
+          data: previousTargetData,
+          borderColor: y2Colors.target.border,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        }
+      );
+      if (hasYear3) {
+        chartDatasets.push({
+          type: 'line',
+          label: `ปี ${thirdYear} - เป้ายอดขาย`,
+          data: thirdTargetData,
+          borderColor: y3Colors.target.border,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        });
+      }
+
+      // 3. กลุ่มข้อมูลค่าโฆษณา (เรียงปี 1 -> ปี 2 -> ปี 3)
+      chartDatasets.push(
+        {
+          label: `ปี ${currentYear} - ค่าโฆษณา`,
+          data: currentAdsData,
+          borderColor: y1Colors.ads.border,
+          backgroundColor: chartType === 'bar' ? y1Colors.ads.bgBar : y1Colors.ads.bg,
+          fill: chartType === 'line',
+          tension: 0.4,
+          borderWidth: 3,
+          borderDash: [5, 5],
+          pointRadius: chartType === 'line' ? 4 : 0,
+          pointBackgroundColor: y1Colors.ads.border
+        },
+        {
+          label: `ปี ${previousYear} - ค่าโฆษณา`,
+          data: previousAdsData,
+          borderColor: y2Colors.ads.border,
+          backgroundColor: chartType === 'bar' ? y2Colors.ads.bgBar : y2Colors.ads.bg,
+          fill: chartType === 'line',
+          tension: 0.4,
+          borderWidth: 3,
+          borderDash: [5, 5],
+          pointRadius: chartType === 'line' ? 4 : 0,
+          pointBackgroundColor: y2Colors.ads.border
+        }
+      );
+      if (hasYear3) {
+        chartDatasets.push({
+          label: `ปี ${thirdYear} - ค่าโฆษณา`,
+          data: thirdAdsData,
+          borderColor: y3Colors.ads.border,
+          backgroundColor: chartType === 'bar' ? y3Colors.ads.bgBar : y3Colors.ads.bg,
+          fill: chartType === 'line',
+          tension: 0.4,
+          borderWidth: 3,
+          borderDash: [5, 5],
+          pointRadius: chartType === 'line' ? 4 : 0,
+          pointBackgroundColor: y3Colors.ads.border
+        });
+      }
+
+      // จัดการการซ่อน/แสดงของเส้นกราฟตามค่า default หรือข้อมูลที่เคยเปิดไว้
+      chartDatasets.forEach(ds => {
+        if (mode === 'clear') {
+          // หากกดปุ่มเคลียร์ ให้ซ่อนกราฟทั้งหมด (กราฟว่าง)
+          ds.hidden = true;
+        } else if (mode === 'init') {
+          // ค่าเริ่มต้นตอนเปิดหน้าแรก: ซ่อนเป้าหมายและโฆษณา (ให้แสดงแค่ "ยอดขาย")
+          ds.hidden = ds.label.includes('เป้ายอดขาย') || ds.label.includes('ค่าโฆษณา');
+        } else if (datasetVisibility[ds.label] !== undefined) {
+          // หากเคยกดเปิด/ปิดเส้นไหนเอาไว้ ให้นำค่านั้นกลับมาใช้งาน
+          ds.hidden = !datasetVisibility[ds.label]; // ค่า hidden จะสลับกับ visible ใน Chart.js
+        } else {
+          // กรณีเส้นกราฟใหม่โผล่มา (เช่น เลือกปีที่ 3 เพิ่ม) ให้ยึดตาม default คือซ่อนเป้าและโฆษณา
+          ds.hidden = ds.label.includes('เป้ายอดขาย') || ds.label.includes('ค่าโฆษณา');
+        }
+      });
+
+      const ctx = document.getElementById('yoy-chart-canvas').getContext('2d');
+
+      if (yoyChart) {
+        yoyChart.destroy();
+      }
+
+      yoyChart = new Chart(ctx, {
+        type: chartType,
+        data: {
+          labels,
+          datasets: chartDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 20
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              titleFont: { size: 14 },
+              bodyFont: { size: 13 },
+              callbacks: {
+                label: function (context) {
+                  return context.dataset.label + ': ' + formatCurrency(context.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.05)'
+              },
+              ticks: {
+                callback: function (value) {
+                  return '฿' + (value / 1000000).toFixed(1) + 'M';
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Refresh data
+    async function refreshData() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      const refreshBtn = document.getElementById('refresh-btn');
+
+      refreshIcon.classList.add('refresh-spin');
+      refreshBtn.disabled = true;
+
+      document.getElementById('loading-state').classList.remove('hidden');
+      document.getElementById('dashboard-content').classList.add('hidden');
+      document.getElementById('error-state').classList.add('hidden');
+
+      try {
+        // Fetch both sales data and target data concurrently
+        const [salesRes, targetRes] = await Promise.all([
+          fetchData(),
+          fetchTargetData()
+        ]);
+
+        rawData = salesRes;
+        rawTargetData = targetRes;
+
+        populateFilters(rawData);
+
+        // ส่งโหมด 'init' เพื่อให้ครั้งแรกที่โหลดแสดงกราฟเฉพาะ "ยอดขาย"
+        updateYoYChart('init');
+
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+
+        const now = new Date();
+        document.getElementById('last-update').textContent = `อัพเดทล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
+
+      } catch (error) {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+        document.getElementById('error-message').textContent = error.message || 'กรุณาตรวจสอบการเชื่อมต่อและลองใหม่อีกครั้ง';
+      } finally {
+        refreshIcon.classList.remove('refresh-spin');
+        refreshBtn.disabled = false;
+      }
+    }
+
+    // ฟังก์ชันสำหรับเคลียร์ค่าตัวกรองทั้งหมด
+    function resetFilters() {
+      // รีเซ็ต Dropdown กลับเป็นค่าเริ่มต้น
+      document.getElementById('yoy-company').value = 'all';
+      document.getElementById('yoy-channel').value = 'all';
+      document.getElementById('chart-type-filter').value = 'bar';
+
+      // รีเซ็ตปีกลับเป็นค่าล่าสุดตามลำดับ
+      const years = [...new Set(rawData.map(d => {
+        const date = parseMonth(d.month);
+        return date ? date.getFullYear() : null;
+      }).filter(y => y !== null))].sort((a, b) => b - a);
+
+      const year1Select = document.getElementById('yoy-year1');
+      const year2Select = document.getElementById('yoy-year2');
+      const year3Select = document.getElementById('yoy-year3');
+
+      if (years.length > 0) year1Select.value = years[0];
+      if (years.length > 1) year2Select.value = years[1];
+
+      // ตรวจสอบว่ามีปีที่ 3 หรือไม่ ถ้ามีให้เลือกเป็น default ถ้าไม่มีให้เป็น "ไม่ระบุ"
+      if (years.length > 2) {
+        year3Select.value = years[2];
+      } else {
+        year3Select.value = 'none';
+      }
+
+      // อัปเดตกราฟใหม่ และสั่งให้ซ่อนกราฟทั้งหมด (โหมด 'clear')
+      updateYoYChart('clear');
+    }
+
+    // Initialize
+    refreshData();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1644 @@
+<!doctype html>
+<html lang="th" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales &amp; Ads Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card-shadow {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .tab-btn {
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      border-b-color: #667eea;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .tab-content.hidden {
+      display: none;
+    }
+
+    .refresh-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    select,
+    input[type="date"],
+    input[type="month"] {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+    }
+
+    input[type="date"],
+    input[type="month"] {
+      background-image: none;
+      padding-right: 0.75rem;
+    }
+  </style>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+</head>
+
+<body class="h-full bg-slate-50">
+  <div id="app" class="h-full overflow-auto">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-md">
+      <div class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h1 id="dashboard-title" class="text-xl font-bold">📊 Sales &amp; Advertising Dashboard</h1>
+            <p class="text-white/70 text-sm">วิเคราะห์ยอดขายและค่าโฆษณา</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3"><span id="last-update"
+            class="text-white/70 text-sm hidden md:block"></span> <button id="refresh-btn" onclick="refreshData()"
+            class="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all">
+            <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg><span>รีเฟรช</span> </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 py-6 mx-auto">
+      <!-- Loading State -->
+      <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full refresh-spin mb-4"></div>
+        <p class="text-gray-600 text-lg">กำลังโหลดข้อมูล...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="hidden">
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-red-800 font-semibold text-lg mb-2">ไม่สามารถโหลดข้อมูลได้</h3>
+          <p id="error-message" class="text-red-600 mb-4"></p><button onclick="refreshData()"
+            class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-all"> ลองใหม่อีกครั้ง
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div id="dashboard-content" class="hidden space-y-6">
+        <!-- Filters Section -->
+        <div class="bg-white rounded-2xl card-shadow p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <h2 class="font-semibold text-gray-800">ตัวกรองข้อมูล</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Company Filter -->
+            <div><label class="block text-sm font-medium text-gray-600 mb-1">บริษัท</label> <select id="company-filter"
+                onchange="applyFilters()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <option value="all">ทั้งหมด</option>
+              </select>
+            </div>
+            <!-- Ad Channel Filter -->
+            <div><label class="block text-sm font-medium text-gray-600 mb-1">ช่องทางโฆษณา</label> <select
+                id="ad-channel-filter" onchange="applyFilters()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <option value="all">ทั้งหมด</option>
+                <option value="google">Google AD</option>
+                <option value="facebook">Facebook AD</option>
+                <option value="line">Line AD</option>
+                <option value="tiktok">TikTok AD</option>
+              </select>
+            </div>
+            <!-- Time Range Filter -->
+            <div><label class="block text-sm font-medium text-gray-600 mb-1">ช่วงเวลา</label> <select
+                id="time-range-filter" onchange="handleTimeRangeChange()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <option value="all">ทั้งหมด</option>
+                <option value="0">เดือนนี้</option>
+                <option value="3">3 เดือนล่าสุด</option>
+                <option value="6">6 เดือนล่าสุด</option>
+                <option value="12" selected>12 เดือนล่าสุด</option>
+                <option value="custom">กำหนดเอง (รายเดือน)</option>
+              </select>
+            </div>
+            <!-- Chart Type -->
+            <div><label class="block text-sm font-medium text-gray-600 mb-1">ประเภทกราฟ</label> <select
+                id="chart-type-filter" onchange="applyFilters()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <option value="line">เส้น (Line Chart)</option>
+                <option value="bar" selected>แท่ง (Bar Chart)</option>
+              </select>
+            </div>
+          </div>
+          <!-- Custom Date Range -->
+          <div id="custom-date-range" class="hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium text-gray-600 mb-1">เดือนที่เริ่มต้น</label> <input
+                type="month" id="start-date" onchange="applyFilters()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1">เดือนที่สิ้นสุด</label> <input type="month"
+                id="end-date" onchange="applyFilters()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Tabs Section -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-6">
+          <!-- Tab Navigation -->
+          <div class="flex flex-col sm:flex-row border-b border-gray-200 bg-gray-50">
+            <button onclick="switchTab('sales-chart')"
+              class="tab-btn active flex-1 px-4 py-3 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-all border-b-2 border-indigo-600">
+              📈 แนวโน้มยอดขาย vs โฆษณา </button>
+            <button onclick="switchTab('breakdown-chart')"
+              class="tab-btn flex-1 px-4 py-3 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-all border-b-2 border-transparent">
+              📊 ค่าใช้จ่ายแต่ละช่องทาง </button>
+            <button onclick="switchTab('company-comparison-chart')"
+              class="tab-btn flex-1 px-4 py-3 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-all border-b-2 border-transparent">
+              🏢 เปรียบเทียบแต่ละบริษัท </button>
+          </div>
+          <div class="p-5">
+            <!-- Tab 1: Sales vs Ads Chart -->
+            <div id="sales-chart" class="tab-content">
+              <div class="h-80 mb-6">
+                <canvas id="sales-vs-ads-chart"></canvas>
+              </div>
+
+              <!-- Summary Cards for Tab 1 -->
+              <div class="mt-8 border-t border-gray-100 pt-6">
+                <div class="flex items-center gap-2 mb-4">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                  </svg>
+                  <h3 class="text-sm font-bold text-gray-800">📊 การ์ดสรุปแนวโน้มยอดขายและเป้าหมาย (ตามช่วงเวลาด้านบน)
+                  </h3>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div class="bg-purple-50/50 rounded-xl p-4 border border-purple-100">
+                    <span class="text-sm font-medium text-purple-600">เป้ายอดขายรวม</span>
+                    <p id="tab1-target" class="text-2xl font-bold text-purple-800 mt-1">฿0</p>
+                  </div>
+                  <div class="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
+                    <span class="text-sm font-medium text-emerald-600">ยอดขายจริง</span>
+                    <p id="tab1-sales" class="text-2xl font-bold text-emerald-800 mt-1">฿0</p>
+                  </div>
+                  <div class="bg-rose-50/50 rounded-xl p-4 border border-rose-100">
+                    <span class="text-sm font-medium text-rose-600">ค่าโฆษณา</span>
+                    <p id="tab1-ads" class="text-2xl font-bold text-rose-800 mt-1">฿0</p>
+                  </div>
+                  <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+                    <span class="text-sm font-medium text-blue-600">% สำเร็จตามเป้า</span>
+                    <p id="tab1-ach" class="text-2xl font-bold text-blue-800 mt-1">0%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Breakdown Chart -->
+            <div id="breakdown-chart" class="tab-content hidden">
+              <!-- Breakdown Filters -->
+              <div class="flex flex-wrap gap-3 mb-4">
+                <div><label class="block text-xs font-medium text-gray-500 mb-1">เลือกบริษัท</label> <select
+                    id="breakdown-company" onchange="updateBreakdownChart()"
+                    class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                    <option value="all">ทุกบริษัท</option>
+                  </select>
+                </div>
+                <div class="flex items-end gap-2"><label
+                    class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-all">
+                    <input type="checkbox" id="show-google" checked onchange="updateBreakdownChart()"
+                      class="w-4 h-4 text-indigo-600 rounded"> <span class="text-sm">Google</span> </label> <label
+                    class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-all">
+                    <input type="checkbox" id="show-facebook" checked onchange="updateBreakdownChart()"
+                      class="w-4 h-4 text-blue-600 rounded"> <span class="text-sm">Facebook</span> </label> <label
+                    class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-all">
+                    <input type="checkbox" id="show-line" checked onchange="updateBreakdownChart()"
+                      class="w-4 h-4 text-green-600 rounded"> <span class="text-sm">Line</span> </label> <label
+                    class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-all">
+                    <input type="checkbox" id="show-tiktok" checked onchange="updateBreakdownChart()"
+                      class="w-4 h-4 text-pink-600 rounded"> <span class="text-sm">TikTok</span> </label>
+                </div>
+              </div>
+              <div class="h-80 mb-6">
+                <canvas id="breakdown-chart-canvas"></canvas>
+              </div>
+              <!-- Breakdown Summary Cards -->
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-amber-600">Google AD</span>
+                    <div
+                      class="w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      G</div>
+                  </div>
+                  <p id="breakdown-google" class="text-lg font-bold text-amber-800">฿0</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-blue-600">Facebook AD</span>
+                    <div
+                      class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      F</div>
+                  </div>
+                  <p id="breakdown-facebook" class="text-lg font-bold text-blue-800">฿0</p>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-green-600">Line AD</span>
+                    <div
+                      class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      L</div>
+                  </div>
+                  <p id="breakdown-line" class="text-lg font-bold text-green-800">฿0</p>
+                </div>
+                <div class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-4 border border-pink-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-pink-600">TikTok AD</span>
+                    <div
+                      class="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      T</div>
+                  </div>
+                  <p id="breakdown-tiktok" class="text-lg font-bold text-pink-800">฿0</p>
+                </div>
+                <div class="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border border-teal-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-teal-600">รวมโฆษณา</span>
+                    <div
+                      class="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      Σ</div>
+                  </div>
+                  <p id="breakdown-total-ads" class="text-lg font-bold text-teal-800">฿0</p>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-emerald-600">ยอดขาย</span>
+                    <div
+                      class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      $</div>
+                  </div>
+                  <p id="breakdown-total-sales" class="text-lg font-bold text-emerald-800">฿0</p>
+                </div>
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-orange-600">สัดส่วนค่าใช้จ่าย</span>
+                    <div
+                      class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      %</div>
+                  </div>
+                  <p id="breakdown-expense-ratio" class="text-lg font-bold text-orange-800">0%</p>
+                </div>
+                <div class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-violet-600">ROI เฉลี่ย</span>
+                    <div
+                      class="w-6 h-6 bg-violet-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      📈</div>
+                  </div>
+                  <p id="breakdown-avg-roi" class="text-lg font-bold text-violet-800">0%</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Company Comparison Chart -->
+            <div id="company-comparison-chart" class="tab-content hidden">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-gray-800">เปรียบเทียบยอดขายและค่าโฆษณาแยกตามบริษัทรายเดือน (Bar Chart)
+                </h3>
+                <p class="text-xs text-gray-500">*แสดงข้อมูลตามช่วงเวลาและบริษัทที่เลือกในตัวกรองหลัก</p>
+              </div>
+              <div class="h-80 mb-6">
+                <canvas id="company-comparison-canvas"></canvas>
+              </div>
+
+              <!-- Company Comparison Cards -->
+              <div class="mt-8 border-t border-gray-100 pt-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                      </path>
+                    </svg>
+                    <h3 class="text-sm font-bold text-gray-800">📊 การ์ดสรุปเป้ายอดขายและค่าโฆษณาแต่ละบริษัท</h3>
+                  </div>
+                  <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-xs text-gray-500 whitespace-nowrap">เลือกเดือน:</label>
+                    <select id="company-comparison-month" onchange="updateCompanyComparisonCards()"
+                      class="w-full sm:w-auto border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                      <!-- Options dynamically populated -->
+                      <option value="all">รวมทุกเดือนที่เลือก</option>
+                    </select>
+                  </div>
+                </div>
+                <div id="company-comparison-cards-container"
+                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <!-- Cards will be rendered here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Floating Action Buttons for Navigation -->
+    <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-[100]">
+
+      <!-- ภาพรวม -->
+      <a href="index.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Dashboard Icon -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">ภาพรวม</span>
+      </a>
+
+      <!-- Lead -->
+      <a href="lead.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group relative">
+
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-purple-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
+          Lead
+        </span>
+      </a>
+
+      <!-- รายวัน -->
+      <a href="date.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Calendar Day -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายวัน</span>
+      </a>
+
+      <!-- รายเดือน -->
+      <a href="#"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Calendar Month -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M3 8h18M8 3v2m8-2v2M5 21h14a2 2 0 002-2V8H3v11a2 2 0 002 2z" />
+        </svg>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายเดือน</span>
+      </a>
+
+      <!-- รายปี -->
+      <a href="year.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Chart Icon -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 3v18m-4-4v4m8-10v10m4-6v6" />
+        </svg>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายปี</span>
+      </a>
+    </div>
+
+  </div>
+  <script>
+    // Configuration
+    const SHEET_ID = '1eiiCH6GcEl2iP3JcAAZciK2on4EHJVbybPFdTSNoTbM';
+    const SHEET_NAME = 'update';
+    const TARGET_SHEET_NAME = 'Traget'; // Sheet เป้าหมาย
+    const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+    const TARGET_API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TARGET_SHEET_NAME}`;
+
+    // Global state
+    let rawData = [];
+    let filteredData = [];
+    let salesVsAdsChart = null;
+    let breakdownChart = null;
+    let companyComparisonChart = null;
+
+    // Default config for Element SDK
+    const defaultConfig = {
+      dashboard_title: '📊 Sales & Advertising Dashboard',
+      background_color: '#f8fafc',
+      primary_color: '#667eea',
+      text_color: '#1e293b',
+      accent_color: '#10b981',
+      secondary_color: '#6366f1'
+    };
+
+    // Element SDK initialization
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('dashboard-title').textContent = config.dashboard_title || defaultConfig.dashboard_title;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => window.elementSdk.setConfig({ background_color: value })
+            },
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => window.elementSdk.setConfig({ primary_color: value })
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => window.elementSdk.setConfig({ text_color: value })
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => window.elementSdk.setConfig({ accent_color: value })
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => window.elementSdk.setConfig({ secondary_color: value })
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['dashboard_title', config.dashboard_title || defaultConfig.dashboard_title]
+        ])
+      });
+    }
+
+    // Switch between tabs
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.remove('border-indigo-600');
+        btn.classList.add('border-transparent');
+      });
+
+      // Show selected tab
+      document.getElementById(tabName).classList.remove('hidden');
+      event.target.classList.add('active');
+      event.target.classList.add('border-indigo-600');
+      event.target.classList.remove('border-transparent');
+
+      // Redraw charts when switching tabs
+      setTimeout(() => {
+        if (tabName === 'sales-chart' && salesVsAdsChart) {
+          salesVsAdsChart.resize();
+        } else if (tabName === 'breakdown-chart' && breakdownChart) {
+          breakdownChart.resize();
+        } else if (tabName === 'company-comparison-chart' && companyComparisonChart) {
+          companyComparisonChart.resize();
+        }
+      }, 100);
+    }
+
+    // Fetch data from Google Sheets
+    async function fetchData() {
+      try {
+        // ฟังก์ชันช่วยดึง JSON จาก Google API ให้ปลอดภัยขึ้น
+        const extractJSON = (text) => {
+          const match = text.match(/google\.visualization\.Query\.setResponse\((.*)\);/);
+          if (match) return JSON.parse(match[1]);
+          return JSON.parse(text.substring(47, text.length - 2));
+        };
+
+        // Fetch Main Data
+        const response = await fetch(API_URL);
+        const text = await response.text();
+        const jsonMain = extractJSON(text);
+
+        // Fetch Target Data
+        let targetMap = new Map();
+        try {
+          const resTarget = await fetch(TARGET_API_URL);
+          const textTarget = await resTarget.text();
+          const jsonTarget = extractJSON(textTarget);
+
+          const targetRows = jsonTarget.table.rows;
+          for (let i = 0; i < targetRows.length; i++) {
+            const row = targetRows[i].c;
+            if (!row) continue;
+
+            // ใช้ .f ดึงข้อความที่จัดรูปแบบแล้ว ถ้าไม่มีให้ใช้ .v
+            const monthStr = row[0]?.f || String(row[0]?.v || '');
+            const company = String(row[1]?.v || '').trim().toUpperCase(); // แปลงเป็นพิมพ์ใหญ่ป้องกันชื่อไม่ตรงกัน
+
+            let targetVal = row[2]?.v;
+            if (typeof targetVal === 'string') {
+              targetVal = parseFloat(targetVal.replace(/,/g, ''));
+            }
+            const target = targetVal || 0;
+
+            if (!company) continue;
+
+            const date = parseMonth(monthStr);
+            if (date) {
+              targetMap.set(`${date.getFullYear()}-${date.getMonth()}_${company}`, target);
+            } else if (monthStr) {
+              targetMap.set(`${monthStr.trim()}_${company}`, target);
+            }
+          }
+        } catch (e) {
+          console.warn("ไม่สามารถดึงข้อมูลจากชีต Traget ได้", e);
+        }
+
+        const rows = jsonMain.table.rows;
+        const data = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i].c;
+          if (!row) continue;
+
+          let monthStr = row[9]?.f || String(row[9]?.v || '');
+          const company = String(row[0]?.v || '').trim().toUpperCase();
+
+          if (!monthStr || !company) continue;
+
+          // ปรับรูปแบบให้สวยงามในกรณีที่มาเป็นฟอร์แมต Date(YYYY,M,D) จาก Sheet
+          if (monthStr.startsWith('Date(')) {
+            const d = parseMonth(monthStr);
+            if (d) {
+              const thaiMonthsList = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+              monthStr = `${thaiMonthsList[d.getMonth()]} ${(d.getFullYear() + 543).toString().slice(-2)}`;
+            }
+          }
+
+          // Match Target
+          let target = 0;
+          const parsedDate = parseMonth(monthStr);
+          if (parsedDate) {
+            target = targetMap.get(`${parsedDate.getFullYear()}-${parsedDate.getMonth()}_${company}`) || 0;
+          } else {
+            target = targetMap.get(`${monthStr.trim()}_${company}`) || 0;
+          }
+
+          const record = {
+            company: company,
+            month: monthStr,
+            googleAd: parseFloat(row[2]?.v) || 0,
+            facebookAd: parseFloat(row[3]?.v) || 0,
+            lineAd: parseFloat(row[4]?.v) || 0,
+            tiktokAd: parseFloat(row[5]?.v) || 0,
+            salesCar: parseFloat(row[6]?.v) || 0,
+            salesGfs: parseFloat(row[7]?.v) || 0,
+            salesMhl: parseFloat(row[8]?.v) || 0,
+            targetSales: target
+          };
+
+          // Calculate totals
+          record.totalAds = record.googleAd + record.facebookAd + record.lineAd + record.tiktokAd;
+          record.totalSales = record.salesCar + record.salesGfs + record.salesMhl;
+          record.roi = record.totalAds > 0 ? ((record.totalSales - record.totalAds) / record.totalAds * 100) : 0;
+
+          data.push(record);
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+      }
+    }
+
+    // Format currency
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('th-TH', {
+        style: 'currency',
+        currency: 'THB',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    // Format number
+    function formatNumber(value) {
+      return new Intl.NumberFormat('th-TH').format(value);
+    }
+
+    // Populate company filters and Year Dropdowns
+    function populateFilters(data) {
+      const companies = [...new Set(data.map(d => d.company))].sort();
+
+      const companyFilter = document.getElementById('company-filter');
+      const breakdownCompany = document.getElementById('breakdown-company');
+
+      companyFilter.innerHTML = '<option value="all">ทั้งหมด</option>';
+      breakdownCompany.innerHTML = '<option value="all">ทุกบริษัท</option>';
+
+      companies.forEach(company => {
+        companyFilter.innerHTML += `<option value="${company}">${company}</option>`;
+        breakdownCompany.innerHTML += `<option value="${company}">${company}</option>`;
+      });
+    }
+
+    // Handle time range change
+    function handleTimeRangeChange() {
+      const timeRange = document.getElementById('time-range-filter').value;
+      const customRange = document.getElementById('custom-date-range');
+
+      if (timeRange === 'custom') {
+        customRange.classList.remove('hidden');
+      } else {
+        customRange.classList.add('hidden');
+      }
+
+      applyFilters();
+    }
+
+    // Parse month string to date
+    function parseMonth(monthStr) {
+      if (!monthStr) return null;
+      monthStr = String(monthStr).trim();
+
+      // Handle Google Sheets Date format: Date(2024,0,1)
+      const gsDateMatch = monthStr.match(/Date\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (gsDateMatch) {
+        return new Date(parseInt(gsDateMatch[1]), parseInt(gsDateMatch[2]), parseInt(gsDateMatch[3]));
+      }
+
+      // Try to parse as is (ISO format or standard date)
+      const date = new Date(monthStr);
+      if (!isNaN(date.getTime())) return date;
+
+      // Try Thai month format (e.g., "ม.ค. 67", "ม.ค. 24")
+      const thaiMonths = {
+        'ม.ค.': 0, 'ก.พ.': 1, 'มี.ค.': 2, 'เม.ย.': 3,
+        'พ.ค.': 4, 'มิ.ย.': 5, 'ก.ค.': 6, 'ส.ค.': 7,
+        'ก.ย.': 8, 'ต.ค.': 9, 'พ.ย.': 10, 'ธ.ค.': 11
+      };
+
+      for (const [key, monthIndex] of Object.entries(thaiMonths)) {
+        if (monthStr.includes(key)) {
+          const yearMatch = monthStr.match(/(\d+)/);
+          if (yearMatch) {
+            let year = parseInt(yearMatch[1]);
+            // Convert Buddhist Era or 2-digit years to CE if needed
+            if (year >= 2400 && year <= 2600) {
+              year -= 543;
+            } else if (year < 100) {
+              if (year > 50) { // e.g. 67 -> 2567 -> 2024
+                year = year + 2500 - 543;
+              } else { // e.g. 24 -> 2024
+                year += 2000;
+              }
+            }
+            return new Date(year, monthIndex, 1);
+          }
+        }
+      }
+
+      // Try other common formats
+      const parts = monthStr.split(/[-\/\s]+/);
+      if (parts.length >= 2) {
+        let month = parseInt(parts[0]) - 1;
+        let year = parseInt(parts[1]);
+        if (year >= 2400 && year <= 2600) year -= 543;
+        if (year < 100) year += 2000;
+        if (month >= 0 && month <= 11 && year > 1900) {
+          return new Date(year, month, 1);
+        }
+      }
+
+      return null;
+    }
+
+    // Apply filters
+    function applyFilters() {
+      const company = document.getElementById('company-filter').value;
+      const adChannel = document.getElementById('ad-channel-filter').value;
+      const timeRange = document.getElementById('time-range-filter').value;
+
+      filteredData = [...rawData];
+
+      // Filter by company
+      if (company !== 'all') {
+        filteredData = filteredData.filter(d => d.company === company);
+      }
+
+      // Filter by time range
+      if (timeRange !== 'all' && timeRange !== 'custom') {
+        const months = parseInt(timeRange);
+        const cutoffDate = new Date();
+
+        if (months === 0) {
+          // This month only
+          const today = new Date();
+          const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+          const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+
+          filteredData = filteredData.filter(d => {
+            const date = parseMonth(d.month);
+            return date && date >= thisMonthStart && date <= thisMonthEnd;
+          });
+        } else {
+          // Last N months
+          cutoffDate.setMonth(cutoffDate.getMonth() - months);
+          filteredData = filteredData.filter(d => {
+            const date = parseMonth(d.month);
+            return date && date >= cutoffDate;
+          });
+        }
+      } else if (timeRange === 'custom') {
+        const startDateInput = document.getElementById('start-date').value;
+        const endDateInput = document.getElementById('end-date').value;
+
+        if (startDateInput || endDateInput) {
+          let startMonth = null, startYear = null;
+          let endMonth = null, endYear = null;
+
+          if (startDateInput) {
+            const parts = startDateInput.split('-');
+            startYear = parseInt(parts[0]);
+            startMonth = parseInt(parts[1]) - 1;
+          }
+          if (endDateInput) {
+            const parts = endDateInput.split('-');
+            endYear = parseInt(parts[0]);
+            endMonth = parseInt(parts[1]) - 1;
+          }
+
+          filteredData = filteredData.filter(d => {
+            const date = parseMonth(d.month);
+            if (!date) return false;
+
+            const dYear = date.getFullYear();
+            const dMonth = date.getMonth();
+
+            // Check if date is within range
+            if (startDateInput) {
+              if (dYear < startYear || (dYear === startYear && dMonth < startMonth)) return false;
+            }
+            if (endDateInput) {
+              if (dYear > endYear || (dYear === endYear && dMonth > endMonth)) return false;
+            }
+            return true;
+          });
+        }
+      }
+
+      updateCharts();
+      updateBreakdownChart();
+      updateCompanyComparisonChart();
+    }
+
+    // Get aggregated monthly data - ONLY from filtered data, with ad channel applied
+    function getMonthlyData() {
+      const monthlyMap = new Map();
+      const adChannel = document.getElementById('ad-channel-filter').value;
+
+      // IMPORTANT: Use only the ALREADY FILTERED data, don't re-filter here
+      filteredData.forEach(d => {
+        if (!monthlyMap.has(d.month)) {
+          monthlyMap.set(d.month, { sales: 0, ads: 0, target: 0 });
+        }
+        const entry = monthlyMap.get(d.month);
+        entry.sales += d.totalSales;
+        entry.target += d.targetSales;
+
+        // Apply ad channel filter to determine which ad cost to use
+        if (adChannel === 'all') {
+          entry.ads += d.totalAds;
+        } else if (adChannel === 'google') {
+          entry.ads += d.googleAd;
+        } else if (adChannel === 'facebook') {
+          entry.ads += d.facebookAd;
+        } else if (adChannel === 'line') {
+          entry.ads += d.lineAd;
+        } else if (adChannel === 'tiktok') {
+          entry.ads += d.tiktokAd;
+        }
+      });
+
+      // Sort by date
+      const sorted = [...monthlyMap.entries()].sort((a, b) => {
+        const dateA = parseMonth(a[0]);
+        const dateB = parseMonth(b[0]);
+        return (dateA || 0) - (dateB || 0);
+      });
+
+      return {
+        labels: sorted.map(s => s[0]),
+        sales: sorted.map(s => s[1].sales),
+        ads: sorted.map(s => s[1].ads),
+        targets: sorted.map(s => s[1].target)
+      };
+    }
+
+    // Update main chart
+    function updateCharts() {
+      const chartType = document.getElementById('chart-type-filter').value;
+      const monthlyData = getMonthlyData();
+
+      // อัพเดทข้อมูลลงในการ์ดสรุปของ Tab 1
+      const totalSales = monthlyData.sales.reduce((a, b) => a + b, 0);
+      const totalAds = monthlyData.ads.reduce((a, b) => a + b, 0);
+      const totalTarget = monthlyData.targets.reduce((a, b) => a + b, 0);
+      const ach = totalTarget > 0 ? (totalSales / totalTarget * 100) : 0;
+
+      document.getElementById('tab1-target').textContent = formatCurrency(totalTarget);
+      document.getElementById('tab1-sales').textContent = formatCurrency(totalSales);
+      document.getElementById('tab1-ads').textContent = formatCurrency(totalAds);
+      document.getElementById('tab1-ach').textContent = ach.toFixed(1) + '%';
+      document.getElementById('tab1-ach').className = `text-2xl font-bold mt-1 ${ach >= 100 ? 'text-green-600' : 'text-amber-500'}`;
+
+      const ctx = document.getElementById('sales-vs-ads-chart').getContext('2d');
+
+      if (salesVsAdsChart) {
+        salesVsAdsChart.destroy();
+      }
+
+      // สร้าง Plugin สำหรับแสดงถ้วยรางวัล 🏆 หากถึงเป้าหมาย
+      const trophyPlugin = {
+        id: 'trophyPlugin',
+        afterDatasetsDraw(chart) {
+          const ctx = chart.ctx;
+          const salesIndex = chart.data.datasets.findIndex(d => d.label === 'ยอดขาย');
+          const targetIndex = chart.data.datasets.findIndex(d => d.label === 'เป้ายอดขาย');
+
+          if (salesIndex === -1 || targetIndex === -1) return;
+
+          const salesMeta = chart.getDatasetMeta(salesIndex);
+          const targetData = chart.data.datasets[targetIndex].data;
+          const salesData = chart.data.datasets[salesIndex].data;
+
+          salesMeta.data.forEach((element, index) => {
+            const sale = salesData[index];
+            const target = targetData[index];
+
+            // เช็คว่ายอดขายถึงเป้าหมายหรือไม่
+            if (target > 0 && sale >= target) {
+              const x = element.x;
+              const y = element.y;
+
+              ctx.save();
+              ctx.font = '22px Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'bottom';
+              // เพิ่มเงาสีขาวให้ถ้วยรางวัลเด่นชัดขึ้น
+              ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+              ctx.shadowBlur = 6;
+              ctx.fillText('🏆', x, y - 5);
+              ctx.restore();
+            }
+          });
+        }
+      };
+
+      salesVsAdsChart = new Chart(ctx, {
+        type: chartType,
+        data: {
+          labels: monthlyData.labels,
+          datasets: [
+            {
+              label: 'ยอดขาย',
+              data: monthlyData.sales,
+              borderColor: '#10b981',
+              backgroundColor: chartType === 'bar' ? 'rgba(16, 185, 129, 0.85)' : 'rgba(16, 185, 129, 0.1)',
+              fill: chartType === 'line',
+              tension: 0.4,
+              borderWidth: chartType === 'line' ? 3 : 0,
+              pointRadius: chartType === 'line' ? 4 : 0,
+              pointBackgroundColor: '#10b981',
+              order: 2, // ให้อยู่บนเป้ายอดขาย
+              borderRadius: chartType === 'bar' ? 4 : 0
+            },
+            {
+              label: 'ค่าโฆษณา',
+              data: monthlyData.ads,
+              borderColor: '#ef4444',
+              backgroundColor: chartType === 'bar' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(239, 68, 68, 0.1)',
+              fill: chartType === 'line',
+              tension: 0.4,
+              borderWidth: chartType === 'line' ? 3 : 0,
+              pointRadius: chartType === 'line' ? 4 : 0,
+              pointBackgroundColor: '#ef4444',
+              order: 1, // ให้อยู่บนสุด
+              borderRadius: chartType === 'bar' ? 4 : 0
+            },
+            {
+              label: 'เป้ายอดขาย',
+              data: monthlyData.targets,
+              type: 'bar', // บังคับเป็นกราฟแท่งเสมอเพื่อเป็นพื้นหลัง
+              backgroundColor: 'rgba(139, 92, 246, 0.15)', // สีม่วงจางๆ 
+              borderColor: 'rgba(139, 92, 246, 0.3)',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              grouped: false, // ยกเลิกการแชร์พื้นที่แกน X กับกราฟแท่งอื่นๆ เพื่อให้แท่งนี้กว้างเต็มช่อง
+              barPercentage: 0.9,
+              categoryPercentage: 1.0,
+              order: 3 // วาดก่อนสุด (อยู่ด้านหลังสุด)
+            }
+          ]
+        },
+        plugins: [trophyPlugin], // เรียกใช้ Plugin ถ้วยรางวัล
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 20
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              titleFont: { size: 14 },
+              bodyFont: { size: 13 },
+              callbacks: {
+                label: function (context) {
+                  let label = context.dataset.label + ': ' + formatCurrency(context.raw);
+                  if (context.dataset.label === 'ยอดขาย') {
+                    const targetDs = context.chart.data.datasets.find(d => d.label === 'เป้ายอดขาย');
+                    if (targetDs && targetDs.data[context.dataIndex] > 0) {
+                      const pct = (context.raw / targetDs.data[context.dataIndex]) * 100;
+                      label += ` (${pct.toFixed(1)}% ของเป้า)`;
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.05)'
+              },
+              ticks: {
+                callback: function (value) {
+                  return '฿' + (value / 1000000).toFixed(1) + 'M';
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Update Company Comparison Chart
+    function updateCompanyComparisonChart() {
+      const adChannel = document.getElementById('ad-channel-filter').value;
+
+      // ดึงรายชื่อเดือนและบริษัททั้งหมดจาก filteredData
+      const monthsSet = new Set();
+      const companiesSet = new Set();
+
+      filteredData.forEach(d => {
+        monthsSet.add(d.month);
+        companiesSet.add(d.company);
+      });
+
+      // เรียงเดือนตามลำดับเวลา (เพื่อเป็นแกน X)
+      const labels = Array.from(monthsSet).sort((a, b) => {
+        const dateA = parseMonth(a);
+        const dateB = parseMonth(b);
+        return (dateA || 0) - (dateB || 0);
+      });
+
+      const companies = Array.from(companiesSet).sort();
+
+      // ชุดสีสำหรับแต่ละบริษัท (Sales = สีทึบ, Ads = สีอ่อน/โปร่งใส)
+      const colors = [
+        { sales: 'rgba(59, 130, 246, 0.9)', ads: 'rgba(59, 130, 246, 0.4)' }, // Blue
+        { sales: 'rgba(16, 185, 129, 0.9)', ads: 'rgba(16, 185, 129, 0.4)' }, // Green
+        { sales: 'rgba(139, 92, 246, 0.9)', ads: 'rgba(139, 92, 246, 0.4)' }, // Purple
+        { sales: 'rgba(245, 158, 11, 0.9)', ads: 'rgba(245, 158, 11, 0.4)' }, // Amber
+        { sales: 'rgba(239, 68, 68, 0.9)', ads: 'rgba(239, 68, 68, 0.4)' }, // Red
+        { sales: 'rgba(6, 182, 212, 0.9)', ads: 'rgba(6, 182, 212, 0.4)' }, // Cyan
+      ];
+
+      const datasets = [];
+
+      // 1. เพิ่มข้อมูลฝั่ง "ยอดขาย" ของทุกบริษัทก่อน (ให้อยู่รวมกันด้านซ้ายของเส้นปะ)
+      companies.forEach((company, index) => {
+        const color = colors[index % colors.length];
+        const salesData = labels.map(month => {
+          const records = filteredData.filter(d => d.company === company && d.month === month);
+          return records.reduce((sum, d) => sum + d.totalSales, 0);
+        });
+
+        datasets.push({
+          label: `${company} (ยอดขาย)`,
+          data: salesData,
+          backgroundColor: color.sales,
+          borderColor: color.sales,
+          borderWidth: 1,
+          borderRadius: 4
+        });
+      });
+
+      // 2. เพิ่มข้อมูลฝั่ง "ค่าโฆษณา" ของทุกบริษัทตามหลัง (ให้อยู่รวมกันด้านขวาของเส้นปะ)
+      companies.forEach((company, index) => {
+        const color = colors[index % colors.length];
+        const adsData = labels.map(month => {
+          const records = filteredData.filter(d => d.company === company && d.month === month);
+          return records.reduce((sum, d) => {
+            let ads = 0;
+            if (adChannel === 'all') ads = d.totalAds;
+            else if (adChannel === 'google') ads = d.googleAd;
+            else if (adChannel === 'facebook') ads = d.facebookAd;
+            else if (adChannel === 'line') ads = d.lineAd;
+            else if (adChannel === 'tiktok') ads = d.tiktokAd;
+            return sum + ads;
+          }, 0);
+        });
+
+        datasets.push({
+          label: `${company} (ค่าโฆษณา)`,
+          data: adsData,
+          backgroundColor: color.ads,
+          borderColor: color.sales,
+          borderWidth: 1,
+          borderRadius: 4
+        });
+      });
+
+      // 3. เพิ่มข้อมูล "เป้ายอดขาย" เป็นกราฟเส้น (Line) 
+      companies.forEach((company, index) => {
+        const color = colors[index % colors.length];
+        const targetData = labels.map(month => {
+          const records = filteredData.filter(d => d.company === company && d.month === month);
+          return records.reduce((sum, d) => sum + d.targetSales, 0);
+        });
+
+        datasets.push({
+          label: `${company} (เป้ายอดขาย)`,
+          data: targetData,
+          type: 'line',
+          borderColor: color.sales,
+          borderDash: [5, 5],
+          borderWidth: 2,
+          fill: false,
+          pointRadius: 4,
+          pointBackgroundColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointBorderColor: color.sales
+        });
+      });
+
+      // สร้างปลั๊กอินสำหรับวาดเส้นปะแบ่งกึ่งกลางของแต่ละเดือน
+      const verticalSeparatorPlugin = {
+        id: 'verticalSeparator',
+        beforeDraw(chart) {
+          const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+          if (!x || !x.ticks) return;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.strokeStyle = '#94a3b8'; // สีเทาสำหรับเส้นปะ
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 6]); // รูปแบบเส้นปะ
+
+          x.ticks.forEach((tick, index) => {
+            const xPos = x.getPixelForTick(index); // จุดกึ่งกลางของเดือน
+            ctx.moveTo(xPos, top);
+            ctx.lineTo(xPos, bottom);
+          });
+
+          ctx.stroke();
+          ctx.restore();
+        }
+      };
+
+      const ctx = document.getElementById('company-comparison-canvas').getContext('2d');
+
+      if (companyComparisonChart) {
+        companyComparisonChart.destroy();
+      }
+
+      companyComparisonChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        plugins: [verticalSeparatorPlugin], // เรียกใช้ปลั๊กอินเส้นปะ
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, padding: 15 }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              callbacks: {
+                label: function (context) {
+                  let label = context.dataset.label + ': ' + formatCurrency(context.raw);
+                  if (context.dataset.label.includes('(ยอดขาย)')) {
+                    const company = context.dataset.label.replace(' (ยอดขาย)', '');
+                    const targetDs = context.chart.data.datasets.find(d => d.label === `${company} (เป้ายอดขาย)`);
+                    if (targetDs && targetDs.data[context.dataIndex] > 0) {
+                      const pct = (context.raw / targetDs.data[context.dataIndex]) * 100;
+                      label += ` (${pct.toFixed(1)}% ของเป้า)`;
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                callback: function (value) {
+                  if (value >= 1000000) return '฿' + (value / 1000000).toFixed(1) + 'M';
+                  return '฿' + (value / 1000).toFixed(0) + 'K';
+                }
+              }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      // Populate month dropdown for Company Comparison Cards
+      const monthSelect = document.getElementById('company-comparison-month');
+      const currentSelection = monthSelect.value;
+
+      monthSelect.innerHTML = `
+        <option value="show_all">แสดงแยกแต่ละเดือน</option>
+        <option value="sum_all">รวมข้อมูลทุกเดือน</option>
+      `;
+      labels.forEach(month => {
+        monthSelect.innerHTML += `<option value="${month}">${month}</option>`;
+      });
+
+      if (labels.includes(currentSelection) || currentSelection === 'sum_all') {
+        monthSelect.value = currentSelection;
+      } else {
+        monthSelect.value = 'show_all';
+      }
+
+      // Update the cards below the chart
+      updateCompanyComparisonCards();
+    }
+
+    // Update summary cards for each company (Month-dependent)
+    function updateCompanyComparisonCards() {
+      const selectedOption = document.getElementById('company-comparison-month').value;
+      const adChannel = document.getElementById('ad-channel-filter').value;
+
+      const companiesSet = new Set();
+      const monthsSet = new Set();
+      filteredData.forEach(d => {
+        companiesSet.add(d.company);
+        monthsSet.add(d.month);
+      });
+      const companies = Array.from(companiesSet).sort();
+      const allMonths = Array.from(monthsSet).sort((a, b) => {
+        const dateA = parseMonth(a);
+        const dateB = parseMonth(b);
+        return (dateA || 0) - (dateB || 0);
+      });
+
+      const container = document.getElementById('company-comparison-cards-container');
+
+      if (companies.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm col-span-full text-center py-4">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let cardsHTML = '';
+
+      if (selectedOption === 'sum_all') {
+        // Render Sum All
+        cardsHTML += `<div class="col-span-full mt-2 mb-2 border-b border-gray-200 pb-2"><h4 class="text-md font-bold text-indigo-700">🌟 รวมข้อมูลทุกเดือนที่เลือก</h4></div>`;
+        cardsHTML += companies.map(company => {
+          let sales = 0;
+          let ads = 0;
+          let target = 0;
+
+          filteredData.forEach(d => {
+            if (d.company === company) {
+              sales += d.totalSales;
+              target += d.targetSales;
+
+              let currentAds = 0;
+              if (adChannel === 'all') currentAds = d.totalAds;
+              else if (adChannel === 'google') currentAds = d.googleAd;
+              else if (adChannel === 'facebook') currentAds = d.facebookAd;
+              else if (adChannel === 'line') currentAds = d.lineAd;
+              else if (adChannel === 'tiktok') currentAds = d.tiktokAd;
+
+              ads += currentAds;
+            }
+          });
+
+          const roi = ads > 0 ? ((sales - ads) / ads * 100) : 0;
+          const roiColor = roi >= 0 ? 'text-blue-600' : 'text-red-600';
+          const achievement = target > 0 ? (sales / target * 100) : 0;
+          const achColor = achievement >= 100 ? 'text-green-600' : (achievement >= 80 ? 'text-amber-500' : 'text-red-500');
+
+          return `
+            <div class="bg-indigo-50/30 rounded-xl p-4 border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
+              <h4 class="font-bold text-indigo-900 border-b border-indigo-100 pb-2 mb-3 text-center text-lg">${company}</h4>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-purple-600 font-medium">เป้ายอดขาย</span>
+                  <span class="font-bold text-purple-700">${formatCurrency(target)}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm border-b border-indigo-50 pb-1 mb-1">
+                  <span class="text-emerald-600 font-medium">ยอดขายจริง</span>
+                  <div class="text-right">
+                    <span class="font-bold text-emerald-700 block">${formatCurrency(sales)}</span>
+                    <span class="text-xs font-bold ${achColor}">${achievement.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-rose-500 font-medium">ค่าโฆษณา</span>
+                  <span class="font-bold text-rose-600">${formatCurrency(ads)}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs pt-2 border-t border-indigo-100/50 mt-2">
+                  <span class="text-indigo-500 font-medium">ROI</span>
+                  <span class="font-bold text-sm ${roiColor}">${roi.toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        // Render Grouped by Month
+        let monthsToRender = allMonths;
+        if (selectedOption !== 'show_all') {
+          monthsToRender = [selectedOption];
+        }
+
+        monthsToRender.forEach(month => {
+          cardsHTML += `<div class="col-span-full mt-4 mb-2 border-b border-gray-200 pb-2"><h4 class="text-md font-bold text-gray-700">📅 เดือน: ${month}</h4></div>`;
+
+          cardsHTML += companies.map(company => {
+            let sales = 0;
+            let ads = 0;
+            let target = 0;
+
+            filteredData.forEach(d => {
+              if (d.company === company && d.month === month) {
+                sales += d.totalSales;
+                target += d.targetSales;
+
+                let currentAds = 0;
+                if (adChannel === 'all') currentAds = d.totalAds;
+                else if (adChannel === 'google') currentAds = d.googleAd;
+                else if (adChannel === 'facebook') currentAds = d.facebookAd;
+                else if (adChannel === 'line') currentAds = d.lineAd;
+                else if (adChannel === 'tiktok') currentAds = d.tiktokAd;
+
+                ads += currentAds;
+              }
+            });
+
+            const roi = ads > 0 ? ((sales - ads) / ads * 100) : 0;
+            const roiColor = roi >= 0 ? 'text-blue-600' : 'text-red-600';
+            const achievement = target > 0 ? (sales / target * 100) : 0;
+            const achColor = achievement >= 100 ? 'text-green-600' : (achievement >= 80 ? 'text-amber-500' : 'text-red-500');
+
+            return `
+              <div class="bg-indigo-50/30 rounded-xl p-4 border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
+                <h4 class="font-bold text-indigo-900 border-b border-indigo-100 pb-2 mb-3 text-center text-sm">${company}</h4>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-purple-600 font-medium">เป้ายอดขาย</span>
+                    <span class="font-bold text-purple-700">${formatCurrency(target)}</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm border-b border-indigo-50 pb-1 mb-1">
+                    <span class="text-emerald-600 font-medium">ยอดขายจริง</span>
+                    <div class="text-right">
+                      <span class="font-bold text-emerald-700 block">${formatCurrency(sales)}</span>
+                      <span class="text-xs font-bold ${achColor}">${achievement.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-rose-500 font-medium">ค่าโฆษณา</span>
+                    <span class="font-bold text-rose-600">${formatCurrency(ads)}</span>
+                  </div>
+                  <div class="flex justify-between items-center text-xs pt-2 border-t border-indigo-100/50 mt-2">
+                    <span class="text-indigo-500 font-medium">ROI</span>
+                    <span class="font-bold text-sm ${roiColor}">${roi.toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        });
+      }
+
+      container.innerHTML = cardsHTML;
+    }
+
+    // Update breakdown chart
+    function updateBreakdownChart() {
+      const breakdownCompany = document.getElementById('breakdown-company').value;
+      const showGoogle = document.getElementById('show-google').checked;
+      const showFacebook = document.getElementById('show-facebook').checked;
+      const showLine = document.getElementById('show-line').checked;
+      const showTiktok = document.getElementById('show-tiktok').checked;
+      const chartType = document.getElementById('chart-type-filter').value;
+
+      let dataToUse = filteredData;
+      if (breakdownCompany !== 'all') {
+        dataToUse = filteredData.filter(d => d.company === breakdownCompany);
+      }
+
+      // Aggregate by month
+      const monthlyMap = new Map();
+      let totalGoogle = 0, totalFacebook = 0, totalLine = 0, totalTiktok = 0, totalSalesSum = 0;
+
+      dataToUse.forEach(d => {
+        if (!monthlyMap.has(d.month)) {
+          monthlyMap.set(d.month, {
+            google: 0, facebook: 0, line: 0, tiktok: 0, sales: 0
+          });
+        }
+        const entry = monthlyMap.get(d.month);
+        entry.google += d.googleAd;
+        entry.facebook += d.facebookAd;
+        entry.line += d.lineAd;
+        entry.tiktok += d.tiktokAd;
+        entry.sales += d.totalSales;
+
+        totalGoogle += d.googleAd;
+        totalFacebook += d.facebookAd;
+        totalLine += d.lineAd;
+        totalTiktok += d.tiktokAd;
+        totalSalesSum += d.totalSales;
+      });
+
+      // Update summary cards
+      document.getElementById('breakdown-google').textContent = formatCurrency(totalGoogle);
+      document.getElementById('breakdown-facebook').textContent = formatCurrency(totalFacebook);
+      document.getElementById('breakdown-line').textContent = formatCurrency(totalLine);
+      document.getElementById('breakdown-tiktok').textContent = formatCurrency(totalTiktok);
+      document.getElementById('breakdown-total-ads').textContent = formatCurrency(totalGoogle + totalFacebook + totalLine + totalTiktok);
+      document.getElementById('breakdown-total-sales').textContent = formatCurrency(totalSalesSum);
+
+      // Calculate expense ratio and ROI
+      const totalAdsCost = totalGoogle + totalFacebook + totalLine + totalTiktok;
+      const expenseRatio = totalSalesSum > 0 ? (totalAdsCost / totalSalesSum * 100) : 0;
+      const avgROI = totalAdsCost > 0 ? ((totalSalesSum - totalAdsCost) / totalAdsCost * 100) : 0;
+
+      document.getElementById('breakdown-expense-ratio').textContent = expenseRatio.toFixed(1) + '%';
+      document.getElementById('breakdown-avg-roi').textContent = avgROI.toFixed(1) + '%';
+
+      const sorted = [...monthlyMap.entries()].sort((a, b) => {
+        const dateA = parseMonth(a[0]);
+        const dateB = parseMonth(b[0]);
+        return (dateA || 0) - (dateB || 0);
+      });
+
+      const labels = sorted.map(s => s[0]);
+      const datasets = [
+        {
+          label: 'ยอดขายรวม',
+          data: sorted.map(s => s[1].sales),
+          borderColor: '#10b981',
+          backgroundColor: chartType === 'bar' ? 'rgba(16, 185, 129, 0.7)' : 'rgba(16, 185, 129, 0.1)',
+          fill: false,
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: chartType === 'line' ? 4 : 0,
+          order: 0
+        }
+      ];
+
+      if (showGoogle) {
+        datasets.push({
+          label: 'Google AD',
+          data: sorted.map(s => s[1].google),
+          borderColor: '#f59e0b',
+          backgroundColor: chartType === 'bar' ? 'rgba(245, 158, 11, 0.7)' : 'rgba(245, 158, 11, 0.1)',
+          fill: false,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: chartType === 'line' ? 3 : 0,
+          order: 1
+        });
+      }
+
+      if (showFacebook) {
+        datasets.push({
+          label: 'Facebook AD',
+          data: sorted.map(s => s[1].facebook),
+          borderColor: '#3b82f6',
+          backgroundColor: chartType === 'bar' ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.1)',
+          fill: false,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: chartType === 'line' ? 3 : 0,
+          order: 2
+        });
+      }
+
+      if (showLine) {
+        datasets.push({
+          label: 'Line AD',
+          data: sorted.map(s => s[1].line),
+          borderColor: '#22c55e',
+          backgroundColor: chartType === 'bar' ? 'rgba(34, 197, 94, 0.7)' : 'rgba(34, 197, 94, 0.1)',
+          fill: false,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: chartType === 'line' ? 3 : 0,
+          order: 3
+        });
+      }
+
+      if (showTiktok) {
+        datasets.push({
+          label: 'TikTok AD',
+          data: sorted.map(s => s[1].tiktok),
+          borderColor: '#ec4899',
+          backgroundColor: chartType === 'bar' ? 'rgba(236, 72, 153, 0.7)' : 'rgba(236, 72, 153, 0.1)',
+          fill: false,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: chartType === 'line' ? 3 : 0,
+          order: 4
+        });
+      }
+
+      const ctx = document.getElementById('breakdown-chart-canvas').getContext('2d');
+
+      if (breakdownChart) {
+        breakdownChart.destroy();
+      }
+
+      breakdownChart = new Chart(ctx, {
+        type: chartType,
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 15
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              callbacks: {
+                label: function (context) {
+                  return context.dataset.label + ': ' + formatCurrency(context.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.05)'
+              },
+              ticks: {
+                callback: function (value) {
+                  if (value >= 1000000) {
+                    return '฿' + (value / 1000000).toFixed(1) + 'M';
+                  }
+                  return '฿' + (value / 1000).toFixed(0) + 'K';
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Refresh data
+    async function refreshData() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      const refreshBtn = document.getElementById('refresh-btn');
+
+      refreshIcon.classList.add('refresh-spin');
+      refreshBtn.disabled = true;
+
+      document.getElementById('loading-state').classList.remove('hidden');
+      document.getElementById('dashboard-content').classList.add('hidden');
+      document.getElementById('error-state').classList.add('hidden');
+
+      try {
+        rawData = await fetchData();
+        filteredData = [...rawData];
+
+        populateFilters(rawData);
+        applyFilters();
+
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+
+        const now = new Date();
+        document.getElementById('last-update').textContent = `อัพเดทล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
+
+      } catch (error) {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+        document.getElementById('error-message').textContent = error.message || 'กรุณาตรวจสอบการเชื่อมต่อและลองใหม่อีกครั้ง';
+      } finally {
+        refreshIcon.classList.remove('refresh-spin');
+        refreshBtn.disabled = false;
+      }
+    }
+
+    // Initialize
+    refreshData();
+  </script>
+</body>
+
+</html>
