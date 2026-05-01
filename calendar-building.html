@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ปฏิทินคิวพบลูกค้า</title>
+
+    <link rel="stylesheet" href="style.css">
+    <!-- Layout logic -->
+    <script src="layout.js" defer></script>
+
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FullCalendar CSS & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <style>
+        .fc {
+            background-color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: none !important;
+        }
+
+        .fc-event {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none !important;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            margin-bottom: 3px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .fc-event:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.95);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .fc .fc-daygrid-day-frame {
+            min-height: 140px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .fc-button-primary {
+            background-color: #6366f1 !important;
+            border-color: #6366f1 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]">
+    <div class="pt-20 md:pt-24 md:pl-[260px] px-4 md:px-6 lg:px-8 min-h-screen">
+        <div id="loader" class="loading-overlay">
+            <div class="spinner mb-4"></div>
+            <p class="text-slate-600">กำลังโหลดข้อมูลคิวพบลูกค้า...</p>
+        </div>
+
+        <div class="max-w-[1320px] mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">ปฏิทินนัดหมายพบลูกค้า ฟิล์มอาคาร</h1>
+                    <p id="lastUpdate" class="text-slate-500 text-sm italic">กำลังโหลดข้อมูล...</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="refreshBtn"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-indigo-200">
+                        <i id="refreshIcon" class="fas fa-sync-alt"></i>
+                        รีเฟรชข้อมูล
+                    </button>
+                </div>
+            </div>
+
+            <div id="calendar"></div>
+        </div>
+
+        <!-- Modal รายละเอียด -->
+        <div id="detailModal"
+            class="fixed inset-0 bg-black/60 hidden z-[4000] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <span class="text-indigo-600 font-semibold text-sm tracking-wider uppercase"
+                            id="m-customerType">ประเภทลูกค้า</span>
+                        <h2 class="text-2xl font-bold text-slate-800" id="m-time"></h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-5 text-slate-700">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 mt-1 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0 text-sm">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400">บริษัท / ลูกค้า</p>
+                            <p class="font-semibold text-lg" id="m-company"></p>
+                            <p class="text-slate-600" id="m-customerName"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 mt-1 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0 text-sm">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400">สถานที่หน้างาน</p>
+                            <p class="font-medium" id="m-location"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-8 h-8 mt-1 rounded-full bg-green-50 flex items-center justify-center text-green-600 flex-shrink-0 text-sm">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400">เบอร์โทรศัพท์</p>
+                                <p class="font-medium" id="m-phone"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-8 h-8 mt-1 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0 text-sm">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400">ประเภทหน้างาน</p>
+                                <p class="font-medium" id="m-jobType"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-xs text-slate-400 mb-1">ช่องทางติดต่อ</p>
+                        <p class="font-medium text-slate-800"><span id="m-contact"></span> - <span
+                                id="m-contactName"></span></p>
+                    </div>
+
+                    <div id="m-info-box" class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100">
+                        <p class="text-xs text-yellow-600 font-bold mb-1 uppercase">ข้อมูลเพิ่มเติม / หมายเหตุ</p>
+                        <p class="text-sm text-slate-700" id="m-info"></p>
+                        <p class="text-sm text-slate-700 mt-2 italic" id="m-note"></p>
+                    </div>
+
+                    <hr class="border-slate-100">
+
+                    <div class="flex justify-between items-center text-sm">
+                        <div>
+                            <p class="text-xs text-slate-400">ฝ่ายขาย</p>
+                            <p class="font-semibold" id="m-sales"></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-slate-400">ลงข้อมูลโดย</p>
+                            <p id="m-createdBy"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="closeModal()"
+                    class="w-full mt-8 bg-slate-900 hover:bg-black text-white py-3 rounded-xl font-medium transition-colors">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+
+        <script>
+            const SHEET_ID = '1FA0JTGrfWO8LfMWUS1xpfrc_Uvdi0PkUIaecCoMTNJI';
+            const SHEET_NAME = '2.คิวพบลูกค้า';
+
+            let calendar;
+            const COLS = {
+                date: 1,        // B
+                sales: 3,       // D
+                time: 4,        // E
+                location: 5,    // F
+                customer: 6,    // G
+                company: 7,     // H
+                channel: 8,     // I
+                channelName: 9, // J
+                note: 10,       // K
+                phone: 11,      // L
+                jobType: 12,    // M
+                customerType: 13, // N
+                info: 14,       // O
+                createdBy: 15   // P
+            };
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const calendarEl = document.getElementById('calendar');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'th',
+                    firstDay: 0,
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,listMonth'
+                    },
+                    buttonText: { today: 'วันนี้', month: 'เดือน', list: 'รายการ' },
+                    eventClick: (info) => showModal(info.event.extendedProps),
+                    // ปิดการซ่อนอีเวนต์เพื่อให้แสดงรายการทั้งหมด
+                    dayMaxEvents: false,
+                    contentHeight: 'auto',
+                    displayEventTime: false,
+                    eventOrder: 'sortValue'
+                });
+                calendar.render();
+                fetchData();
+            });
+
+            function timeToMinutes(timeStr) {
+                if (!timeStr) return 9999;
+                let cleanedTime = String(timeStr).replace(/[^0-9.:]/g, '');
+                let parts = cleanedTime.split(/[.:]/);
+                let hours = parseInt(parts[0]);
+                let mins = parts.length > 1 ? parseInt(parts[1]) : 0;
+                if (isNaN(hours)) return 9999;
+                return (hours * 60) + mins;
+            }
+
+            function parseGoogleDate(dateVal) {
+                if (!dateVal) return null;
+                if (typeof dateVal === 'string' && dateVal.startsWith('Date(')) {
+                    const parts = dateVal.match(/\d+/g);
+                    if (parts) return new Date(parts[0], parts[1], parts[2]);
+                }
+                if (typeof dateVal === 'string' && dateVal.includes('/')) {
+                    const parts = dateVal.split('/');
+                    if (parts.length === 3) {
+                        let d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+                        if (y > 2500) y -= 543;
+                        return new Date(y, m, d);
+                    }
+                }
+                return null;
+            }
+
+            async function fetchData() {
+                document.getElementById('loader').classList.remove('hidden');
+                document.getElementById('refreshIcon').classList.add('fa-spin');
+
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    const jsonStr = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"));
+                    const data = JSON.parse(jsonStr);
+
+                    const rows = data.table.rows.slice(5);
+
+                    const events = rows.map(row => {
+                        const c = row.c;
+                        const getVal = (idx) => (c && c[idx] && c[idx].v !== null) ? (c[idx].f || c[idx].v) : '';
+
+                        const location = getVal(COLS.location);
+                        if (!location || location.trim() === "") return null;
+
+                        const rawDate = (c && c[COLS.date] && c[COLS.date].v) ? c[COLS.date].v : getVal(COLS.date);
+                        const dateObj = parseGoogleDate(rawDate);
+                        if (!dateObj) return null;
+
+                        const timeStr = getVal(COLS.time);
+                        const company = getVal(COLS.company);
+                        const customer = getVal(COLS.customer);
+                        const sales = getVal(COLS.sales) || "ไม่ระบุฝ่ายขาย";
+
+                        return {
+                            title: `${timeStr || "-"} - ${customer || company || "-"} | ${sales || "-"}`,
+                            start: `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`,
+                            backgroundColor: '#6366f1',
+                            extendedProps: {
+                                time: timeStr,
+                                company: company,
+                                customer: customer,
+                                location: location,
+                                phone: getVal(COLS.phone),
+                                channel: getVal(COLS.channel),
+                                channelName: getVal(COLS.channelName),
+                                jobType: getVal(COLS.jobType),
+                                customerType: getVal(COLS.customerType),
+                                info: getVal(COLS.info),
+                                note: getVal(COLS.note),
+                                sales: getVal(COLS.sales),
+                                createdBy: getVal(COLS.createdBy),
+                                sortValue: timeToMinutes(timeStr)
+                            }
+                        };
+                    }).filter(ev => ev !== null);
+
+                    calendar.removeAllEvents();
+                    calendar.addEventSource(events);
+                    document.getElementById('lastUpdate').innerText = `อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                } finally {
+                    document.getElementById('loader').classList.add('hidden');
+                    document.getElementById('refreshIcon').classList.remove('fa-spin');
+                }
+            }
+
+            function showModal(data) {
+                document.getElementById('m-customerType').innerText = data.customerType || 'นัดหมายลูกค้า';
+                document.getElementById('m-time').innerText = 'เวลา ' + (data.time || 'ไม่ระบุ');
+                document.getElementById('m-company').innerText = data.company || '-';
+                document.getElementById('m-customerName').innerText = data.customer || '';
+                document.getElementById('m-location').innerText = data.location || '-';
+                document.getElementById('m-phone').innerText = data.phone || '-';
+                document.getElementById('m-jobType').innerText = data.jobType || '-';
+                document.getElementById('m-contact').innerText = data.channel || '-';
+                document.getElementById('m-contactName').innerText = data.channelName || '-';
+                document.getElementById('m-info').innerText = data.info || 'ไม่มีข้อมูลเพิ่มเติม';
+                document.getElementById('m-note').innerText = data.note ? 'หมายเหตุ: ' + data.note : '';
+                document.getElementById('m-sales').innerText = data.sales || '-';
+                document.getElementById('m-createdBy').innerText = data.createdBy || '-';
+
+                document.getElementById('detailModal').classList.remove('hidden');
+                document.getElementById('detailModal').classList.add('flex');
+            }
+
+            function closeModal() {
+                document.getElementById('detailModal').classList.add('hidden');
+                document.getElementById('detailModal').classList.remove('flex');
+            }
+
+            document.getElementById('refreshBtn').addEventListener('click', fetchData);
+        </script>
+    </div>
+</body>
+
+</html>

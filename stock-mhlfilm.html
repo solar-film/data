@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard แผนกคลังสินค้า MHL</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="layout.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn-refresh {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-refresh:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .summary-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+
+        .summary-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .brand-summary-card {
+            min-width: 150px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .analysis-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]">
+    <div class="pt-20 md:pt-24 md:pl-[260px] px-4 md:px-6 lg:px-8 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Back to Top Button -->
+            <button id="backToTop" title="Go to top">↑</button>
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-warehouse text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-slate-800">สต๊อกฟิล์ม <span class="text-blue-600">MHL</span>
+                        </h1>
+                        <p id="update-date"
+                            class="text-[10px] text-blue-600 font-bold uppercase italic tracking-widest">
+                            กำลังโหลด...</p>
+                    </div>
+                </div>
+               
+                <div class="bg-white border border-slate-200 rounded-2xl p-1 flex items-center gap-4 pl-5 shadow-sm">
+                    <div class="text-left pr-4 border-r border-slate-100">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">STOCK UPDATE</p>
+                        <p id="time-display" class="text-sm font-bold text-slate-700">กำลังโหลด...</p>
+                    </div>
+                    <button onclick="fetchData()" id="refresh-btn" class="btn-refresh">
+                        <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+                        <span>REFRESH</span>
+                        <div id="btn-loader" class="loader hidden !border-t-white"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid & Chart & Analysis -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Mini Stats -->
+                <div class="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:col-span-1">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">SKU Count</p>
+                        <h3 id="stat-sku-count" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                    <div
+                        class="bg-white p-5 rounded-2xl border border-slate-200 border-l-4 border-l-blue-500 shadow-sm">
+                        <p class="text-blue-500 text-[10px] font-bold uppercase mb-1">TOTAL MHL STOCK</p>
+                        <h3 id="stat-stock" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-700 mb-4 text-sm flex items-center gap-2">
+                        <i class="fas fa-chart-simple text-blue-500"></i> ปริมาณสต็อกรวมตามแบรนด์ (เรียงจากสูง-ต่ำ)
+                    </h4>
+                    <div class="h-[200px]"><canvas id="brandChart"></canvas></div>
+                </div>
+
+                <!-- Analysis Card -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm analysis-card">
+                    <h4 class="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
+                        <i class="fas fa-robot text-blue-500"></i> AI Analytics
+                    </h4>
+                    <div id="analysis-content" class="text-[11px] text-slate-600 space-y-2">
+                        กำลังประมวลผลข้อมูล...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brand Summary Horizontal Cards -->
+            <div class="mb-8">
+                <h5 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <i class="fas fa-table-list text-blue-500"></i> ยอดคงเหลือรายแบรนด์
+                </h5>
+                <div id="brand-summary-container" class="summary-scroll">
+                    <!-- Brand Summary Cards go here -->
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm">
+                <div class="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6">
+                    <div class="relative w-full max-w-sm">
+                        <input type="text" id="search-input" onkeyup="filterTable()" placeholder="ค้นหาฟิล์ม..."
+                            class="pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm w-full outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+                        <i
+                            class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    </div>
+                    <div id="brand-filters" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div id="models-container" class="space-y-8"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1QTctZGHosnBs_izX1rTRe_ZkJPYjanTcsMxdG28hIHg', SHEET_MAIN = '#MHL', SHEET_STOCK = '#STOCK';
+        let currentData = [], selectedBrand = 'ALL', chart = null;
+
+        async function fetchData() {
+            const btn = document.getElementById('refresh-btn'), icon = document.getElementById('refresh-icon'), loader = document.getElementById('btn-loader');
+            btn.disabled = true; icon.classList.add('hidden'); loader.classList.remove('hidden');
+            try {
+                const [timeRes, dataRes] = await Promise.all([
+                    fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_STOCK)}&range=L1:L1`),
+                    fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_MAIN)}`)
+                ]);
+                const timeText = (await timeRes.text()).replace(/"/g, '').trim();
+                document.getElementById('time-display').textContent = timeText;
+                document.getElementById('update-date').textContent = "Updated: " + timeText;
+
+                currentData = parseCSV(await dataRes.text()).slice(1).filter(r => r[6]);
+                renderBrandSummary();
+                renderFilters();
+                renderTable();
+                updateStats();
+                initChart();
+                generateInsights();
+            } catch (e) { console.error(e); }
+            finally { btn.disabled = false; icon.classList.remove('hidden'); loader.classList.add('hidden'); }
+        }
+
+        function parseCSV(t) {
+            const rows = [];
+            t.split(/\r?\n/).forEach(line => {
+                const parts = []; let cur = '', q = false;
+                for (let i = 0; i < line.length; i++) {
+                    if (line[i] === '"') q = !q;
+                    else if (line[i] === ',' && !q) { parts.push(cur.trim()); cur = ''; }
+                    else cur += line[i];
+                }
+                parts.push(cur.trim()); if (parts.some(p => p !== "")) rows.push(parts);
+            });
+            return rows;
+        }
+
+        function renderBrandSummary() {
+            const container = document.getElementById('brand-summary-container');
+            const totals = {};
+            currentData.forEach(r => {
+                const b = r[4].trim();
+                totals[b] = (totals[b] || 0) + (parseFloat(r[0]) || 0);
+            });
+            container.innerHTML = Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([b, v]) => `
+                <div class="brand-summary-card">
+                    <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase">${b}</p>
+                    <p class="text-xl font-bold text-blue-600">${v.toLocaleString()}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('brand-filters');
+            const brands = [...new Set(currentData.map(r => r[4].trim()))].sort();
+            container.innerHTML = `<button onclick="filterBy('ALL')" class="filter-btn active">ALL</button>` +
+                brands.map(b => `<button onclick="filterBy('${b}')" class="filter-btn">${b}</button>`).join('');
+        }
+
+        function filterBy(b) {
+            selectedBrand = b;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isAll = b === 'ALL' && btn.textContent === 'ALL';
+                const isMatch = btn.textContent === b;
+                btn.classList.toggle('active', isAll || isMatch);
+            });
+            renderTable();
+        }
+
+        function renderTable() {
+            const container = document.getElementById('models-container');
+            const filtered = selectedBrand === 'ALL' ? currentData : currentData.filter(r => r[4].trim() === selectedBrand);
+            const groups = {}; filtered.forEach(r => { if (!groups[r[4]]) groups[r[4]] = []; groups[r[4]].push(r); });
+            container.innerHTML = Object.keys(groups).sort().map(b => `
+                <div class="model-section border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-5 py-3 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase flex justify-between">
+                        <span>${b}</span>
+                        <span class="text-blue-500">${groups[b].length} SKU</span>
+                    </div>
+                    <table class="w-full text-xs">
+                        <tbody class="divide-y divide-slate-50">
+                            ${groups[b].map(r => `
+                                <tr class="data-row hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-5 py-3 text-blue-600 font-bold w-1/3">${r[5]}</td>
+                                    <td class="px-5 py-3 font-semibold text-slate-700">${r[6]}</td>
+                                    <td class="px-5 py-3 text-right font-bold text-blue-600">${(parseFloat(r[0]) || 0).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            const total = currentData.reduce((acc, r) => acc + (parseFloat(r[0]) || 0), 0);
+            document.getElementById('stat-stock').textContent = total.toLocaleString();
+            document.getElementById('stat-sku-count').textContent = currentData.length;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('brandChart').getContext('2d');
+            const dataMap = {};
+            currentData.forEach(r => { dataMap[r[4]] = (dataMap[r[4]] || 0) + (parseFloat(r[0]) || 0); });
+
+            const sortedData = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+            const labels = sortedData.map(item => item[0]);
+            const values = sortedData.map(item => item[1]);
+
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8,
+                        barThickness: 30
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function generateInsights() {
+            const out = currentData.filter(r => (parseFloat(r[0]) || 0) <= 0);
+            const content = document.getElementById('analysis-content');
+
+            let html = '';
+            if (out.length > 0) {
+                html += `<div class="p-2 bg-red-50 text-red-700 rounded-lg font-bold">⚠️ มีสินค้าหมด ${out.length} SKU</div>`;
+            } else {
+                html += `<div class="p-2 bg-green-50 text-green-700 rounded-lg font-bold">✅ สินค้าทุกรุ่นมีสต็อกเพียงพอ</div>`;
+            }
+
+            // คำนวณแบรนด์ที่มีสต็อกเยอะสุด
+            const dataMap = {};
+            currentData.forEach(r => { dataMap[r[4]] = (dataMap[r[4]] || 0) + (parseFloat(r[0]) || 0); });
+            const topBrand = Object.entries(dataMap).sort((a, b) => b[1] - a[1])[0];
+
+            if (topBrand) {
+                html += `<div class="mt-2 text-slate-500">แบรนด์ที่มีสต็อกสูงสุดคือ <span class="text-blue-600 font-bold">${topBrand[0]}</span> (${topBrand[1].toLocaleString()} ม้วน)</div>`;
+            }
+
+            content.innerHTML = html;
+        }
+
+        function filterTable() {
+            const q = document.getElementById('search-input').value.toUpperCase();
+            document.querySelectorAll('.data-row').forEach(r => r.style.display = r.textContent.toUpperCase().includes(q) ? "" : "none");
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+
+</html>

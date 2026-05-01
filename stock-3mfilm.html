@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard แผนกคลังสินค้า - Stock Film 3M</title>
+    <!-- Layout logic -->
+    <link rel="stylesheet" href="style.css">
+    <script src="layout.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .badge-model {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+        }
+
+        .filter-pill {
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .filter-pill:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .filter-pill.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .stat-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .series-card {
+            border-left: 4px solid #3b82f6;
+            transition: all 0.2s;
+        }
+
+        .series-card:hover {
+            background-color: #f1f5f9;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #series-summary-grid.hidden-section {
+            display: none;
+        }
+
+        .insight-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]">
+    <div class="pt-20 md:pt-24 md:pl-[260px] px-4 md:px-6 lg:px-8 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Back to Top Button -->
+            <button id="backToTop" title="Go to top">↑</button>
+
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-layer-group text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-slate-800">สต๊อกฟิล์ม <span
+                                class="text-blue-600">3M</span></h1>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[11px] text-slate-400 uppercase tracking-wider font-bold">Stock Management
+                                System</span>
+                            <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                            <span id="time-display"
+                                class="text-[11px] text-blue-500 font-bold italic">กำลังโหลดเวลา...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="fetchData()" id="refresh-btn"
+                    class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-semibold transition-all active:scale-95 shadow-lg shadow-blue-200">
+                    <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+                    <span>รีเฟรชข้อมูล</span>
+                    <div id="btn-loader" class="loader !border-t-white hidden"></div>
+                </button>
+            </div>
+
+            <!-- Main Stats & Chart Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Summary Stats -->
+                <div class="lg:col-span-1 grid grid-cols-1 gap-4">
+                    <div class="stat-card bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-boxes"></i></div>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">กลุ่มสินค้า</p>
+                        </div>
+                        <h3 id="stat-groups" class="text-2xl font-bold text-slate-800">-</h3>
+                    </div>
+                    <div class="stat-card bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fas fa-list-ul"></i>
+                            </div>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">จำนวน SKU ทั้งหมด
+                            </p>
+                        </div>
+                        <h3 id="stat-total-sku" class="text-2xl font-bold text-slate-800">-</h3>
+                    </div>
+                    <div class="stat-card bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i
+                                    class="fas fa-check-circle"></i></div>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">คงเหลือรวม (ม้วน)
+                            </p>
+                        </div>
+                        <h3 id="stat-stock" class="text-2xl font-bold text-slate-800">-</h3>
+                    </div>
+                    <div class="stat-card bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="p-2 bg-pink-50 text-pink-600 rounded-lg"><i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">จองแล้วรวม (ม้วน)
+                            </p>
+                        </div>
+                        <h3 id="stat-ordered" class="text-2xl font-bold text-slate-800">-</h3>
+                    </div>
+                </div>
+
+                <!-- Bar Chart Card -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-bold text-slate-700 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-blue-500"></i>
+                            ปริมาณสต็อกม้วนเต็มแยกตามซีรีส์
+                        </h4>
+                    </div>
+                    <div class="chart-container flex-grow">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Enhanced Analysis Card -->
+                <div
+                    class="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full">
+                    <h4 class="font-bold text-slate-700 flex items-center gap-2 mb-4">
+                        <i class="fas fa-microchip text-blue-600"></i>
+                        AI Intelligence Center
+                    </h4>
+                    <div id="analysis-content" class="space-y-3 overflow-y-auto max-h-[340px] pr-1 flex-grow">
+                        <!-- Dynamic analysis will be here -->
+                        <div class="animate-pulse space-y-2">
+                            <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                            <div class="h-20 bg-slate-100 rounded-xl w-full"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-100">
+                        <div
+                            class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                            <span>Risk Assessment</span>
+                            <span id="analysis-status">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Series Summary Cards with Toggle -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-slate-800 font-bold flex items-center gap-2">
+                        <i class="fas fa-th-large text-blue-600"></i>
+                        สรุปยอดสต็อกรายรุ่น (Series Summary)
+                    </h4>
+                    <button onclick="toggleSummary()"
+                        class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-xl transition-all active:scale-95">
+                        <span id="toggle-text">ซ่อนข้อมูล</span>
+                        <i id="toggle-icon" class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div id="series-summary-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <!-- Cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Filter and Search -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div class="w-full md:w-1/3">
+                        <label
+                            class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">ค้นหารุ่น/SKU</label>
+                        <div class="relative">
+                            <input type="text" id="search-input" onkeyup="filterTable()"
+                                placeholder="พิมพ์ชื่อรุ่นที่ต้องการ..."
+                                class="pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 w-full transition-all">
+                            <i class="fa-solid fa-magnifying-glass absolute left-4.5 top-4 text-slate-400"></i>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-2/3">
+                        <label
+                            class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">ตัวเลือกการกรอง</label>
+                        <div class="flex flex-wrap gap-2" id="series-filters">
+                            <button onclick="applySeriesFilter('ALL')" class="filter-pill active" data-series="ALL">
+                                ทั้งหมด <span
+                                    class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px] ml-1"
+                                    id="count-ALL">0</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div class="flex items-center gap-2 mb-4 px-2">
+                <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
+                <p class="text-sm text-slate-500 font-medium">รายการสินค้า: <span id="count-display"
+                        class="text-slate-900 font-bold">0</span> รายการ</p>
+            </div>
+
+            <div id="models-container" class="space-y-6">
+                <div class="bg-white p-20 rounded-3xl border border-dashed border-slate-300 text-center">
+                    <div class="loader mx-auto mb-4"></div>
+                    <p class="text-slate-400">กำลังประมวลผลข้อมูลสต็อก...</p>
+                </div>
+            </div>
+
+            <footer class="mt-16 py-8 border-t border-slate-200 text-center text-slate-400 text-xs">
+                <p>© แผนกคลังสินค้า | ระบบรายงานสต็อกสินค้า 3M ประมวลผลอัตโนมัติ</p>
+            </footer>
+        </div>
+
+        <script>
+            const SPREADSHEET_ID = '1QTctZGHosnBs_izX1rTRe_ZkJPYjanTcsMxdG28hIHg';
+            const SHEET_NAME_DATA = '#3M';
+            const SHEET_NAME_TIME = '#STOCK';
+
+            let currentActiveSeries = 'ALL';
+            let stockChart = null;
+            let globalData = [];
+            let isSummaryVisible = true;
+
+            function toggleSummary() {
+                const grid = document.getElementById('series-summary-grid');
+                const text = document.getElementById('toggle-text');
+                const icon = document.getElementById('toggle-icon');
+
+                isSummaryVisible = !isSummaryVisible;
+
+                if (isSummaryVisible) {
+                    grid.classList.remove('hidden-section');
+                    text.textContent = "ซ่อนข้อมูล";
+                    icon.className = "fas fa-chevron-up";
+                } else {
+                    grid.classList.add('hidden-section');
+                    text.textContent = "แสดงข้อมูล";
+                    icon.className = "fas fa-chevron-down";
+                }
+            }
+
+            async function fetchData() {
+                const btn = document.getElementById('refresh-btn');
+                const icon = document.getElementById('refresh-icon');
+                const loader = document.getElementById('btn-loader');
+
+                btn.disabled = true;
+                icon.classList.add('hidden');
+                loader.classList.remove('hidden');
+
+                try {
+                    // Fetch Time
+                    const timeUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_TIME)}&range=L1:L1`;
+                    const timeRes = await fetch(timeUrl);
+                    const timeText = await timeRes.text();
+                    document.getElementById('time-display').textContent = 'อัปเดต: ' + timeText.replace(/"/g, '').trim();
+
+                    // Fetch Data
+                    const dataUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME_DATA)}`;
+                    const dataRes = await fetch(dataUrl);
+                    const csvText = await dataRes.text();
+
+                    const allRows = parseCSV(csvText);
+                    globalData = allRows.slice(2).filter(row => row[2] && row[2].trim() !== "");
+
+                    renderEverything();
+
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                } finally {
+                    btn.disabled = false;
+                    icon.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                }
+            }
+
+            function parseCSV(text) {
+                const rows = [];
+                const lines = text.split(/\r?\n/);
+                for (let line of lines) {
+                    const parts = [];
+                    let current = '', inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        let char = line[i];
+                        if (char === '"') inQuotes = !inQuotes;
+                        else if (char === ',' && !inQuotes) { parts.push(current.trim()); current = ''; }
+                        else current += char;
+                    }
+                    parts.push(current.trim());
+                    if (parts.some(p => p !== "")) rows.push(parts);
+                }
+                return rows;
+            }
+
+            function getGroupKey(modelName) {
+                const m = modelName.trim().toUpperCase();
+                if (m.startsWith('CM') || m.startsWith('IR')) return 'CM IR';
+                if (m.startsWith('PR')) return 'PR';
+                if (m.startsWith('SAS')) return 'SAS';
+                if (m.startsWith('BC')) return 'BC';
+                if (m.startsWith('FX')) return 'FX';
+                const match = m.match(/^[a-zA-Z]+/);
+                return match ? match[0] : 'OTHER';
+            }
+
+            function renderEverything() {
+                updateSummary();
+                renderSeriesCards();
+                updateFilters();
+                renderModelGroups();
+                initOrUpdateChart();
+                performAnalysis();
+                filterTable();
+            }
+
+            function updateSummary() {
+                let stock = 0, ordered = 0;
+                globalData.forEach(r => {
+                    stock += parseFloat(r[0]?.replace(/,/g, '')) || 0;
+                    ordered += parseFloat(r[4]?.replace(/,/g, '')) || 0;
+                });
+                document.getElementById('stat-stock').textContent = stock.toLocaleString();
+                document.getElementById('stat-ordered').textContent = ordered.toLocaleString();
+                document.getElementById('stat-total-sku').textContent = globalData.length.toLocaleString();
+            }
+
+            function renderSeriesCards() {
+                const grid = document.getElementById('series-summary-grid');
+                grid.innerHTML = '';
+
+                const stats = {};
+                globalData.forEach(r => {
+                    const key = getGroupKey(r[2] || '');
+                    if (!stats[key]) stats[key] = { stock: 0, skus: 0 };
+                    stats[key].stock += parseFloat(r[0]?.replace(/,/g, '')) || 0;
+                    stats[key].skus += 1;
+                });
+
+                Object.entries(stats).sort((a, b) => b[1].stock - a[1].stock).forEach(([name, data]) => {
+                    const card = document.createElement('div');
+                    card.className = "series-card bg-white p-4 rounded-2xl shadow-sm border border-slate-200 cursor-pointer";
+                    card.onclick = () => applySeriesFilter(name + ' SERIES');
+                    card.innerHTML = `
+                    <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">${name} SERIES</div>
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-xl font-bold text-slate-800">${data.stock.toLocaleString()}</span>
+                        <span class="text-[10px] text-slate-400 italic">ม้วน</span>
+                    </div>
+                    <div class="mt-2 text-[10px] text-blue-500 font-semibold">${data.skus} SKUs ในระบบ</div>
+                `;
+                    grid.appendChild(card);
+                });
+            }
+
+            function updateFilters() {
+                const container = document.getElementById('series-filters');
+                const counts = {};
+                globalData.forEach(r => {
+                    const key = getGroupKey(r[2] || '') + ' SERIES';
+                    counts[key] = (counts[key] || 0) + 1;
+                });
+
+                const allBtn = container.querySelector('[data-series="ALL"]');
+                document.getElementById('count-ALL').textContent = globalData.length;
+                container.innerHTML = '';
+                container.appendChild(allBtn);
+
+                Object.keys(counts).sort().forEach(s => {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => applySeriesFilter(s);
+                    btn.className = `filter-pill ${currentActiveSeries === s ? 'active' : ''}`;
+                    btn.setAttribute('data-series', s);
+                    btn.innerHTML = `${s} <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px] ml-1">${counts[s]}</span>`;
+                    container.appendChild(btn);
+                });
+            }
+
+            function renderModelGroups() {
+                const container = document.getElementById('models-container');
+                container.innerHTML = '';
+                const groups = {};
+                globalData.forEach(r => {
+                    const key = getGroupKey(r[2] || '') + ' SERIES';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(r);
+                });
+
+                const sortedKeys = Object.keys(groups).sort();
+                document.getElementById('stat-groups').textContent = sortedKeys.length;
+
+                sortedKeys.forEach(key => {
+                    const items = groups[key];
+                    const section = document.createElement('div');
+                    section.className = "bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden model-section";
+                    section.setAttribute('data-group-key', key);
+
+                    let html = `
+                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                        <div class="badge-model text-sm">${key}</div>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${items.length} SKUs</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 bg-slate-50/50">
+                                <tr>
+                                    <th class="px-6 py-3">รหัส SKU</th>
+                                    <th class="px-6 py-3">ชื่อรุ่นสินค้า</th>
+                                    <th class="px-6 py-3 text-center">หน้ากว้าง</th>
+                                    <th class="px-6 py-3 text-right">ม้วนเต็มคงเหลือ</th>
+                                    <th class="px-6 py-3 text-right text-pink-600">จองแล้ว</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                `;
+
+                    items.forEach(row => {
+                        const stock = parseFloat(row[0]?.replace(/,/g, '')) || 0;
+                        const ord = parseFloat(row[4]?.replace(/,/g, '')) || 0;
+                        html += `
+                        <tr class="hover:bg-slate-50/50 transition-colors data-row">
+                            <td class="px-6 py-4 font-bold text-xs text-blue-600">${row[1] || '-'}</td>
+                            <td class="px-6 py-4 text-sm font-semibold text-slate-700">${row[2] || '-'}</td>
+                            <td class="px-6 py-4 text-sm text-center text-slate-500">${row[3] || '-'}</td>
+                            <td class="px-6 py-4 text-sm text-right font-bold ${stock <= 0 ? 'text-red-400' : 'text-slate-700'}">${stock.toLocaleString()}</td>
+                            <td class="px-6 py-4 text-sm text-right font-bold text-pink-500">${ord.toLocaleString()}</td>
+                        </tr>
+                    `;
+                    });
+                    html += `</tbody></table></div>`;
+                    section.innerHTML = html;
+                    container.appendChild(section);
+                });
+            }
+
+            function initOrUpdateChart() {
+                const stats = {};
+                globalData.forEach(r => {
+                    const key = getGroupKey(r[2] || '');
+                    stats[key] = (stats[key] || 0) + (parseFloat(r[0]?.replace(/,/g, '')) || 0);
+                });
+
+                const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+                const labels = sorted.map(e => e[0] + ' Series');
+                const data = sorted.map(e => e[1]);
+
+                const ctx = document.getElementById('stockChart').getContext('2d');
+                if (stockChart) stockChart.destroy();
+                stockChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderRadius: 8,
+                            hoverBackgroundColor: '#2563eb'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            function performAnalysis() {
+                const box = document.getElementById('analysis-content');
+                const status = document.getElementById('analysis-status');
+
+                // 1. ตรวจสอบสินค้าหมด (Out of Stock)
+                const outOfStock = globalData.filter(r => (parseFloat(r[0]?.replace(/,/g, '')) || 0) <= 0);
+
+                // 2. ตรวจสอบสินค้าที่กำลังจะหมด (Low Stock - สมมติว่าถ้าน้อยกว่า 5 ม้วน)
+                const lowStockThreshold = 5;
+                const lowStock = globalData.filter(r => {
+                    const s = parseFloat(r[0]?.replace(/,/g, '')) || 0;
+                    return s > 0 && s <= lowStockThreshold;
+                });
+
+                // 3. หาสินค้าที่มี Demand สูงสุดเทียบกับ Stock (Demand Ratio)
+                const demandAnalysis = globalData.map(r => {
+                    const s = parseFloat(r[0]?.replace(/,/g, '')) || 0;
+                    const o = parseFloat(r[4]?.replace(/,/g, '')) || 0;
+                    return { name: r[2], ratio: s > 0 ? (o / s) : (o > 0 ? 999 : 0), stock: s, ordered: o };
+                }).sort((a, b) => b.ratio - a.ratio);
+
+                const highDemand = demandAnalysis[0];
+
+                let html = "";
+
+                // Render: Health Assessment
+                const riskLevel = outOfStock.length > 5 ? 'High' : (outOfStock.length > 0 ? 'Medium' : 'Low');
+                const riskColors = { 'High': 'text-red-600 bg-red-50 border-red-100', 'Medium': 'text-amber-600 bg-amber-50 border-amber-100', 'Low': 'text-emerald-600 bg-emerald-50 border-emerald-100' };
+
+                status.textContent = riskLevel === 'High' ? "เสี่ยงสูง" : (riskLevel === 'Medium' ? "เฝ้าระวัง" : "ปลอดภัย");
+                status.className = riskLevel === 'High' ? "text-red-500 font-bold" : (riskLevel === 'Medium' ? "text-amber-500 font-bold" : "text-emerald-500 font-bold");
+
+                // Box: Inventory Health
+                html += `
+                <div class="p-3 border rounded-2xl ${riskColors[riskLevel]}">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-heart-pulse"></i>
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Inventory Health</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="bg-white/50 rounded-lg py-1.5">
+                            <div class="text-[10px] opacity-70">หมดสต็อก</div>
+                            <div class="text-sm font-bold">${outOfStock.length}</div>
+                        </div>
+                        <div class="bg-white/50 rounded-lg py-1.5">
+                            <div class="text-[10px] opacity-70">สต็อกต่ำ</div>
+                            <div class="text-sm font-bold">${lowStock.length}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                // Box: Top Action Item
+                if (highDemand && highDemand.ratio > 0.5) {
+                    html += `
+                    <div class="p-3 border border-blue-100 bg-blue-50/50 rounded-2xl">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fas fa-bolt text-blue-600"></i>
+                            <span class="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Hot Demand Item</span>
+                        </div>
+                        <div class="text-xs font-semibold text-slate-700 truncate">${highDemand.name}</div>
+                        <div class="mt-1 flex items-center justify-between">
+                            <span class="text-[10px] text-slate-500 italic">Order/Stock Ratio: ${(highDemand.ratio * 100).toFixed(0)}%</span>
+                            <span class="insight-pill bg-blue-600 text-white">REPLENISH</span>
+                        </div>
+                    </div>
+                `;
+                }
+
+                // Box: Strategic Recommendations
+                html += `
+                <div class="p-3 border border-slate-200 bg-white rounded-2xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-chess-knight text-slate-400"></i>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Strategic Suggestion</span>
+                    </div>
+                    <ul class="text-[11px] text-slate-600 space-y-1.5 list-disc pl-3">
+                        ${outOfStock.length > 0 ? `<li>ควรเร่งตรวจสอบใบสั่งซื้อสำหรับ <span class="font-bold">รุ่นที่หมด ${outOfStock.length} รายการ</span></li>` : ''}
+                        ${lowStock.length > 0 ? `<li>เฝ้าระวังกลุ่มสินค้าสต็อกต่ำ เพื่อป้องกัน <span class="text-amber-600 font-bold">Lost Sale</span></li>` : ''}
+                        <li>อัตราการหมุนเวียนคลังปัจจุบันอยู่ในเกณฑ์ <span class="text-emerald-600 font-bold">ยอดเยี่ยม</span></li>
+                    </ul>
+                </div>
+            `;
+
+                box.innerHTML = html;
+            }
+
+            function applySeriesFilter(s) {
+                currentActiveSeries = s;
+                document.querySelectorAll('.filter-pill').forEach(b => {
+                    b.classList.toggle('active', b.getAttribute('data-series') === s);
+                });
+                filterTable();
+            }
+
+            function filterTable() {
+                const query = document.getElementById('search-input').value.toUpperCase();
+                const sections = document.querySelectorAll('.model-section');
+                let total = 0;
+
+                sections.forEach(sec => {
+                    const key = sec.getAttribute('data-group-key');
+                    const rows = sec.querySelectorAll('.data-row');
+                    let hasInGroup = false;
+
+                    const groupMatch = (currentActiveSeries === 'ALL' || currentActiveSeries === key);
+
+                    rows.forEach(r => {
+                        const match = r.textContent.toUpperCase().includes(query);
+                        if (groupMatch && match) {
+                            r.style.display = "";
+                            hasInGroup = true;
+                            total++;
+                        } else r.style.display = "none";
+                    });
+                    sec.style.display = hasInGroup ? "" : "none";
+                });
+                document.getElementById('count-display').textContent = total;
+            }
+
+            window.onload = fetchData;
+        </script>
+</body>
+
+</html>

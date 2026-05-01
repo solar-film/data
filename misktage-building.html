@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบข้อมูลลูกค้า (เฉพาะงานหลุด)</title>
+
+    <link rel="stylesheet" href="style.css">
+    <!-- Layout logic -->
+    <script src="layout.js" defer></script>
+
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js สำหรับวาดกราฟ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts (Anuphan ตามไฟล์ตัวอย่าง) -->
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Anuphan', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* สไตล์แบบ Glassmorphism */
+        .card-glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25rem;
+        }
+
+        .stat-card-active {
+            border: 2px solid #ef4444;
+            /* เปลี่ยนเป็นสีแดง/rose สำหรับงานหลุด */
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]"></br></br>
+    <!-- ปรับระยะ padding เพื่อให้แสดงผลใน Preview ได้สวยงามขึ้นเมื่อไม่มี Sidebar -->
+    <div class="pt-8 px-4 md:px-6 lg:px-8 min-h-screen">
+
+        <header>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 h-auto sm:h-16 py-4 sm:py-0">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-rose-500 p-2 rounded-xl shadow-rose-200 shadow-lg shrink-0">
+                            <i data-lucide="users-x" class="text-white w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">ระบบข้อมูลลูกค้า (เฉพาะงานหลุด)
+                            </h1>
+                            <p class="text-xs sm:text-sm text-slate-500 font-medium"><a
+                                    href="https://docs.google.com/spreadsheets/d/1Ag7yh0SFSqGfm3LTNinHwlwV6h5Xa4M2yIuf03mq2uc/edit?gid=949197576#gid=949197576"
+                                    target="_blank" class="text-indigo-600 hover:text-indigo-800">อัปเดตข้อมูลจากชีต
+                                    CUSTOMER ALL</a></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <button id="refreshBtn" onclick="fetchData()"
+                            class="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all shadow-md active:scale-95 font-medium text-sm">
+                            <i data-lucide="rotate-cw" id="refreshIcon" class="w-4 h-4"></i>
+                            <span>รีเฟรชข้อมูล</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- ข้อความแจ้งเตือน (Alerts) -->
+            <div id="alertBox" class="hidden p-4 mb-6 rounded-xl text-sm border font-medium shadow-sm" role="alert">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="info" class="w-5 h-5 shrink-0"></i>
+                    <span id="alertMessage"></span>
+                </div>
+            </div>
+
+            <!-- ส่วน Dashboard หลัก (Filters + Stats) -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8" id="dashboardSection">
+
+                <!-- Sidebar Filters (lg:col-span-1) -->
+                <div class="lg:col-span-1 card-glass p-6 rounded-2xl shadow-sm space-y-4 h-fit">
+
+                    <!-- ส่วนกรองเวลา (Quick Filters & Dropdown) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                            <i data-lucide="calendar-clock" class="w-4 h-4 text-indigo-500"></i>
+                            ช่วงเวลาที่พบงานหลุด
+                        </label>
+
+                        <!-- Quick Filters -->
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button id="btn-this_month" onclick="setTimeFilter('this_month')"
+                                class="time-filter-btn px-2 py-2 text-[12px] font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 transition-all border border-transparent">เดือนนี้</button>
+                            <button id="btn-last_3_months" onclick="setTimeFilter('last_3_months')"
+                                class="time-filter-btn px-2 py-2 text-[12px] font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 transition-all border border-transparent">3
+                                เดือน</button>
+                            <button id="btn-this_year" onclick="setTimeFilter('this_year')"
+                                class="time-filter-btn px-2 py-2 text-[12px] font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 transition-all border border-transparent">ปีนี้</button>
+                            <button id="btn-all" onclick="setTimeFilter('all')"
+                                class="time-filter-btn px-2 py-2 text-[12px] font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition-all border border-indigo-600">ทั้งหมด</button>
+                        </div>
+
+                        <!-- Specific Month Dropdown -->
+                        <div class="relative">
+                            <select id="filterMonth" onchange="handleDropdownChange()"
+                                class="custom-select w-full pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium text-slate-700 text-sm shadow-sm">
+                                <option value="">(เลือกเดือนเจาะจง...)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                            <i data-lucide="user-square-2" class="w-4 h-4 text-indigo-500"></i>
+                            เลือกฝ่ายขาย
+                        </label>
+                        <div class="relative">
+                            <select id="filterSales" onchange="applyFilters()"
+                                class="custom-select w-full pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium text-slate-700 text-sm shadow-sm">
+                                <option value="">ทั้งหมดทุกฝ่ายขาย</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <button onclick="resetFilters()"
+                            class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-all text-sm font-semibold">
+                            <i data-lucide="filter-x" class="w-4 h-4"></i>
+                            ล้างตัวกรอง
+                        </button>
+                    </div>
+
+                    <div class="pt-2">
+                        <div class="flex flex-col gap-1 text-[11px] text-slate-400 font-medium">
+                            <div class="flex items-center justify-between">
+                                <span>รายการงานหลุดที่แสดง</span>
+                                <span id="displayCount"
+                                    class="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md text-xs">0</span>
+                            </div>
+                            <div id="lastUpdatedText" class="mt-1 text-slate-400 italic">อัปเดตล่าสุด: -</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Dashboard (lg:col-span-3) -->
+                <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <!-- Card 1: สรุปงานหลุด (Total) -->
+                    <div class="card-glass p-5 rounded-3xl flex flex-col transition-all stat-card-active min-h-[220px]">
+                        <div class="text-center mb-3">
+                            <p class="text-[13px] font-bold text-slate-400 uppercase tracking-widest">
+                                งานหลุดที่พบ (ตามเงื่อนไข)</p>
+                            <div class="flex items-baseline justify-center gap-1 mt-2">
+                                <h3 id="filteredTotalCount" class="text-5xl font-black text-rose-600 tracking-tighter">0
+                                </h3>
+                                <span class="text-sm font-bold text-slate-400">เคส</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto border-t border-slate-100 pt-3">
+                            <div class="text-center">
+                                <p class="text-[12px] font-bold text-slate-500 mb-1">ยอดรวมงานหลุดในระบบทั้งหมด</p>
+                                <p class="text-lg font-black text-slate-700" id="grandTotalCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: สรุปแยกตามฝ่ายขาย -->
+                    <div class="card-glass p-5 rounded-3xl flex flex-col min-h-[220px]">
+                        <div class="text-center mb-1">
+                            <p class="text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                สรุปแยกตามฝ่ายขาย</p>
+                            <p id="salesDateLabel"
+                                class="text-[12px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full inline-block">
+                                ในช่วงเวลาที่เลือก</p>
+                        </div>
+                        <div id="salesListContainer" class="mt-3 space-y-2">
+                            <!-- JS จะใส่ข้อมูลตรงนี้ -->
+                        </div>
+                    </div>
+
+                    <!-- Card 3: กราฟรายเดือน -->
+                    <div class="card-glass p-5 rounded-3xl flex flex-col min-h-[220px]">
+                        <div class="text-center mb-1">
+                            <p class="text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                แนวโน้มงานหลุด</p>
+                            <p id="chartLabel"
+                                class="text-[12px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full inline-block">
+                                สถิติรายเดือน</p>
+                        </div>
+                        <div class="relative h-full w-full mt-2 min-h-[120px]">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState"
+                class="hidden flex-col items-center justify-center p-20 card-glass rounded-2xl shadow-sm border border-slate-200">
+                <i data-lucide="loader-2" class="w-10 h-10 text-indigo-500 loading-spinner mb-4"></i>
+                <p class="text-slate-500 font-semibold">กำลังดึงข้อมูลจาก Google Sheets...</p>
+            </div>
+
+            <!-- Data Table -->
+            <div id="tableSection"
+                class="card-glass rounded-2xl shadow-sm overflow-hidden border border-slate-200 hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    ข้อมูลลูกค้า & ติดต่อ</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    รายละเอียดนัดหมาย</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">สถานะ &
+                                    สาเหตุงานหลุด</th>
+                                <th
+                                    class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">
+                                    ผู้รับผิดชอบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="divide-y divide-slate-100 bg-white/50">
+                            <!-- ข้อมูลจะถูกเพิ่มที่นี่ผ่าน JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden py-24 flex flex-col items-center justify-center text-slate-400">
+                    <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100">
+                        <i data-lucide="file-search" class="w-12 h-12 text-slate-300"></i>
+                    </div>
+                    <p class="text-lg font-bold text-slate-500" id="emptyStateText">ไม่พบข้อมูลงานหลุดในเงื่อนไขนี้</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // กำหนดค่า Google Sheet
+        const SHEET_ID = '1Ag7yh0SFSqGfm3LTNinHwlwV6h5Xa4M2yIuf03mq2uc';
+        const SHEET_NAME = 'CUSTOMER_ALL';
+        const QUERY_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=A4:AQ&headers=0`;
+
+        // ตำแหน่ง Index ของคอลัมน์ (A=0, B=1, ... AQ=42)
+        const COL_INDEX = {
+            A: 0,   // เดือน
+            B: 1,   // วันที่พบลูกค้า
+            E: 4,   // ฝ่ายขาย
+            H: 7,   // ชื่อลูกค้า
+            I: 8,   // บริษัท
+            M: 12,  // เบอร์โทรลูกค้า
+            O: 14,  // ประเภทลูกค้า
+            P: 15,  // สถานที่หน้างาน
+            R: 17,  // เลขที่ใบเสนอราคา
+            S: 18,  // หน้ากระจก (ตรฟ.)
+            X: 23,  // สถานะงาน
+            AQ: 42  // สาเหตุงานหลุด
+        };
+
+        lucide.createIcons();
+
+        let allLostJobsData = [];
+        let isFirstLoad = true;
+        let monthlyChartInstance = null;
+        let currentTimeFilter = 'all'; // สถานะของการกรองเวลา: 'this_month', 'last_3_months', 'this_year', 'all'
+
+        // ฟังก์ชันอ่านค่าจากเซลล์
+        function getCellValue(row, index) {
+            if (!row || !row.c || !row.c[index]) return '-';
+            let value = row.c[index].f !== undefined ? row.c[index].f : row.c[index].v;
+            return value !== null && value !== '' ? value.toString().trim() : '-';
+        }
+
+        // ฟังก์ชันจัดการ UI สถานะต่างๆ
+        function setUIState(state, message = '') {
+            const tableSection = document.getElementById('tableSection');
+            const dataTableBody = document.getElementById('dataTableBody');
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const alertBox = document.getElementById('alertBox');
+            const alertMessage = document.getElementById('alertMessage');
+            const refreshIcon = document.getElementById('refreshIcon');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const dashboardSection = document.getElementById('dashboardSection');
+
+            loadingState.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            alertBox.classList.add('hidden');
+            alertBox.className = 'hidden p-4 mb-6 rounded-xl text-sm border font-medium shadow-sm';
+
+            if (state === 'loading') {
+                dataTableBody.innerHTML = '';
+                tableSection.classList.add('hidden');
+                dashboardSection.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+                loadingState.classList.add('flex');
+                refreshIcon.classList.add('loading-spinner');
+                refreshBtn.disabled = true;
+                refreshBtn.classList.add('opacity-70');
+            } else if (state === 'success') {
+                refreshIcon.classList.remove('loading-spinner');
+                refreshBtn.disabled = false;
+                refreshBtn.classList.remove('opacity-70');
+                dashboardSection.classList.remove('hidden');
+                tableSection.classList.remove('hidden');
+            } else if (state === 'error') {
+                refreshIcon.classList.remove('loading-spinner');
+                refreshBtn.disabled = false;
+                refreshBtn.classList.remove('opacity-70');
+
+                alertBox.classList.remove('hidden');
+                alertBox.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
+                alertMessage.innerHTML = message;
+            } else if (state === 'empty') {
+                refreshIcon.classList.remove('loading-spinner');
+                refreshBtn.disabled = false;
+                refreshBtn.classList.remove('opacity-70');
+                dashboardSection.classList.add('hidden');
+                tableSection.classList.remove('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                document.getElementById('emptyStateText').innerText = message || 'ไม่พบข้อมูลงานหลุดในระบบ';
+            }
+        }
+
+        // ดึงข้อมูล
+        async function fetchData() {
+            setUIState('loading');
+
+            try {
+                const response = await fetch(QUERY_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const text = await response.text();
+
+                if (text.trim().startsWith('<')) {
+                    throw new Error('ไม่สามารถเข้าถึงข้อมูลได้ โปรดตรวจสอบว่า Google Sheet ของคุณได้ตั้งค่าการแชร์เป็น <b>"ทุกคนที่มีลิงก์"</b> แล้ว');
+                }
+
+                const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/);
+                if (!jsonMatch || jsonMatch.length < 2) {
+                    throw new Error('รูปแบบข้อมูลที่ตอบกลับไม่ถูกต้อง');
+                }
+
+                const data = JSON.parse(jsonMatch[1]);
+                const rows = data.table.rows;
+
+                if (!rows || rows.length === 0) {
+                    setUIState('empty', 'ไม่พบข้อมูลใดๆ ในตาราง (ระบบอาจยังไม่มีข้อมูล)');
+                    document.getElementById('grandTotalCount').innerText = '0';
+                    return;
+                }
+
+                // กรองข้อมูลเฉพาะงานที่มีสถานะ "ไม่ติดตั้ง" ใน Col X เท่านั้น
+                allLostJobsData = rows.filter(row => {
+                    const statusValue = getCellValue(row, COL_INDEX.X);
+                    return statusValue === 'ไม่ติดตั้ง';
+                });
+
+                if (allLostJobsData.length === 0) {
+                    setUIState('empty', 'ดึงข้อมูลสำเร็จ แต่ไม่พบประวัติงานที่มีสถานะ "ไม่ติดตั้ง"');
+                    document.getElementById('grandTotalCount').innerText = '0';
+                    return;
+                }
+
+                document.getElementById('grandTotalCount').innerText = allLostJobsData.length;
+
+                populateDropdowns(allLostJobsData);
+                applyFilters();
+                setUIState('success');
+
+                const now = new Date();
+                document.getElementById('lastUpdatedText').innerHTML = `<i data-lucide="clock" class="w-3 h-3 inline"></i> ข้อมูลล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                setUIState('error', `<b>เกิดข้อผิดพลาด:</b> ${error.message}`);
+            }
+        }
+
+        // ฟังก์ชันแปลงข้อความเดือนให้เป็นตัวเลขสำหรับจัดเรียงและคำนวณ (YYYYMM)
+        function parseMonthString(mStr) {
+            if (!mStr || mStr === '-') return { value: 0, original: mStr };
+
+            const thaiMonthsShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const thaiMonthsFull = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+            let monthIdx = -1;
+            let year = new Date().getFullYear(); // ค่าเริ่มต้นคือปีปัจจุบัน (ค.ศ.)
+
+            // หาเดือน
+            for (let i = 0; i < 12; i++) {
+                if (mStr.includes(thaiMonthsShort[i]) || mStr.includes(thaiMonthsFull[i])) {
+                    monthIdx = i;
+                    break;
+                }
+            }
+
+            // กรณีใส่มาเป็นตัวเลขเดือน เช่น "05" หรือ "05/24"
+            if (monthIdx === -1) {
+                const match = mStr.match(/\b(0?[1-9]|1[0-2])\b/);
+                if (match) monthIdx = parseInt(match[1], 10) - 1;
+            }
+
+            // หาปี (รองรับ ค.ศ. 4 หลัก, พ.ศ. 4 หลัก, และแบบย่อ 2 หลัก)
+            const yearMatch = mStr.match(/\b(20\d{2}|25\d{2}|\d{2})\b/);
+            if (yearMatch) {
+                let y = parseInt(yearMatch[1], 10);
+                if (y > 2500) y -= 543; // พ.ศ. เต็ม -> ค.ศ.
+                else if (y >= 50 && y <= 99) y = (2500 + y) - 543; // พ.ศ. ย่อ (เช่น 67 -> 2024)
+                else if (y >= 0 && y < 50) y = 2000 + y; // ค.ศ. ย่อ (เช่น 24 -> 2024, 25 -> 2025)
+                year = y;
+            }
+
+            // ถ้าหาเดือนไม่เจอ ให้ค่าน้อยสุดจะได้ไปอยู่ท้ายๆ
+            if (monthIdx === -1) return { value: 0, original: mStr };
+
+            // สร้างค่า YYYYMM (เช่น 202405 สำหรับ พ.ค. 2024)
+            const sortValue = (year * 100) + (monthIdx + 1);
+            return { value: sortValue, original: mStr };
+        }
+
+        // ตรวจสอบว่าเดือนตรงกับ Quick Filter ที่เลือกหรือไม่
+        function isWithinTimeFilter(monthStr, filterType) {
+            if (filterType === 'all') return true;
+            if (!monthStr || monthStr === '-') return false;
+
+            const parsed = parseMonthString(monthStr);
+            if (parsed.value === 0) return false;
+
+            const rowYear = Math.floor(parsed.value / 100);
+            const rowMonth = parsed.value % 100;
+
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+
+            if (filterType === 'this_year') {
+                return rowYear === currentYear;
+            }
+
+            if (filterType === 'this_month') {
+                return rowYear === currentYear && rowMonth === currentMonth;
+            }
+
+            if (filterType === 'last_3_months') {
+                // คำนวณเดือนสะสมทั้งหมดเพื่อหาผลต่าง
+                const rowTotalMonths = (rowYear * 12) + rowMonth;
+                const currentTotalMonths = (currentYear * 12) + currentMonth;
+                const diff = currentTotalMonths - rowTotalMonths;
+
+                // ถ้าย้อนหลังไม่เกิน 2 เดือน (รวมเดือนปัจจุบันเป็น 3 เดือน) และไม่ใช่อนาคต
+                return diff >= 0 && diff < 3;
+            }
+
+            return true;
+        }
+
+        // อัปเดตสไตล์ของปุ่ม Quick Filters
+        function updateQuickFilterUI(filterType) {
+            document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'border-indigo-600');
+                btn.classList.add('bg-slate-100', 'text-slate-600', 'border-transparent');
+            });
+            const activeBtn = document.getElementById(`btn-${filterType}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-100', 'text-slate-600', 'border-transparent');
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm', 'border-indigo-600');
+            }
+        }
+
+        // เมื่อกดปุ่ม Quick Filter
+        function setTimeFilter(filterType) {
+            currentTimeFilter = filterType;
+            updateQuickFilterUI(filterType);
+
+            // ล้างค่า Dropdown เฉพาะเดือนออก หากเลือกเงื่อนไขเวลาแบบรวดเร็ว
+            if (filterType !== 'all') {
+                document.getElementById('filterMonth').value = '';
+            }
+
+            applyFilters();
+        }
+
+        // เมื่อผู้ใช้เลือกเดือนเจาะจงผ่าน Dropdown
+        function handleDropdownChange() {
+            // ยกเลิกสถานะปุ่ม Quick Filter โดยให้กลับไปเป็น "ทั้งหมด"
+            currentTimeFilter = 'all';
+            updateQuickFilterUI('all');
+            applyFilters();
+        }
+
+        // เตรียมตัวเลือก Dropdown
+        function populateDropdowns(rows) {
+            const months = new Set();
+            const sales = new Set();
+
+            rows.forEach(row => {
+                const m = getCellValue(row, COL_INDEX.A);
+                const s = getCellValue(row, COL_INDEX.E);
+                if (m !== '-') months.add(m);
+                if (s !== '-') sales.add(s);
+            });
+
+            // สร้าง Array ของเดือนที่ผ่านการคำนวณรหัสแล้ว
+            let parsedMonths = [...months].map(m => parseMonthString(m));
+
+            const createOptions = (id, itemsSet, isMonth = false) => {
+                const select = document.getElementById(id);
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">(เลือกทั้งหมด / ไม่ระบุ)</option>';
+
+                let itemsArray = [];
+                if (isMonth) {
+                    // เรียงเดือนจาก ใหม่ล่าสุด -> เก่าสุด (Descending)
+                    parsedMonths.sort((a, b) => b.value - a.value);
+                    itemsArray = parsedMonths.map(m => m.original);
+                } else {
+                    itemsArray = [...itemsSet].sort();
+                }
+
+                itemsArray.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    select.appendChild(option);
+                });
+
+                if (currentValue && itemsSet.has(currentValue)) {
+                    select.value = currentValue;
+                }
+            };
+
+            createOptions('filterMonth', months, true);
+            createOptions('filterSales', sales, false);
+
+            // ระบบตั้งค่าเริ่มต้นเป็น "เดือนนี้" สำหรับการเปิดใช้งานครั้งแรก
+            if (isFirstLoad) {
+                currentTimeFilter = 'this_month';
+                updateQuickFilterUI('this_month');
+                isFirstLoad = false;
+            }
+        }
+
+        function updateDashboard(monthVal, salesVal, timeFilter) {
+            // สร้าง Label ข้อความสรุปช่วงเวลา
+            let dateLabel = "ทุกช่วงเวลา";
+            if (timeFilter === 'this_month') dateLabel = "เดือนนี้";
+            else if (timeFilter === 'last_3_months') dateLabel = "3 เดือนล่าสุด";
+            else if (timeFilter === 'this_year') dateLabel = "ปีนี้";
+            else if (monthVal !== '') dateLabel = `เดือน ${monthVal}`;
+
+            document.getElementById('salesDateLabel').innerText = dateLabel;
+
+            // 1. สร้างสรุปฝ่ายขาย (กรองด้วยเงื่อนไขเวลา)
+            const cardData = allLostJobsData.filter(row => {
+                const m = getCellValue(row, COL_INDEX.A);
+                if (timeFilter !== 'all') return isWithinTimeFilter(m, timeFilter);
+                return (monthVal === '') || (m === monthVal);
+            });
+
+            const salesCount = {};
+            cardData.forEach(row => {
+                const s = getCellValue(row, COL_INDEX.E);
+                if (s !== '-') salesCount[s] = (salesCount[s] || 0) + 1;
+            });
+
+            const cardsContainer = document.getElementById('salesListContainer');
+            const sortedSales = Object.entries(salesCount).sort((a, b) => b[1] - a[1]);
+
+            if (sortedSales.length === 0) {
+                cardsContainer.innerHTML = '<div class="text-center text-slate-300 text-[11px] py-6 font-medium italic">ไม่มีงานหลุดในช่วงเวลานี้</div>';
+            } else {
+                cardsContainer.innerHTML = sortedSales.map(([name, count]) => `
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100 hover:border-indigo-100 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-[10px] shrink-0">
+                                ${name.charAt(0)}
+                            </div>
+                            <span class="text-[13px] font-bold text-slate-700 truncate mr-2">${name}</span>
+                        </div>
+                        <span class="text-[12px] font-black text-rose-500 bg-white px-2.5 py-0.5 rounded-lg border shadow-sm shrink-0">${count} งาน</span>
+                    </div>
+                `).join('');
+            }
+
+            // 2. สร้างกราฟ
+            const chartData = allLostJobsData.filter(row => {
+                const m = getCellValue(row, COL_INDEX.A);
+                const s = getCellValue(row, COL_INDEX.E);
+
+                let matchTime = true;
+                if (timeFilter !== 'all') {
+                    matchTime = isWithinTimeFilter(m, timeFilter);
+                } else if (monthVal !== '') {
+                    matchTime = (m === monthVal);
+                }
+
+                const matchSales = (salesVal === '') || (s === salesVal);
+                return matchTime && matchSales;
+            });
+
+            const monthCount = {};
+            chartData.forEach(row => {
+                const m = getCellValue(row, COL_INDEX.A);
+                if (m !== '-') monthCount[m] = (monthCount[m] || 0) + 1;
+            });
+
+            const sortedMonths = Object.keys(monthCount).sort((a, b) => parseMonthString(a).value - parseMonthString(b).value);
+            const chartValues = sortedMonths.map(m => monthCount[m]);
+
+            renderChart(sortedMonths, chartValues);
+        }
+
+        function renderChart(labels, data) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+
+            if (labels.length === 0) return;
+
+            monthlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'จำนวนงานหลุด (เคส)',
+                        data: data,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)', // Rose/Red
+                        hoverBackgroundColor: 'rgba(225, 29, 72, 1)',
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                            padding: 10,
+                            titleFont: { family: 'Anuphan', size: 13 },
+                            bodyFont: { family: 'Anuphan', size: 14, weight: 'bold' },
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { family: 'Anuphan' } },
+                            grid: { color: '#f1f5f9', drawBorder: false }
+                        },
+                        x: {
+                            ticks: { font: { family: 'Anuphan', size: 11 } },
+                            grid: { display: false, drawBorder: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyFilters() {
+            const monthVal = document.getElementById('filterMonth').value;
+            const salesVal = document.getElementById('filterSales').value;
+
+            updateDashboard(monthVal, salesVal, currentTimeFilter);
+
+            const filteredData = allLostJobsData.filter(row => {
+                const m = getCellValue(row, COL_INDEX.A);
+                const s = getCellValue(row, COL_INDEX.E);
+
+                let matchMonth = true;
+                if (currentTimeFilter !== 'all') {
+                    matchMonth = isWithinTimeFilter(m, currentTimeFilter);
+                } else {
+                    matchMonth = (monthVal === '') || (m === monthVal);
+                }
+
+                const matchSales = (salesVal === '') || (s === salesVal);
+                return matchMonth && matchSales;
+            });
+
+            document.getElementById('filteredTotalCount').innerText = filteredData.length;
+            renderTable(filteredData);
+            document.getElementById('displayCount').innerText = filteredData.length;
+        }
+
+        function resetFilters() {
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterSales').value = '';
+            setTimeFilter('all'); // เรียกคืนสไตล์ปุ่ม Quick Filter เป็น "ทั้งหมด" และเรียก applyFilters() ด้วยในตัว
+        }
+
+        function renderTable(rows) {
+            const tbody = document.getElementById('dataTableBody');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            if (rows.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            rows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-rose-50/30 transition-all border-b border-slate-100 last:border-0';
+
+                const colsData = [
+                    getCellValue(row, COL_INDEX.A),  // [0] เดือน
+                    getCellValue(row, COL_INDEX.B),  // [1] วันที่
+                    getCellValue(row, COL_INDEX.E),  // [2] ฝ่ายขาย
+                    getCellValue(row, COL_INDEX.H),  // [3] ชื่อลูกค้า
+                    getCellValue(row, COL_INDEX.M),  // [4] เบอร์โทร
+                    getCellValue(row, COL_INDEX.O),  // [5] ประเภท
+                    getCellValue(row, COL_INDEX.P),  // [6] สถานที่
+                    getCellValue(row, COL_INDEX.R),  // [7] ใบเสนอราคา
+                    getCellValue(row, COL_INDEX.I),  // [8] บริษัท
+                    getCellValue(row, COL_INDEX.S),  // [9] หน้ากระจก (ตรฟ.)
+                ];
+
+                const statusValue = getCellValue(row, COL_INDEX.X);
+                const lossReason = getCellValue(row, COL_INDEX.AQ);
+
+                tr.innerHTML = `
+                    <td class="px-6 py-5 align-top">
+                        <div class="flex flex-col gap-1.5">
+                            <span class="text-sm font-bold text-slate-800">${index + 1}. ${colsData[3]}</span>
+                            ${colsData[8] !== '-' && colsData[8] !== '' ? `<div class="flex items-center gap-1.5 text-slate-600 font-medium text-[12px]"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> ${colsData[8]}</div>` : ''}
+                            <div class="flex items-center gap-1.5 text-slate-500 font-semibold text-[13px]">
+                                <i data-lucide="phone" class="w-3.5 h-3.5"></i> ${colsData[4]}
+                            </div>
+                            <div class="mt-1">
+                                <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">${colsData[5]}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 align-top text-sm">
+                        <div class="flex flex-col gap-1.5">
+                            <div>
+                                <span class="font-black text-slate-700">${colsData[1]}</span>
+                                <span class="text-slate-400 font-medium ml-1">(${colsData[0]})</span>
+                            </div>
+                            <div class="flex items-start gap-1.5 text-slate-600 font-medium text-[12px] leading-tight max-w-[200px]">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5"></i>
+                                <span>${colsData[6]}</span>
+                            </div>
+                            ${colsData[9] !== '-' && colsData[9] !== '' ? `
+                            <div class="flex items-center gap-1.5 text-slate-600 font-medium text-[12px]">
+                                <i data-lucide="maximize" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
+                                <span>พท.กระจก: ${colsData[9]} ตรฟ.</span>
+                            </div>` : ''}
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 align-top">
+                        <div class="flex flex-col gap-2 max-w-[250px]">
+                            <div class="flex items-start gap-1.5 text-rose-600 text-[13px] font-bold leading-snug">
+                                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                                <span>${lossReason}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">สถานะ: ${statusValue}</span>
+                                ${colsData[7] !== '-' ? `<span class="text-[10px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">อ้างอิง: ${colsData[7]}</span>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 align-top text-right">
+                        <div class="flex flex-col items-end gap-1.5">
+                            <span class="text-[14px] font-black text-indigo-700">${colsData[2]}</span>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchData);
+
+    </script>
+</body>
+
+</html>

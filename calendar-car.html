@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ปฎิทินคิวจองติดตั้งฟิล์มรถยนต์</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Layout logic -->
+    <script src="layout.js" defer></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FullCalendar CSS & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <style>
+        .fc {
+            background-color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: none !important;
+        }
+
+        .fc-event {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none !important;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            margin-bottom: 3px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .fc-event:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.95);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .fc .fc-daygrid-day-frame {
+            min-height: 140px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .fc-button-primary {
+            background-color: #3b82f6 !important;
+            border-color: #3b82f6 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]">
+    <div class="pt-20 md:pt-24 md:pl-[260px] px-4 md:px-6 lg:px-8 min-h-screen">
+        <div class="max-w-[1320px] mx-auto">
+
+            <div>
+                <!-- Sidebar & Header จะถูกสร้างอัตโนมัติจาก layout.js -->
+                <!-- แก้เฉพาะพื้นที่นี้ -->
+                <div id="loader" class="loading-overlay">
+                    <div class="spinner mb-4"></div>
+                    <p class="text-slate-600">กำลังจัดเรียงคิวงานตามลำดับเวลา...</p>
+                </div>
+
+                <div class="max-w-full mx-auto">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-800">ปฏิทินคิวจอง แผนกฟิล์มรถยนต์</h1>
+                            <p id="lastUpdate" class="text-slate-500 text-sm italic">กำลังโหลดข้อมูล...</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="refreshBtn"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-200">
+                                <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                รีเฟรชข้อมูล
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="calendar"></div>
+                </div>
+
+                <!-- Modal รายละเอียด -->
+                <div id="detailModal"
+                    class="fixed inset-0 bg-black/60 hidden z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span
+                                    class="text-blue-600 font-semibold text-sm tracking-wider">นัดหมายติดตั้งฟิล์ม</span>
+                                <h2 class="text-2xl font-bold text-slate-800" id="m-time"></h2>
+                            </div>
+                            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="space-y-4 text-slate-700">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    👤</div>
+                                <div>
+                                    <p class="text-xs text-slate-400">ลูกค้า / ประเภทรถ</p>
+                                    <p class="font-medium"><span id="m-customer"></span> (<span id="m-type"></span>)</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    🚗</div>
+                                <div>
+                                    <p class="text-xs text-slate-400">รถยนต์ / ทะเบียน</p>
+                                    <p class="font-medium"><span id="m-car"></span> <span id="m-plate"></span> <span
+                                            class="text-slate-400">|</span> <span id="m-tag"
+                                            class="text-blue-600"></span></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    🎞️</div>
+                                <div>
+                                    <p class="text-xs text-slate-400">รุ่นฟิล์ม</p>
+                                    <p class="font-medium text-blue-700" id="m-film"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                                    💰</div>
+                                <div>
+                                    <p class="text-xs text-slate-400">ยอดขาย</p>
+                                    <p class="font-bold text-green-600 text-lg" id="m-total"></p>
+                                </div>
+                            </div>
+                            <hr class="border-slate-100">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-slate-400">พนักงานขาย</p>
+                                    <p class="text-sm font-medium" id="m-sales"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400">ช่องทาง</p>
+                                    <p class="text-sm font-medium" id="m-contact"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="closeModal()"
+                            class="w-full mt-8 bg-slate-900 hover:bg-black text-white py-3 rounded-xl font-medium transition-colors">ปิดหน้าต่าง</button>
+                    </div>
+                </div>
+
+                <script>
+                    const SHEET_ID = '1QnbSbWJXl-XvgplCJ1l2eQX5VMDlcA8qFaMfvaYRkSk';
+                    const SHEET_NAME = 'คิวฟิล์มรถยนต์';
+
+                    let calendar;
+                    // ปรับปรุง Index ตามที่คุณระบุ (A=0, B=1, C=2...)
+                    const COLS = {
+                        sales: 2,      // C
+                        customer: 4,   // E
+                        date: 14,      // O (วันที่นัด)
+                        time: 15,      // P (เวลานัด)
+                        carModel: 16,  // Q
+                        plate: 17,     // R
+                        carType: 21,   // V
+                        film: 24,      // Y
+                        total: 22,     // W (ยอดขาย)
+                        tag: 27,       // AB (ป้ายทะเบียน)
+                        contact: 28    // AC (ช่องทางติดต่อ)
+                    };
+
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const calendarEl = document.getElementById('calendar');
+                        calendar = new FullCalendar.Calendar(calendarEl, {
+                            initialView: 'dayGridMonth',
+                            locale: 'th',
+                            firstDay: 0,
+                            headerToolbar: {
+                                left: 'prev,next today',
+                                center: 'title',
+                                right: 'dayGridMonth,listMonth'
+                            },
+                            buttonText: { today: 'วันนี้', month: 'เดือน', list: 'รายการ' },
+                            eventClick: (info) => showModal(info.event.extendedProps),
+                            dayMaxEvents: false,
+                            contentHeight: 'auto',
+                            displayEventTime: false,
+                            expandRows: true,
+                            eventOrder: 'sortValue' // บังคับเรียงลำดับตามเวลาที่คำนวณไว้
+                        });
+                        calendar.render();
+                        fetchData();
+                    });
+
+                    // ฟังก์ชันคำนวณลำดับเวลาให้ถูกต้อง
+                    function timeToMinutes(timeStr) {
+                        if (!timeStr) return 9999;
+                        let cleanedTime = String(timeStr).replace(/[^0-9.:]/g, '');
+                        let parts = cleanedTime.split(/[.:]/);
+                        let hours = parseInt(parts[0]);
+                        let mins = parts.length > 1 ? parseInt(parts[1]) : 0;
+
+                        if (isNaN(hours)) return 9999;
+
+                        // ตรรกะ: ถ้าเวลา < 7 (เช่น 1.00, 2.30) ให้ถือว่าเป็นช่วงบ่าย (+12 ชม.)
+                        if (hours < 7) hours += 12;
+
+                        return (hours * 60) + mins;
+                    }
+
+                    function parseGoogleDate(dateVal) {
+                        if (!dateVal) return null;
+                        if (typeof dateVal === 'string' && dateVal.startsWith('Date(')) {
+                            const parts = dateVal.match(/\d+/g);
+                            if (parts) return new Date(parts[0], parts[1], parts[2]);
+                        }
+                        if (typeof dateVal === 'string' && dateVal.includes('/')) {
+                            const parts = dateVal.split('/');
+                            if (parts.length === 3) {
+                                let d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+                                if (y > 2500) y -= 543;
+                                return new Date(y, m, d);
+                            }
+                        }
+                        return null;
+                    }
+
+                    async function fetchData() {
+                        document.getElementById('loader').classList.remove('hidden');
+                        document.getElementById('refreshIcon').classList.add('animate-spin');
+
+                        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+                        try {
+                            const response = await fetch(url);
+                            const text = await response.text();
+                            const jsonStr = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"));
+                            const data = JSON.parse(jsonStr);
+
+                            // เริ่มอ่านข้อมูลจากแถวที่ 3 เป็นต้นไป (slice index 2)
+                            const rows = data.table.rows.slice(2);
+
+                            const events = rows.map(row => {
+                                const c = row.c;
+                                const getVal = (idx) => (c && c[idx] && c[idx].v !== null) ? (c[idx].f || c[idx].v) : '';
+
+                                const customerName = getVal(COLS.customer);
+                                if (!customerName || customerName.trim() === "") return null;
+
+                                const rawDate = (c && c[COLS.date] && c[COLS.date].v) ? c[COLS.date].v : getVal(COLS.date);
+                                const dateObj = parseGoogleDate(rawDate);
+                                if (!dateObj) return null;
+
+                                const timeStr = getVal(COLS.time);
+
+                                return {
+                                    title: `${timeStr} | ${customerName}`,
+                                    start: `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`,
+                                    backgroundColor: '#3b82f6',
+                                    sortValue: timeToMinutes(timeStr),
+                                    extendedProps: {
+                                        time: timeStr,
+                                        customer: customerName,
+                                        car: getVal(COLS.carModel),
+                                        plate: getVal(COLS.plate),
+                                        carType: getVal(COLS.carType),
+                                        tag: getVal(COLS.tag),
+                                        film: getVal(COLS.film),
+                                        total: getVal(COLS.total),
+                                        sales: getVal(COLS.sales),
+                                        contact: getVal(COLS.contact),
+                                        sortValue: timeToMinutes(timeStr)
+                                    }
+                                };
+                            })
+                                .filter(ev => ev !== null);
+
+                            calendar.removeAllEvents();
+                            calendar.addEventSource(events);
+                            document.getElementById('lastUpdate').innerText = `อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+
+                        } catch (error) {
+                            console.error('Error:', error);
+                        } finally {
+                            document.getElementById('loader').classList.add('hidden');
+                            document.getElementById('refreshIcon').classList.remove('animate-spin');
+                        }
+                    }
+
+                    function showModal(data) {
+                        document.getElementById('m-time').innerText = 'เวลา ' + (data.time || 'ไม่ระบุ');
+                        document.getElementById('m-customer').innerText = data.customer;
+                        document.getElementById('m-type').innerText = data.carType || '-';
+                        document.getElementById('m-car').innerText = data.car || '-';
+                        document.getElementById('m-plate').innerText = data.plate || '-';
+                        document.getElementById('m-tag').innerText = data.tag || '';
+                        document.getElementById('m-film').innerText = data.film || '-';
+
+                        const amount = String(data.total).replace(/[^0-9.-]+/g, "");
+                        document.getElementById('m-total').innerText = amount ? Number(amount).toLocaleString() + ' ฿' : '-';
+
+                        document.getElementById('m-sales').innerText = data.sales || '-';
+                        document.getElementById('m-contact').innerText = data.contact || '-';
+
+                        document.getElementById('detailModal').classList.remove('hidden');
+                        document.getElementById('detailModal').classList.add('flex');
+                    }
+
+                    function closeModal() {
+                        document.getElementById('detailModal').classList.add('hidden');
+                        document.getElementById('detailModal').classList.remove('flex');
+                    }
+
+                    document.getElementById('refreshBtn').addEventListener('click', fetchData);
+                </script>
+
+
+            </div>
+        </div>
+</body>
+
+</html>

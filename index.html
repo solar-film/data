@@ -4,19 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Sales & Ads Dashboard</title>
+    <title>Sales & Ads Dashboard - Good Group</title>
 
-    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Layout logic -->
+    <script src="layout.js" defer></script>
+
+    <!-- Tailwind & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chart.js DataLabels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <!-- Google Fonts: Sarabun -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -27,514 +30,300 @@
             background-color: #f8fafc;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            border-radius: 1rem;
+        .card-base {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .hover-lift {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .card-base:hover {
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
 
-        .hover-lift:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .bg-icon {
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            font-size: 5rem;
+            opacity: 0.05;
+            transform: rotate(-15deg);
         }
 
         .loader {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
+            border-top: 3px solid #f97316;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .progress-bar {
-            transition: width 1s ease-in-out;
-        }
+        .progress-bar { transition: width 1s ease-in-out; }
 
-        /* Animation for trophy */
-        @keyframes bounce-slow {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-5px);
-            }
-        }
-
-        .animate-bounce-slow {
-            animation: bounce-slow 2s infinite;
-        }
-
-        /* Hide scrollbar but keep functionality */
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 
-<body class="text-slate-800 min-h-screen flex flex-col">
-
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg">
-                    <i data-lucide="bar-chart-2"></i>
-                </div>
+<body class="bg-[#f8fafc]">
+    <main id="mainContent" class="transition-all">
+        <div class="max-w-7xl mx-auto px-4 md:px-6">
+            
+            <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 class="text-xl font-bold text-slate-900 leading-tight">Sales & Ads Dashboard</h1>
-                    <p class="text-xs text-slate-500">รายงานวิเคราะห์ยอดขาย การติดต่อ และต้นทุนโฆษณา</p>
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">รายงานวิเคราะห์ยอดขาย</h1>
+                    <p id="lastUpdateText" class="text-slate-500 mt-1">กำลังโหลดข้อมูลล่าสุด...</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="refreshBtn" onclick="loadAllData()" class="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    </button>
+                    <div class="hidden sm:flex flex-col text-right mr-2">
+                        <span class="text-xs font-semibold text-slate-900">ผู้ดูแลระบบ</span>
+                        <span class="text-[10px] text-slate-400">Admin Role</span>
+                    </div>
+                    <div class="w-11 h-11 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm">
+                        A
+                    </div>
+                </div>
+            </header>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="flex flex-col items-center justify-center py-24 card-base mb-8">
+                <div class="loader mb-4"></div>
+                <p class="text-slate-500 font-medium animate-pulse">กำลังดึงข้อมูลจาก Google Sheets...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden py-10">
+                <div class="bg-red-50 border border-red-200 text-red-700 p-8 rounded-3xl max-w-2xl mx-auto text-center">
+                    <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-4 text-red-500"></i>
+                    <h3 class="text-xl font-bold mb-2">ไม่สามารถเชื่อมต่อข้อมูลได้</h3>
+                    <p id="errorMsg" class="text-sm opacity-80">กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือสิทธิ์การเข้าถึงไฟล์</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <span id="lastUpdateText" class="text-xs text-slate-400 hidden sm:block">กำลังโหลดข้อมูล...</span>
-                <button id="refreshBtnTop" onclick="loadAllData()"
-                    class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    รีเฟรช
-                </button>
-            </div>
-        </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <!-- Dashboard Content -->
+            <div id="dashboardContent" class="hidden space-y-8 animate-in fade-in duration-500">
 
-        <div id="loadingState" class="flex flex-col items-center justify-center py-20">
-            <div class="loader mb-4"></div>
-            <p class="text-slate-500 font-medium">กำลังเชื่อมต่อฐานข้อมูล Google Sheets...</p>
-        </div>
-
-        <div id="errorState" class="hidden py-10">
-            <div class="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl max-w-2xl mx-auto text-center">
-                <i data-lucide="alert-circle" class="w-10 h-10 mx-auto mb-2 text-red-500"></i>
-                <h3 class="text-lg font-bold mb-2">ไม่สามารถดึงข้อมูลได้</h3>
-                <p id="errorMsg" class="text-sm">กรุณาตรวจสอบว่า Google Sheet เปิดเป็น "แชร์สาธารณะ" แล้วหรือไม่</p>
-            </div>
-        </div>
-
-        <!-- Dashboard Content -->
-        <div id="dashboardContent" class="hidden space-y-6">
-
-            <!-- Filters -->
-            <section class="glass-card p-4 md:p-5">
-                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                    <i data-lucide="filter" class="w-5 h-5 text-blue-500"></i>
-                    <h2 class="font-semibold text-slate-800">ตัวกรองข้อมูล</h2>
-                </div>
-                <div class="flex flex-col md:flex-row gap-6 items-start md:items-end">
-                    <div class="w-full md:w-48">
-                        <label class="block text-xs font-medium text-slate-500 mb-1">เดือน</label>
-                        <select id="filterMonth" onchange="applyFilters()"
-                            class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 text-sm">
-                            <option value="all">ทั้งหมด</option>
-                        </select>
+                <!-- Filters -->
+                <section class="card-base p-6">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="filter" class="w-5 h-5 text-blue-600"></i>
+                        <h2 class="font-bold text-slate-900 text-lg">ตัวกรองข้อมูล</h2>
                     </div>
-                    <div class="flex-1 w-full">
-                        <label class="block text-xs font-medium text-slate-500 mb-2">บริษัท <span
-                                class="font-normal text-slate-400 mx-1">|</span> เป้ายอดขายรวม: <span
-                                id="companyTargetDisplay" class="font-bold text-blue-600 text-sm ml-1">฿0</span></label>
-                        <div id="companyButtons" class="flex flex-wrap gap-2">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">เดือน</label>
+                            <select id="filterMonth" onchange="applyFilters()"
+                                class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl block p-3 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none transition-all">
+                                <option value="all">ทั้งหมด</option>
+                            </select>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- KPIs -->
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                <!-- KPI: Total Sales -->
-                <div class="glass-card p-5 hover-lift relative overflow-hidden group">
-                    <div
-                        class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-emerald-600">
-                        <i data-lucide="coins" class="w-16 h-16"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 mb-1">ยอดขายรวมสุทธิ</p>
-                    <h3 id="kpiTotalSales" class="text-3xl font-bold text-emerald-700 mb-2">฿0</h3>
-
-                    <div class="mt-4">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-500">เป้าหมาย: <span id="kpiTarget"
-                                    class="font-semibold text-slate-700">฿0</span></span>
-                            <span id="kpiPercent" class="font-bold text-emerald-700">0%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div id="kpiProgressBar" class="bg-emerald-600 h-2 rounded-full progress-bar"
-                                style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI: Total Ads & ROAS -->
-                <div class="glass-card p-5 hover-lift relative overflow-hidden group">
-                    <div
-                        class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-rose-500">
-                        <i data-lucide="megaphone" class="w-16 h-16"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 mb-1">ค่าโฆษณารวม</p>
-                    <h3 id="kpiTotalAds" class="text-3xl font-bold text-rose-600 mb-1">฿0</h3>
-
-                    <div class="mt-4 pt-3 border-t border-rose-50">
-                        <div class="flex items-center justify-between">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">ROAS
-                                    (เท่า)</span>
-                                <span id="kpiROAS" class="text-xl font-black text-blue-600">0.00x</span>
+                        <div class="md:col-span-9">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-xs font-bold text-slate-400 uppercase">บริษัท <span class="mx-2 text-slate-200">|</span> เป้ายอดขายรวม: <span id="companyTargetDisplay" class="text-blue-600 font-bold ml-1">฿0</span></label>
                             </div>
-                            <div class="bg-blue-50 p-1.5 rounded-lg">
-                                <i data-lucide="trending-up" class="w-5 h-5 text-blue-500"></i>
+                            <div id="companyButtons" class="flex flex-wrap gap-2">
+                                <!-- Buttons will be injected here -->
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- KPI: Detailed Contact Efficiency -->
-                <div class="glass-card p-5 hover-lift relative overflow-hidden group">
-                    <div
-                        class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-indigo-500">
-                        <i data-lucide="message-square" class="w-16 h-16"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 mb-1">การติดต่อทั้งหมด</p>
-                    <div class="flex items-baseline gap-2">
-                        <h3 id="kpiTotalContacts" class="text-3xl font-bold text-indigo-600">0</h3>
-                        <span class="text-xs text-slate-400">ครั้ง</span>
-                    </div>
-
-                    <div class="mt-3 pt-3 border-t border-indigo-50">
-                        <!-- Channel Breakdown -->
-                        <div class="grid grid-cols-3 gap-1 text-[10px] text-center mb-3">
-                            <div class="flex flex-col">
-                                <span class="text-slate-400">Line</span>
-                                <span id="subContactLine" class="font-bold text-indigo-700">0</span>
+                <!-- KPI Grid -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- KPI: Sales -->
+                    <div class="card-base p-6">
+                        <div class="bg-icon text-emerald-600"><i class="fas fa-coins"></i></div>
+                        <p class="text-slate-500 text-sm font-medium mb-1">ยอดขายรวมสุทธิ</p>
+                        <h3 id="kpiTotalSales" class="text-3xl font-bold text-emerald-600 mb-4">฿0</h3>
+                        
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[11px] font-bold">
+                                <span class="text-slate-400">เป้าหมาย: <span id="kpiTarget" class="text-slate-600">฿0</span></span>
+                                <span id="kpiPercent" class="text-emerald-600">0%</span>
                             </div>
-                            <div class="flex flex-col border-x border-slate-100">
-                                <span class="text-slate-400">Call</span>
-                                <span id="subContactCall" class="font-bold text-indigo-700">0</span>
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="text-slate-400">Chat FB</span>
-                                <span id="subContactFB" class="font-bold text-indigo-700">0</span>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div id="kpiProgressBar" class="bg-emerald-500 h-full progress-bar" style="width: 0%"></div>
                             </div>
                         </div>
-                        <!-- Costs breakdown -->
-                        <div class="space-y-2 bg-slate-50 p-2 rounded-lg">
+                    </div>
+
+                    <!-- KPI: Ads & ROAS -->
+                    <div class="card-base p-6">
+                        <div class="bg-icon text-rose-600"><i class="fas fa-bullhorn"></i></div>
+                        <p class="text-slate-500 text-sm font-medium mb-1">ค่าโฆษณารวม</p>
+                        <h3 id="kpiTotalAds" class="text-3xl font-bold text-rose-600 mb-4">฿0</h3>
+                        
+                        <div class="pt-3 border-t border-slate-50 flex items-end justify-between">
+                            <div class="space-y-1">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">ROAS (เท่า)</p>
+                                <p id="kpiROAS" class="text-2xl font-black text-blue-600 leading-none">0.00x</p>
+                            </div>
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="trending-up" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Contacts -->
+                    <div class="card-base p-6">
+                        <div class="bg-icon text-indigo-600"><i class="fas fa-comment-dots"></i></div>
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <h3 id="kpiTotalContacts" class="text-3xl font-bold text-indigo-600">0</h3>
+                            <span class="text-xs text-slate-400 font-medium">ครั้ง</span>
+                        </div>
+                        <p class="text-slate-500 text-sm font-medium mb-3">การติดต่อทั้งหมด</p>
+                        
+                        <div class="grid grid-cols-3 gap-1 mb-4 border-b border-slate-50 pb-3">
+                            <div class="text-center">
+                                <p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Line</p>
+                                <p id="subContactLine" class="text-xs font-bold text-indigo-700">0</p>
+                            </div>
+                            <div class="text-center border-x border-slate-100">
+                                <p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Call</p>
+                                <p id="subContactCall" class="text-xs font-bold text-indigo-700">0</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Chat FB</p>
+                                <p id="subContactFB" class="text-xs font-bold text-indigo-700">0</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-xl p-3 space-y-2">
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] text-slate-500 font-bold uppercase">เฉลี่ย / ติดต่อ</span>
-                                <span id="kpiCostPerContact" class="text-xs font-bold text-indigo-600">฿0</span>
+                                <span id="kpiCostPerContact" class="text-xs font-bold text-blue-600">฿0</span>
                             </div>
-                            <div class="flex justify-between items-center border-t border-slate-200 pt-1">
+                            <div class="flex justify-between items-center border-t border-slate-200 pt-2">
                                 <div class="flex flex-col">
-                                    <span class="text-[10px] text-slate-500 font-bold uppercase">เฉลี่ย / Lead</span>
-                                    <span class="text-[9px] text-slate-400 italic">(รวม <span id="kpiNewLeads">0</span>
-                                        Leads)</span>
+                                    <span class="text-[10px] text-slate-500 font-bold uppercase">เฉลี่ย / LEAD</span>
+                                    <span class="text-[9px] text-slate-400 italic">(รวม <span id="kpiNewLeads">0</span> Leads)</span>
                                 </div>
                                 <span id="kpiCostPerLead" class="text-xs font-bold text-rose-600">฿0</span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- KPI: Sales Breakdown Mini -->
-                <div class="glass-card p-5 hover-lift flex flex-col justify-center">
-                    <p class="text-sm font-medium text-slate-500 mb-3 border-b border-slate-100 pb-2">ยอดขายแยกตามประเภท
-                        (เทียบเป้า)</p>
-                    <div class="space-y-4">
-                        <div class="space-y-1">
-                            <div class="flex justify-between items-end">
-                                <span class="flex items-center gap-2 text-xs font-semibold text-slate-600"><span
-                                        class="w-2 h-2 rounded-full bg-indigo-500"></span>CAR</span>
-                                <div class="text-right">
-                                    <div id="kpiSalesCAR" class="font-bold text-slate-800 text-sm">฿0</div>
-                                    <div class="text-[10px] text-slate-400">เป้า: <span id="targetCAR">฿0</span> (<span
-                                            id="pctCAR" class="font-medium text-indigo-500">0%</span>)</div>
+                    <!-- KPI: Type Breakdown -->
+                    <div class="card-base p-6">
+                        <p class="text-sm font-bold text-slate-700 mb-4">ยอดขายแยกตามประเภท (เทียบเป้า)</p>
+                        <div class="space-y-5">
+                            <!-- CAR -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-xs font-bold text-slate-600 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-500"></span>CAR</span>
+                                    <div class="text-right">
+                                        <p id="kpiSalesCAR" class="text-sm font-bold text-slate-900">฿0</p>
+                                        <p class="text-[9px] text-slate-400 font-medium">เป้า: <span id="targetCAR">฿0</span> (<span id="pctCAR" class="text-indigo-600">0.0%</span>)</p>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div id="barCAR" class="bg-indigo-500 h-full progress-bar" style="width: 0%"></div>
                                 </div>
                             </div>
-                            <div class="w-full bg-slate-100 rounded-full h-1">
-                                <div id="barCAR" class="bg-indigo-500 h-1 rounded-full progress-bar" style="width: 0%">
+                            <!-- GFS -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-xs font-bold text-slate-600 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyan-500"></span>GFS</span>
+                                    <div class="text-right">
+                                        <p id="kpiSalesGFS" class="text-sm font-bold text-slate-900">฿0</p>
+                                        <p class="text-[9px] text-slate-400 font-medium">เป้า: <span id="targetGFS">฿0</span> (<span id="pctGFS" class="text-cyan-600">0.0%</span>)</p>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div id="barGFS" class="bg-cyan-500 h-full progress-bar" style="width: 0%"></div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between items-end">
-                                <span class="flex items-center gap-2 text-xs font-semibold text-slate-600"><span
-                                        class="w-2 h-2 rounded-full bg-cyan-500"></span>GFS</span>
-                                <div class="text-right">
-                                    <div id="kpiSalesGFS" class="font-bold text-slate-800 text-sm">฿0</div>
-                                    <div class="text-[10px] text-slate-400">เป้า: <span id="targetGFS">฿0</span> (<span
-                                            id="pctGFS" class="font-medium text-cyan-500">0%</span>)</div>
+                            <!-- MHL -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-xs font-bold text-slate-600 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-purple-500"></span>MHL</span>
+                                    <div class="text-right">
+                                        <p id="kpiSalesMHL" class="text-sm font-bold text-slate-900">฿0</p>
+                                        <p class="text-[9px] text-slate-400 font-medium">เป้า: <span id="targetMHL">฿0</span> (<span id="pctMHL" class="text-purple-600">0.0%</span>)</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="w-full bg-slate-100 rounded-full h-1">
-                                <div id="barGFS" class="bg-cyan-500 h-1 rounded-full progress-bar" style="width: 0%">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between items-end">
-                                <span class="flex items-center gap-2 text-xs font-semibold text-slate-600"><span
-                                        class="w-2 h-2 rounded-full bg-fuchsia-500"></span>MHL</span>
-                                <div class="text-right">
-                                    <div id="kpiSalesMHL" class="font-bold text-slate-800 text-sm">฿0</div>
-                                    <div class="text-[10px] text-slate-400">เป้า: <span id="targetMHL">฿0</span> (<span
-                                            id="pctMHL" class="font-medium text-fuchsia-500">0%</span>)</div>
-                                </div>
-                            </div>
-                            <div class="w-full bg-slate-100 rounded-full h-1">
-                                <div id="barMHL" class="bg-fuchsia-500 h-1 rounded-full progress-bar" style="width: 0%">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Combined Main Visualisation Card with Tabs -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <section class="glass-card lg:col-span-2 overflow-hidden flex flex-col">
-                    <div
-                        class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 overflow-x-auto scrollbar-hide">
-                        <div class="flex items-center gap-6 whitespace-nowrap">
-                            <button onclick="switchVisualTab('monthly')" id="tabBtnMonthly"
-                                class="pb-3 border-b-2 border-blue-600 text-blue-600 font-bold text-sm transition-all">
-                                วิเคราะห์รายเดือน
-                            </button>
-                            <button onclick="switchVisualTab('daily')" id="tabBtnDaily"
-                                class="pb-3 border-b-2 border-transparent text-slate-400 font-medium text-sm hover:text-slate-600 transition-all">
-                                วิเคราะห์รายวัน
-                            </button>
-                            <button onclick="switchVisualTab('contacts')" id="tabBtnContacts"
-                                class="pb-3 border-b-2 border-transparent text-slate-400 font-medium text-sm hover:text-slate-600 transition-all flex items-center gap-2">
-                                วิเคราะห์การติดต่อ
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Monthly Analysis Tab (Default) -->
-                    <div id="tabContentMonthly" class="pt-5 px-5 pb-1 flex-grow">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800 text-sm">ยอดขายเทียบเป้าหมาย (12 เดือนย้อนหลัง)</h3>
-                        </div>
-                        <div class="relative h-[400px] w-full">
-                            <canvas id="monthlyComparisonChart"></canvas>
-                        </div>
-                        
-                        <!-- Summary Cards for Monthly -->
-                        <div class="mt-6 border-t border-slate-100 pt-5 mb-4">
-                            <div class="flex items-center gap-2 mb-4">
-                                <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-600"></i>
-                                <h3 class="text-sm font-bold text-slate-800">การ์ดสรุปยอดขายและเป้าหมาย (12 เดือนย้อนหลัง)</h3>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="bg-purple-50/50 rounded-xl p-4 border border-purple-100">
-                                    <span class="text-sm font-medium text-purple-600">เป้ายอดขายรวม</span>
-                                    <p id="tabMonthlyTarget" class="text-2xl font-bold text-purple-800 mt-1">฿0</p>
-                                </div>
-                                <div class="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
-                                    <span class="text-sm font-medium text-emerald-600">ยอดขายจริงรวม</span>
-                                    <p id="tabMonthlySales" class="text-2xl font-bold text-emerald-800 mt-1">฿0</p>
-                                </div>
-                                <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
-                                    <span class="text-sm font-medium text-blue-600">% สำเร็จตามเป้า</span>
-                                    <p id="tabMonthlyAchieve" class="text-2xl font-bold text-blue-800 mt-1">0%</p>
-                                </div>
-                                <div class="bg-rose-50/50 rounded-xl p-4 border border-rose-100">
-                                    <span class="text-sm font-medium text-rose-600">ขาดอีก</span>
-                                    <p id="tabMonthlyDiff" class="text-2xl font-bold text-rose-800 mt-1">฿0</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="tabContentDaily" class="pt-5 px-5 pb-1 flex-grow hidden">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800 text-sm">แนวโน้มยอดขายเทียบกับค่าโฆษณา (รายวัน)</h3>
-                        </div>
-                        <div class="relative h-[400px] w-full">
-                            <canvas id="trendChart"></canvas>
-                        </div>
-                        
-                        <!-- Summary Cards for Daily -->
-                        <div class="mt-6 border-t border-slate-100 pt-5 mb-4">
-                            <div class="flex items-center gap-2 mb-4">
-                                <i data-lucide="calendar-days" class="w-5 h-5 text-blue-600"></i>
-                                <h3 class="text-sm font-bold text-slate-800">การ์ดสรุปยอดขายและโฆษณา (ตามตัวกรองด้านบน)</h3>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
-                                    <span class="text-sm font-medium text-emerald-600">ยอดขายรวม</span>
-                                    <p id="tabDailySales" class="text-2xl font-bold text-emerald-800 mt-1">฿0</p>
-                                </div>
-                                <div class="bg-rose-50/50 rounded-xl p-4 border border-rose-100">
-                                    <span class="text-sm font-medium text-rose-600">ค่าโฆษณารวม</span>
-                                    <p id="tabDailyAds" class="text-2xl font-bold text-rose-800 mt-1">฿0</p>
-                                </div>
-                                <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
-                                    <span class="text-sm font-medium text-blue-600">ROAS เฉลี่ย</span>
-                                    <p id="tabDailyROAS" class="text-2xl font-bold text-blue-800 mt-1">0x</p>
-                                </div>
-                                <div class="bg-amber-50/50 rounded-xl p-4 border border-amber-100">
-                                    <span class="text-sm font-medium text-amber-600">ยอดขายสูงสุด/วัน</span>
-                                    <p id="tabDailyMax" class="text-2xl font-bold text-amber-800 mt-1">฿0</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="tabContentContacts" class="pt-5 px-5 pb-1 flex-grow hidden">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800 text-sm">สถิติการติดต่อแยกตามช่องทาง (รายเดือน)</h3>
-                        </div>
-                        <div class="relative h-[400px] w-full">
-                            <canvas id="contactTrendChart"></canvas>
-                        </div>
-                        
-                        <!-- Summary Cards for Contacts -->
-                        <div class="mt-6 border-t border-slate-100 pt-5 mb-4">
-                            <div class="flex items-center gap-2 mb-4">
-                                <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
-                                <h3 class="text-sm font-bold text-slate-800">การ์ดสรุปการติดต่อ (12 เดือนย้อนหลัง)</h3>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
-                                    <span class="text-sm font-medium text-indigo-600">รวมการติดต่อ</span>
-                                    <p id="tabContactTotal" class="text-2xl font-bold text-indigo-800 mt-1">0</p>
-                                </div>
-                                <div class="bg-purple-50/50 rounded-xl p-4 border border-purple-100">
-                                    <span class="text-sm font-medium text-purple-600">รวม Leads</span>
-                                    <p id="tabContactLeads" class="text-2xl font-bold text-purple-800 mt-1">0</p>
-                                </div>
-                                <div class="bg-rose-50/50 rounded-xl p-4 border border-rose-100">
-                                    <span class="text-sm font-medium text-rose-600">ต้นทุน / ติดต่อ</span>
-                                    <p id="tabContactCostPerContact" class="text-2xl font-bold text-rose-800 mt-1">฿0</p>
-                                </div>
-                                <div class="bg-orange-50/50 rounded-xl p-4 border border-orange-100">
-                                    <span class="text-sm font-medium text-orange-600">ต้นทุน / Lead</span>
-                                    <p id="tabContactCostPerLead" class="text-2xl font-bold text-orange-800 mt-1">฿0</p>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div id="barMHL" class="bg-purple-500 h-full progress-bar" style="width: 0%"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section class="flex flex-col gap-6">
-                    <!-- Ads Breakdown Pie -->
-                    <div class="glass-card p-5 flex-1">
-                        <div class="flex items-center gap-2 mb-4 border-b border-slate-50 pb-2">
-                            <i data-lucide="pie-chart" class="w-4 h-4 text-rose-500"></i>
-                            <h3 class="font-bold text-slate-800 text-sm">สัดส่วนค่าโฆษณา</h3>
+                <!-- Chart Area -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
+                    <section class="card-base lg:col-span-2 flex flex-col min-h-[500px]">
+                        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-50 overflow-x-auto scrollbar-hide">
+                            <div class="flex items-center gap-8 whitespace-nowrap">
+                                <button onclick="switchVisualTab('monthly')" id="tabBtnMonthly"
+                                    class="pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm transition-all">
+                                    วิเคราะห์รายเดือน
+                                </button>
+                                <button onclick="switchVisualTab('daily')" id="tabBtnDaily"
+                                    class="pb-4 border-b-2 border-transparent text-slate-400 font-medium text-sm hover:text-slate-600 transition-all">
+                                    แนวโน้มยอดขาย & โฆษณา
+                                </button>
+                                <button onclick="switchVisualTab('contacts')" id="tabBtnContacts"
+                                    class="pb-4 border-b-2 border-transparent text-slate-400 font-medium text-sm hover:text-slate-600 transition-all">
+                                    สถิติช่องทางติดต่อ
+                                </button>
+                            </div>
                         </div>
-                        <div class="relative h-[220px] w-full">
-                            <canvas id="adsBreakdownChart"></canvas>
+
+                        <div id="tabContentMonthly" class="p-6 flex-grow">
+                            <div class="relative h-[400px]">
+                                <canvas id="monthlyComparisonChart"></canvas>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-1 gap-2 mt-4 text-[11px]" id="adsLegend">
+
+                        <div id="tabContentDaily" class="p-6 flex-grow hidden">
+                            <div class="relative h-[400px]">
+                                <canvas id="trendChart"></canvas>
+                            </div>
                         </div>
-                    </div>
-                    <!-- Ads per Company Mini List -->
-                    <div class="glass-card p-5 flex-1">
-                        <p class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                            <i data-lucide="building-2" class="w-4 h-4 text-blue-500"></i>
-                            ค่าโฆษณาแยกตามบริษัท
-                        </p>
-                        <div id="adsCompanyList" class="space-y-0 max-h-[200px] overflow-y-auto pr-1 scrollbar-hide">
+
+                        <div id="tabContentContacts" class="p-6 flex-grow hidden">
+                            <div class="relative h-[400px]">
+                                <canvas id="contactTrendChart"></canvas>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+
+                    <section class="flex flex-col gap-8">
+                        <div class="card-base p-6">
+                            <div class="flex items-center gap-2 mb-6 border-b border-slate-50 pb-4">
+                                <i data-lucide="pie-chart" class="w-5 h-5 text-rose-500"></i>
+                                <h3 class="font-bold text-slate-900">สัดส่วนค่าโฆษณา</h3>
+                            </div>
+                            <div class="relative h-[240px] mb-6">
+                                <canvas id="adsBreakdownChart"></canvas>
+                            </div>
+                            <div class="space-y-2" id="adsLegend"></div>
+                        </div>
+
+                        <div class="card-base p-6">
+                            <div class="flex items-center gap-2 mb-4">
+                                <i data-lucide="building-2" class="w-5 h-5 text-blue-500"></i>
+                                <h3 class="font-bold text-slate-900">ยอดรวมแยกตามบริษัท</h3>
+                            </div>
+                            <div id="adsCompanyList" class="space-y-1 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide"></div>
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
     </main>
-
-    <!-- Floating Action Buttons for Navigation -->
-    <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-[100]">
-
-        <!-- ภาพรวม -->
-        <a href="index.html"
-            class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
-            <!-- Dashboard Icon -->
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-            </svg>
-            <span
-                class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">ภาพรวม</span>
-        </a>
-
-        <!-- Lead -->
-        <a href="lead.html"
-            class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group relative">
-
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-
-            <span
-                class="absolute right-16 top-1/2 -translate-y-1/2 bg-purple-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
-                Lead
-            </span>
-        </a>
-
-        <!-- รายวัน -->
-        <a href="date.html"
-            class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
-            <!-- Calendar Day -->
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span
-                class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายวัน</span>
-        </a>
-
-        <!-- รายเดือน -->
-        <a href="#"
-            class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
-            <!-- Calendar Month -->
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    d="M3 8h18M8 3v2m8-2v2M5 21h14a2 2 0 002-2V8H3v11a2 2 0 002 2z" />
-            </svg>
-            <span
-                class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายเดือน</span>
-        </a>
-
-        <!-- รายปี -->
-        <a href="year.html"
-            class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
-            <!-- Chart Icon -->
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    d="M11 3v18m-4-4v4m8-10v10m4-6v6" />
-            </svg>
-            <span
-                class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายปี</span>
-        </a>
-    </div>
-
-    </div>
 
     <script>
         lucide.createIcons();
@@ -544,7 +333,7 @@
         let rawTargetData = [];
         let filteredData = [];
         let activeCompany = 'all';
-        let currentVisualTab = 'monthly'; // SET MONTHLY AS DEFAULT
+        let currentVisualTab = 'monthly';
 
         let trendChartObj = null;
         let adsChartObj = null;
@@ -568,11 +357,10 @@
 
         Chart.defaults.font.family = "'Sarabun', sans-serif";
 
-        // Custom Plugin for drawing Trophy on bars that reach target
         const trophyPlugin = {
             id: 'trophyPlugin',
-            afterDatasetsDraw(chart, args, pluginOptions) {
-                const { ctx, data, chartArea: { top, bottom, left, right, width, height }, scales: { x, y } } = chart;
+            afterDatasetsDraw(chart) {
+                const { ctx, data, scales: { x, y } } = chart;
                 if (chart.canvas.id !== 'monthlyComparisonChart') return;
                 const salesDataset = data.datasets.find(ds => ds.label === 'ยอดขายจริง');
                 const targetDataset = data.datasets.find(ds => ds.label === 'เป้ายอดขาย');
@@ -585,10 +373,7 @@
                         const yPos = y.getPixelForValue(val);
                         ctx.font = '22px Arial';
                         ctx.textAlign = 'center';
-                        ctx.textBaseline = 'bottom';
-                        ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
-                        ctx.shadowBlur = 6;
-                        ctx.fillText('🏆', xPos, yPos - 5);
+                        ctx.fillText('🏆', xPos, yPos - 12);
                     }
                 });
                 ctx.restore();
@@ -601,45 +386,12 @@
             return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(number);
         }
 
-        function parseSheetDateCell(cell) {
-            if (!cell) return { raw: '', iso: '' };
-            if (cell.v && typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
-                let match = cell.v.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
-                if (match) {
-                    let y = parseInt(match[1]);
-                    let m = parseInt(match[2]) + 1;
-                    let d = parseInt(match[3]);
-                    let yearEng = y > 2500 ? y - 543 : y;
-                    let yearThai = y > 2500 ? y : y + 543;
-                    let iso = `${yearEng}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-                    let raw = `${d.toString().padStart(2, '0')}/${m.toString().padStart(2, '0')}/${yearThai}`;
-                    return { raw, iso };
-                }
-            }
-            let textVal = cell.f ? String(cell.f).trim() : (cell.v ? String(cell.v).trim() : '');
-            let iso = textVal;
-            const parts = textVal.split('/');
-            if (parts.length === 3) {
-                const day = parts[0].padStart(2, '0');
-                const month = parts[1].padStart(2, '0');
-                let year = parseInt(parts[2], 10);
-                if (year < 100) year += (year > 50 ? 2500 : 2000);
-                let yearEng = year > 2500 ? year - 543 : year;
-                let yearThai = year > 2500 ? year : year + 543;
-                iso = `${yearEng}-${month}-${day}`;
-                textVal = `${day}/${month}/${yearThai}`;
-            }
-            return { raw: textVal || 'Unknown', iso: iso };
-        }
-
         async function fetchSheet(sheetName) {
             const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
-            try {
-                const response = await fetch(url);
-                const text = await response.text();
-                const jsonText = text.substring(47, text.length - 2);
-                return JSON.parse(jsonText);
-            } catch (error) { throw error; }
+            const response = await fetch(url);
+            const text = await response.text();
+            const jsonText = text.substring(47, text.length - 2);
+            return JSON.parse(jsonText);
         }
 
         function getCellValue(cell, type = 'number') {
@@ -647,124 +399,130 @@
             if (type === 'number') {
                 let val = (cell.v !== null && cell.v !== undefined) ? cell.v : cell.f;
                 if (typeof val === 'number') return val;
-                if (typeof val === 'string') {
-                    const cleanStr = val.replace(/[^0-9.-]+/g, '');
-                    return Number(cleanStr) || 0;
-                }
+                if (typeof val === 'string') return Number(val.replace(/[^0-9.-]+/g, '')) || 0;
                 return 0;
             }
             return cell.f ? String(cell.f).trim() : (cell.v !== null && cell.v !== undefined ? String(cell.v).trim() : '');
         }
 
-        function processDailyData(json) {
-            const rows = json.table.rows;
-            rawDailyData = [];
-            let currentMonth = '';
-            rows.forEach((row) => {
-                const c = row.c;
-                if (!c) return;
-                let monthVal = getCellValue(c[0], 'string').trim();
-                if (monthVal) currentMonth = monthVal; else monthVal = currentMonth;
-                let parsedDate = parseSheetDateCell(c[1]);
-                if (!parsedDate.raw || parsedDate.raw === 'วันที่' || parsedDate.raw === 'Unknown') return;
-
-                rawDailyData.push({
-                    month: monthVal,
-                    dateRaw: parsedDate.raw,
-                    dateIso: parsedDate.iso,
-                    company: getCellValue(c[2], 'string').trim(),
-                    adsGoogle: getCellValue(c[3]),
-                    contactLine: getCellValue(c[4]),
-                    contactCall: getCellValue(c[5]),
-                    adsFB: getCellValue(c[6]),
-                    contactFB: getCellValue(c[7]),
-                    adsLine: getCellValue(c[8]),
-                    adsTiktok: getCellValue(c[9]),
-                    newLead: getCellValue(c[10]),
-                    salesGFS: getCellValue(c[11]),
-                    salesMHL: getCellValue(c[12]),
-                    salesCAR: getCellValue(c[13])
-                });
-            });
-        }
-
-        function processTargetData(json) {
-            const rows = json.table.rows;
-            rawTargetData = [];
-            let currentMonth = '';
-            rows.forEach((row, index) => {
-                const c = row.c;
-                if (!c || index === 0) return;
-                let monthVal = getCellValue(c[0], 'string').trim();
-                let companyVal = getCellValue(c[1], 'string').trim();
-                let targetVal = getCellValue(c[2], 'number');
-                if (monthVal === 'เดือน') return;
-                if (monthVal !== '') currentMonth = monthVal; else monthVal = currentMonth;
-                if (!monthVal || !companyVal) return;
-                rawTargetData.push({ month: monthVal, company: companyVal, target: targetVal });
-            });
+        function parseSheetDateCell(cell) {
+            if (!cell) return { raw: '', iso: '' };
+            if (cell.v && typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
+                let match = cell.v.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
+                if (match) {
+                    let y = parseInt(match[1]), m = parseInt(match[2]) + 1, d = parseInt(match[3]);
+                    let yearEng = y > 2500 ? y - 543 : y;
+                    return { raw: `${d}/${m}/${y}`, iso: `${yearEng}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}` };
+                }
+            }
+            return { raw: getCellValue(cell, 'string'), iso: '' };
         }
 
         async function loadAllData() {
             document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('errorState').classList.add('hidden');
             document.getElementById('dashboardContent').classList.add('hidden');
             try {
                 const [dailyRes, targetRes] = await Promise.all([fetchSheet('รายวัน'), fetchSheet('Traget')]);
-                processDailyData(dailyRes);
-                processTargetData(targetRes);
+                
+                rawDailyData = dailyRes.table.rows.map(row => {
+                    const c = row.c;
+                    if (!c) return null;
+                    const dateInfo = parseSheetDateCell(c[1]);
+                    return {
+                        month: getCellValue(c[0], 'string'),
+                        dateRaw: dateInfo.raw,
+                        dateIso: dateInfo.iso,
+                        company: getCellValue(c[2], 'string'),
+                        adsGoogle: getCellValue(c[3]),
+                        contactLine: getCellValue(c[4]),
+                        contactCall: getCellValue(c[5]),
+                        adsFB: getCellValue(c[6]),
+                        contactFB: getCellValue(c[7]),
+                        adsLine: getCellValue(c[8]),
+                        adsTiktok: getCellValue(c[9]),
+                        newLead: getCellValue(c[10]),
+                        salesGFS: getCellValue(c[11]),
+                        salesMHL: getCellValue(c[12]),
+                        salesCAR: getCellValue(c[13])
+                    };
+                }).filter(d => d && d.company);
+
+                rawTargetData = targetRes.table.rows.slice(1).map(row => {
+                    const c = row.c;
+                    return { month: getCellValue(c[0], 'string'), company: getCellValue(c[1], 'string'), target: getCellValue(c[2], 'number') };
+                }).filter(t => t.month && t.company);
+
                 setupFilters();
                 applyFilters();
-                document.getElementById('lastUpdateText').textContent = `อัพเดทล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+
+                document.getElementById('lastUpdateText').textContent = `อัปเดตล่าสุดเมื่อ ${new Date().toLocaleTimeString('th-TH')} น.`;
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('dashboardContent').classList.remove('hidden');
-            } catch (error) {
+            } catch (e) {
+                console.error(e);
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('errorState').classList.remove('hidden');
             }
         }
 
         function setupFilters() {
-            const months = [...new Set(rawDailyData.map(d => d.month).filter(m => m))];
-            const monthSelect = document.getElementById('filterMonth');
-            monthSelect.innerHTML = '<option value="all">ทุกเดือน</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
-
+            const months = [...new Set(rawDailyData.map(d => d.month))].filter(Boolean);
+            const select = document.getElementById('filterMonth');
+            select.innerHTML = '<option value="all">ทุกเดือน</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
+            
             const now = new Date();
+            const thaiShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const thaiFull = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
             const mIdx = now.getMonth();
-            const thaiShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][mIdx];
-            let currentMonthMatch = [...months].reverse().find(m => m.includes(thaiShort));
-            if (currentMonthMatch) monthSelect.value = currentMonthMatch; else if (months.length > 0) monthSelect.value = months[months.length - 1];
+            const yThaiFull = (now.getFullYear() + 543).toString();
+            const yThaiShort = yThaiFull.slice(-2);
+            
+            const match = months.slice().reverse().find(m => {
+                const isMonth = m.includes(thaiShort[mIdx]) || m.includes(thaiFull[mIdx]);
+                const isYear = m.includes(yThaiFull) || m.includes(yThaiShort);
+                return isMonth && isYear;
+            });
+            
+            if (match) select.value = match;
+            else if (months.length > 0) select.value = months[months.length - 1];
 
-            const companies = [...new Set(rawDailyData.map(d => d.company).filter(c => c))].sort();
+            const companies = [...new Set(rawDailyData.map(d => d.company))].sort();
             const container = document.getElementById('companyButtons');
-            let btns = `<button data-company="all" onclick="setCompany('all')" class="px-4 py-2 text-sm font-medium rounded-lg border bg-blue-600 text-white shadow-md">ทุกบริษัท</button>`;
+            let btns = `<button data-comp="all" onclick="setCompany('all')" class="px-5 py-2.5 text-sm font-bold rounded-xl border-2 transition-all bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100">ทุกบริษัท</button>`;
             companies.forEach(c => {
-                btns += `<button data-company="${c}" onclick="setCompany('${c}')" class="px-4 py-2 text-sm font-medium rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50">${c}</button>`;
+                btns += `<button data-comp="${c}" onclick="setCompany('${c}')" class="px-5 py-2.5 text-sm font-bold rounded-xl border border-slate-100 bg-white text-slate-500 hover:border-slate-200 transition-all"> ${c} </button>`;
             });
             container.innerHTML = btns;
         }
 
-        function setCompany(comp) {
-            activeCompany = comp;
-            const buttons = document.querySelectorAll('#companyButtons button');
-            buttons.forEach(btn => {
-                if (btn.dataset.company === comp) btn.className = 'px-4 py-2 text-sm font-medium rounded-lg border bg-blue-600 text-white shadow-md';
-                else btn.className = 'px-4 py-2 text-sm font-medium rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+        function setCompany(c) {
+            activeCompany = c;
+            document.querySelectorAll('#companyButtons button').forEach(btn => {
+                if (btn.dataset.comp === c) {
+                    btn.className = "px-5 py-2.5 text-sm font-bold rounded-xl border-2 transition-all bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100";
+                } else {
+                    btn.className = "px-5 py-2.5 text-sm font-bold rounded-xl border border-slate-100 bg-white text-slate-500 hover:border-slate-200 transition-all";
+                }
             });
             applyFilters();
         }
 
+        function applyFilters() {
+            const m = document.getElementById('filterMonth').value;
+            filteredData = rawDailyData.filter(d => (m === 'all' || d.month === m) && (activeCompany === 'all' || d.company === activeCompany));
+            updateDashboard();
+        }
+
         function switchVisualTab(tab) {
             currentVisualTab = tab;
-            const tabs = ['Monthly', 'Daily', 'Contacts'];
-            tabs.forEach(t => {
+            ['Monthly', 'Daily', 'Contacts'].forEach(t => {
                 const btn = document.getElementById(`tabBtn${t}`);
                 const content = document.getElementById(`tabContent${t}`);
-                if (t.toLowerCase() === tab.toLowerCase()) {
-                    btn.className = "pb-3 border-b-2 border-blue-600 text-blue-600 font-bold text-sm transition-all";
+                if (t.toLowerCase() === tab) {
+                    btn.className = "pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm transition-all";
                     content.classList.remove('hidden');
                 } else {
-                    btn.className = "pb-3 border-b-2 border-transparent text-slate-400 font-medium text-sm hover:text-slate-600 transition-all";
+                    btn.className = "pb-4 border-b-2 border-transparent text-slate-400 font-medium text-sm hover:text-slate-600 transition-all";
                     content.classList.add('hidden');
                 }
             });
@@ -773,375 +531,174 @@
             if (tab === 'contacts' && contactTrendChartObj) contactTrendChartObj.update();
         }
 
-        function applyFilters() {
-            const month = document.getElementById('filterMonth').value;
-            filteredData = rawDailyData.filter(d => (month === 'all' || d.month === month) && (activeCompany === 'all' || d.company === activeCompany));
-            updateDashboard();
-        }
-
         function updateDashboard() {
-            let sCAR = 0, sGFS = 0, sMHL = 0, aG = 0, aFB = 0, aL = 0, aTK = 0, nLead = 0, totalContacts = 0;
-            let cLine = 0, cCall = 0, cFB = 0;
-            let compStats = {};
+            let sC = 0, sG = 0, sM = 0, aG = 0, aF = 0, aL = 0, aT = 0, lead = 0;
+            let cL = 0, cCa = 0, cF = 0;
+            let compMap = {};
 
             filteredData.forEach(d => {
-                sCAR += d.salesCAR; sGFS += d.salesGFS; sMHL += d.salesMHL;
-                const dailyTotalAds = d.adsGoogle + d.adsFB + d.adsLine + d.adsTiktok;
-                const dailyContacts = d.contactLine + d.contactCall + d.contactFB;
+                sC += d.salesCAR; sG += d.salesGFS; sM += d.salesMHL;
+                aG += d.adsGoogle; aF += d.adsFB; aL += d.adsLine; aT += d.adsTiktok;
+                lead += d.newLead;
+                cL += d.contactLine; cCa += d.contactCall; cF += d.contactFB;
 
-                aG += d.adsGoogle; aFB += d.adsFB; aL += d.adsLine; aTK += d.adsTiktok;
-                nLead += d.newLead;
-                cLine += d.contactLine; cCall += d.contactCall; cFB += d.contactFB;
-                totalContacts += dailyContacts;
-
-                if (!compStats[d.company]) {
-                    compStats[d.company] = { ads: 0, contacts: 0, leads: 0 };
-                }
-                compStats[d.company].ads += dailyTotalAds;
-                compStats[d.company].contacts += dailyContacts;
-                compStats[d.company].leads += d.newLead;
+                if(!compMap[d.company]) compMap[d.company] = { ads: 0, contacts: 0, leads: 0 };
+                compMap[d.company].ads += (d.adsGoogle + d.adsFB + d.adsLine + d.adsTiktok);
+                compMap[d.company].contacts += (d.contactLine + d.contactCall + d.contactFB);
+                compMap[d.company].leads += d.newLead;
             });
 
-            const tSales = sCAR + sGFS + sMHL, tAds = aG + aFB + aL + aTK;
-            const roasValue = tAds > 0 ? (tSales / tAds).toFixed(2) : '0.00';
+            const totalSales = sC + sG + sM, totalAds = aG + aF + aL + aT, totalContacts = cL + cCa + cF;
+            const roas = totalAds > 0 ? (totalSales / totalAds).toFixed(2) : '0.00';
 
-            const costPerContact = totalContacts > 0 ? (tAds / totalContacts).toFixed(0) : '0';
-            const costPerLead = nLead > 0 ? (tAds / nLead).toFixed(0) : '0';
-
-            // KPI Update
-            document.getElementById('kpiTotalSales').textContent = formatBaht(tSales);
-            document.getElementById('kpiTotalAds').textContent = formatBaht(tAds);
-            document.getElementById('kpiROAS').textContent = `${roasValue}x`;
-
-            // Contact KPI Update
+            document.getElementById('kpiTotalSales').textContent = formatBaht(totalSales);
+            document.getElementById('kpiTotalAds').textContent = formatBaht(totalAds);
+            document.getElementById('kpiROAS').textContent = roas + 'x';
             document.getElementById('kpiTotalContacts').textContent = totalContacts.toLocaleString();
-            document.getElementById('subContactLine').textContent = cLine.toLocaleString();
-            document.getElementById('subContactCall').textContent = cCall.toLocaleString();
-            document.getElementById('subContactFB').textContent = cFB.toLocaleString();
-            document.getElementById('kpiNewLeads').textContent = nLead.toLocaleString();
-            document.getElementById('kpiCostPerContact').textContent = `฿${parseInt(costPerContact).toLocaleString()}`;
-            document.getElementById('kpiCostPerLead').textContent = `฿${parseInt(costPerLead).toLocaleString()}`;
+            document.getElementById('subContactLine').textContent = cL.toLocaleString();
+            document.getElementById('subContactCall').textContent = cCa.toLocaleString();
+            document.getElementById('subContactFB').textContent = cF.toLocaleString();
+            document.getElementById('kpiNewLeads').textContent = lead.toLocaleString();
+            document.getElementById('kpiCostPerContact').textContent = totalContacts > 0 ? formatBaht(totalAds/totalContacts) : '฿0';
+            document.getElementById('kpiCostPerLead').textContent = lead > 0 ? formatBaht(totalAds/lead) : '฿0';
 
-            document.getElementById('kpiSalesCAR').textContent = formatBaht(sCAR);
-            document.getElementById('kpiSalesGFS').textContent = formatBaht(sGFS);
-            document.getElementById('kpiSalesMHL').textContent = formatBaht(sMHL);
+            document.getElementById('kpiSalesCAR').textContent = formatBaht(sC);
+            document.getElementById('kpiSalesGFS').textContent = formatBaht(sG);
+            document.getElementById('kpiSalesMHL').textContent = formatBaht(sM);
 
-            // Ads List Update
-            const sortedComps = Object.keys(compStats).sort((a, b) => compStats[b].ads - compStats[a].ads);
-            if (sortedComps.length === 0) {
-                document.getElementById('adsCompanyList').innerHTML = '<div class="text-xs text-slate-400 text-center py-4">ไม่มีข้อมูล</div>';
-            } else {
-                document.getElementById('adsCompanyList').innerHTML = sortedComps.map(comp => `
-                    <div class="flex justify-between items-center text-xs py-2 border-b border-slate-100 last:border-0">
-                        <div class="flex flex-col gap-1">
-                            <span class="text-slate-700 font-bold">${comp}</span>
-                            <span class="text-[10px] text-slate-500 flex gap-2">
-                                <span>ติดต่อ: <span class="text-indigo-600 font-semibold">${compStats[comp].contacts.toLocaleString()}</span></span>
-                                <span>Lead: <span class="text-emerald-600 font-semibold">${compStats[comp].leads.toLocaleString()}</span></span>
-                            </span>
-                        </div>
-                        <span class="font-bold text-slate-800">${formatBaht(compStats[comp].ads)}</span>
-                    </div>`).join('');
-            }
-
-            const month = document.getElementById('filterMonth').value;
-            const validCompanies = [...new Set(rawDailyData.map(d => d.company).filter(c => c))];
-            const getTargetFor = (compName, mName = month) => {
-                let targets = rawTargetData.filter(t => (mName === 'all' || mName.includes(t.month) || t.month.includes(mName)) && t.company === compName);
-                let unique = {}; targets.forEach(t => unique[`${t.month}-${t.company}`] = t.target);
-                return Object.values(unique).reduce((a, b) => a + b, 0);
+            const monthVal = document.getElementById('filterMonth').value;
+            const getTarget = (cName) => {
+                return rawTargetData.filter(t => (monthVal === 'all' || t.month === monthVal) && (cName === 'all' || t.company === cName)).reduce((a,b) => a+b.target, 0);
             };
 
-            const targetCAR = getTargetFor('CAR'), targetGFS = getTargetFor('GFS'), targetMHL = getTargetFor('MHL');
+            const targetCAR = getTarget('CAR'), targetGFS = getTarget('GFS'), targetMHL = getTarget('MHL');
+            let overallTarget = 0;
+            if (activeCompany === 'all') overallTarget = targetCAR + targetGFS + targetMHL;
+            else overallTarget = getTarget(activeCompany);
+
+            document.getElementById('companyTargetDisplay').textContent = formatBaht(overallTarget);
+            document.getElementById('kpiTarget').textContent = formatBaht(overallTarget);
+            const pct = overallTarget > 0 ? (totalSales / overallTarget * 100).toFixed(1) : 0;
+            document.getElementById('kpiPercent').textContent = pct + '%';
+            document.getElementById('kpiProgressBar').style.width = Math.min(pct, 100) + '%';
+
             const updateMini = (id, actual, target) => {
                 document.getElementById(`target${id}`).textContent = formatBaht(target);
-                let pct = target > 0 ? ((actual / target) * 100).toFixed(1) : 0;
-                document.getElementById(`pct${id}`).textContent = `${pct}%`;
-                document.getElementById(`bar${id}`).style.width = `${Math.min(pct, 100)}%`;
+                const p = target > 0 ? (actual / target * 100).toFixed(1) : 0;
+                document.getElementById(`pct${id}`).textContent = p + '%';
+                document.getElementById(`bar${id}`).style.width = Math.min(p, 100) + '%';
             };
-            updateMini('CAR', sCAR, targetCAR);
-            updateMini('GFS', sGFS, targetGFS);
-            updateMini('MHL', sMHL, targetMHL);
+            updateMini('CAR', sC, targetCAR);
+            updateMini('GFS', sG, targetGFS);
+            updateMini('MHL', sM, targetMHL);
 
-            let overallTarget = 0;
-            if (activeCompany === 'all') {
-                let targets = rawTargetData.filter(t => (month === 'all' || month.includes(t.month) || t.month.includes(month)) && validCompanies.includes(t.company) && !t.company.includes('รวม'));
-                let unique = {}; targets.forEach(t => unique[`${t.month}-${t.company}`] = t.target);
-                overallTarget = Object.values(unique).reduce((a, b) => a + b, 0);
-            } else {
-                overallTarget = getTargetFor(activeCompany);
-            }
-
-            document.getElementById('companyTargetDisplay').textContent = overallTarget > 0 ? formatBaht(overallTarget) : 'ไม่มีข้อมูล';
-            document.getElementById('kpiTarget').textContent = formatBaht(overallTarget);
-            let totalPct = overallTarget > 0 ? ((tSales / overallTarget) * 100).toFixed(1) : 0;
-            document.getElementById('kpiPercent').textContent = `${totalPct}%`;
-            document.getElementById('kpiProgressBar').style.width = `${Math.min(totalPct, 100)}%`;
+            const sortedComps = Object.keys(compMap).sort((a,b) => compMap[b].ads - compMap[a].ads);
+            document.getElementById('adsCompanyList').innerHTML = sortedComps.map(c => `
+                <div class="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">${c}</p>
+                        <p class="text-[10px] text-slate-400">Lead: ${compMap[c].leads} | Contact: ${compMap[c].contacts}</p>
+                    </div>
+                    <p class="text-sm font-bold text-slate-600">${formatBaht(compMap[c].ads)}</p>
+                </div>`).join('');
 
             updateTrendChart();
-            updateAdsBreakdownChart(aG, aFB, aL, aTK);
+            updateAdsBreakdownChart(aG, aF, aL, aT);
             updateMonthlyComparisonChart();
             updateContactTrendChart();
         }
 
         function updateTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
             const dateMap = {};
-            let sorted = [...filteredData].sort((a, b) => (a.dateIso || '').localeCompare(b.dateIso || ''));
-            sorted.forEach(d => {
-                const k = d.dateRaw || 'Unknown';
-                if (!dateMap[k]) dateMap[k] = { s: 0, a: 0 };
+            filteredData.sort((a,b) => (a.dateIso || '').localeCompare(b.dateIso || '')).forEach(d => {
+                const k = d.dateRaw;
+                if(!dateMap[k]) dateMap[k] = { s: 0, a: 0 };
                 dateMap[k].s += (d.salesCAR + d.salesGFS + d.salesMHL);
                 dateMap[k].a += (d.adsGoogle + d.adsFB + d.adsLine + d.adsTiktok);
             });
             const labels = Object.keys(dateMap), sData = labels.map(l => dateMap[l].s), aData = labels.map(l => dateMap[l].a);
-            
-            // Calculate and Update Cards
-            const sumSales = sData.reduce((a, b) => a + b, 0);
-            const sumAds = aData.reduce((a, b) => a + b, 0);
-            const roas = sumAds > 0 ? (sumSales / sumAds).toFixed(2) : '0.00';
-            const maxSales = sData.length > 0 ? Math.max(...sData) : 0;
-
-            document.getElementById('tabDailySales').textContent = formatBaht(sumSales);
-            document.getElementById('tabDailyAds').textContent = formatBaht(sumAds);
-            document.getElementById('tabDailyROAS').textContent = `${roas}x`;
-            document.getElementById('tabDailyMax').textContent = formatBaht(maxSales);
-
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            if (trendChartObj) trendChartObj.destroy();
+            if(trendChartObj) trendChartObj.destroy();
             trendChartObj = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels,
                     datasets: [
-                        { label: 'ค่าโฆษณารวม', type: 'line', data: aData, borderColor: colors.adsTotal, borderWidth: 2, tension: 0.3, yAxisID: 'y1', datalabels: { display: false } },
-                        { label: 'ยอดขายรวม', data: sData, backgroundColor: colors.sales, borderRadius: 4, yAxisID: 'y', datalabels: { display: false } }
+                        { label: 'ค่าโฆษณา', type: 'line', data: aData, borderColor: colors.adsTotal, yAxisID: 'y1', tension: 0.3, borderWidth: 3, datalabels: { display: false } },
+                        { label: 'ยอดขาย', data: sData, backgroundColor: colors.sales, borderRadius: 6, yAxisID: 'y', datalabels: { display: false } }
                     ]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { bottom: 5 } }, // Minimize bottom padding inside chart
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: { 
-                        legend: { position: 'top', align: 'end' },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            padding: 12,
-                            titleFont: { size: 14 },
-                            bodyFont: { size: 13 },
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + formatBaht(context.raw);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { position: 'left', min: 0, ticks: { callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v } },
-                        y1: { position: 'right', min: 0, grid: { drawOnChartArea: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y1: { position: 'right', grid: { display: false } } } }
             });
         }
 
-        function updateAdsBreakdownChart(g, fb, line, tk) {
+        function updateAdsBreakdownChart(g, f, l, t) {
             const ctx = document.getElementById('adsBreakdownChart').getContext('2d');
-            if (adsChartObj) adsChartObj.destroy();
-            const vals = [g, fb, line, tk], labels = ['Google', 'FB', 'Line', 'Tiktok'], bg = [colors.google, colors.fb, colors.line, colors.tiktok];
-            const total = vals.reduce((a, b) => a + b, 0);
-
-            document.getElementById('adsLegend').innerHTML = labels.map((l, i) => `
-                <div class="flex justify-between p-2 bg-slate-50 rounded border border-slate-100 mb-1">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:${bg[i]}"></span>${l}</span>
-                    <span class="font-bold">${formatBaht(vals[i])}</span>
+            const data = [g, f, l, t], labels = ['Google', 'Facebook', 'Line', 'TikTok'], bg = [colors.google, colors.fb, colors.line, colors.tiktok];
+            const total = data.reduce((a,b) => a+b, 0);
+            document.getElementById('adsLegend').innerHTML = labels.map((lb, i) => `
+                <div class="flex justify-between text-xs font-medium text-slate-600 bg-slate-50/50 p-2 rounded-lg">
+                    <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:${bg[i]}"></span>${lb}</span>
+                    <span class="font-bold">${formatBaht(data[i])}</span>
                 </div>`).join('');
-
+            if(adsChartObj) adsChartObj.destroy();
             adsChartObj = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels, datasets: [{ data: total > 0 ? vals : [1], backgroundColor: total > 0 ? bg : ['#e2e8f0'], borderColor: '#ffffff', borderWidth: 2 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            display: total > 0,
-                            color: '#fff',
-                            font: { weight: 'bold', size: 10 },
-                            formatter: (value, ctx) => {
-                                let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                return (value * 100 / sum).toFixed(1) + "%";
-                            }
-                        }
-                    }
-                }
+                data: { labels, datasets: [{ data: total > 0 ? data : [1], backgroundColor: total > 0 ? bg : ['#f1f5f9'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false }, datalabels: { display: false } } }
             });
         }
 
         function updateMonthlyComparisonChart() {
             const ctx = document.getElementById('monthlyComparisonChart').getContext('2d');
-            if (monthlyChartObj) monthlyChartObj.destroy();
-            const monthsInSheet = [...new Set(rawDailyData.map(d => d.month).filter(m => m))];
-            const last12Months = monthsInSheet.slice(-12);
-            const labels = [], salesData = [], targetData = [];
-
-            last12Months.forEach(m => {
-                labels.push(m);
-                const monthSales = rawDailyData
-                    .filter(d => d.month === m && (activeCompany === 'all' || d.company === activeCompany))
-                    .reduce((sum, d) => sum + (d.salesCAR + d.salesGFS + d.salesMHL), 0);
-                salesData.push(monthSales);
-
-                let monthTarget = 0;
-                if (activeCompany === 'all') {
-                    let targets = rawTargetData.filter(t => t.month === m && !t.company.includes('รวม'));
-                    let unique = {}; targets.forEach(t => unique[`${t.month}-${t.company}`] = t.target);
-                    monthTarget = Object.values(unique).reduce((a, b) => a + b, 0);
-                } else {
-                    monthTarget = rawTargetData.filter(t => t.month === m && t.company === activeCompany).reduce((sum, t) => sum + t.target, 0);
-                }
-                targetData.push(monthTarget);
+            const months = [...new Set(rawDailyData.map(d => d.month))].slice(-12);
+            const sales = [], targets = [];
+            months.forEach(m => {
+                const s = rawDailyData.filter(d => d.month === m && (activeCompany === 'all' || d.company === activeCompany)).reduce((a,b) => a+(b.salesCAR+b.salesGFS+b.salesMHL), 0);
+                sales.push(s);
+                let t = 0;
+                if(activeCompany === 'all') t = rawTargetData.filter(tg => tg.month === m && ['CAR','GFS','MHL'].includes(tg.company)).reduce((a,b) => a+b.target, 0);
+                else t = rawTargetData.filter(tg => tg.month === m && tg.company === activeCompany).reduce((a,b) => a+b.target, 0);
+                targets.push(t);
             });
-
-            // Calculate and Update Cards
-            const sumTarget = targetData.reduce((a, b) => a + b, 0);
-            const sumSales = salesData.reduce((a, b) => a + b, 0);
-            const achievePct = sumTarget > 0 ? (sumSales / sumTarget) * 100 : 0;
-            const diff = sumTarget > sumSales ? sumTarget - sumSales : 0;
-
-            document.getElementById('tabMonthlyTarget').textContent = formatBaht(sumTarget);
-            document.getElementById('tabMonthlySales').textContent = formatBaht(sumSales);
-            document.getElementById('tabMonthlyAchieve').textContent = achievePct.toFixed(1) + '%';
-            document.getElementById('tabMonthlyAchieve').className = `text-2xl font-bold mt-1 ${achievePct >= 100 ? 'text-emerald-600' : 'text-blue-800'}`;
-            document.getElementById('tabMonthlyDiff').textContent = formatBaht(diff);
-
+            if(monthlyChartObj) monthlyChartObj.destroy();
             monthlyChartObj = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: months,
                     datasets: [
-                        { 
-                            label: 'เป้ายอดขาย', 
-                            data: targetData, 
-                            backgroundColor: 'rgba(139, 92, 246, 0.15)', 
-                            borderColor: 'rgba(139, 92, 246, 0.3)', 
-                            borderWidth: 1, 
-                            borderDash: [5, 5], 
-                            grouped: false, 
-                            barPercentage: 0.9, 
-                            categoryPercentage: 1.0, 
-                            order: 3, 
-                            datalabels: { display: false } 
-                        },
-                        { 
-                            label: 'ยอดขายจริง', 
-                            data: salesData, 
-                            backgroundColor: colors.sales, 
-                            borderRadius: 4, 
-                            barPercentage: 0.45, 
-                            categoryPercentage: 0.8, 
-                            order: 2, 
-                            datalabels: { display: false } 
-                        }
+                        { label: 'เป้ายอดขาย', data: targets, backgroundColor: 'rgba(249, 115, 22, 0.1)', borderColor: 'rgba(249, 115, 22, 0.3)', borderWidth: 1, borderDash: [5,5], grouped: false, datalabels: { display: false } },
+                        { label: 'ยอดขายจริง', data: sales, backgroundColor: colors.sales, borderRadius: 6, barPercentage: 0.5, datalabels: { display: false } }
                     ]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { bottom: 5 } }, // Bring chart axis closer to bottom
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: {
-                        legend: { position: 'top', align: 'end' },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            padding: 12,
-                            titleFont: { size: 14 },
-                            bodyFont: { size: 13 },
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label + ': ' + formatBaht(context.raw);
-                                    if (context.dataset.label === 'ยอดขายจริง') {
-                                        const targetDs = context.chart.data.datasets.find(d => d.label === 'เป้ายอดขาย');
-                                        if (targetDs && targetDs.data[context.dataIndex] > 0) {
-                                            const pct = (context.raw / targetDs.data[context.dataIndex]) * 100;
-                                            label += ` (${pct.toFixed(1)}% ของเป้า)`;
-                                        }
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, min: 0, ticks: { callback: v => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         function updateContactTrendChart() {
             const ctx = document.getElementById('contactTrendChart').getContext('2d');
-            if (contactTrendChartObj) contactTrendChartObj.destroy();
-            const monthsInSheet = [...new Set(rawDailyData.map(d => d.month).filter(m => m))];
-            const last12Months = monthsInSheet.slice(-12);
-            const lineData = [], callData = [], fbData = [], leadData = [];
-            let totalLine = 0, totalCall = 0, totalFB = 0, totalLead = 0, totalAds12M = 0;
-
-            last12Months.forEach(m => {
+            const months = [...new Set(rawDailyData.map(d => d.month))].slice(-12);
+            const dL = [], dC = [], dF = [], dLe = [];
+            months.forEach(m => {
                 const subset = rawDailyData.filter(d => d.month === m && (activeCompany === 'all' || d.company === activeCompany));
-                
-                const mLine = subset.reduce((s, d) => s + d.contactLine, 0);
-                const mCall = subset.reduce((s, d) => s + d.contactCall, 0);
-                const mFB = subset.reduce((s, d) => s + d.contactFB, 0);
-                const mLead = subset.reduce((s, d) => s + d.newLead, 0);
-                
-                lineData.push(mLine);
-                callData.push(mCall);
-                fbData.push(mFB);
-                leadData.push(mLead);
-
-                totalLine += mLine;
-                totalCall += mCall;
-                totalFB += mFB;
-                totalLead += mLead;
-                totalAds12M += subset.reduce((s, d) => s + (d.adsGoogle + d.adsFB + d.adsLine + d.adsTiktok), 0);
+                dL.push(subset.reduce((a,b) => a+b.contactLine, 0));
+                dC.push(subset.reduce((a,b) => a+b.contactCall, 0));
+                dF.push(subset.reduce((a,b) => a+b.contactFB, 0));
+                dLe.push(subset.reduce((a,b) => a+b.newLead, 0));
             });
-
-            // Calculate and Update Cards
-            const totalContacts = totalLine + totalCall + totalFB;
-            const costPerContact = totalContacts > 0 ? totalAds12M / totalContacts : 0;
-            const costPerLead = totalLead > 0 ? totalAds12M / totalLead : 0;
-
-            document.getElementById('tabContactTotal').textContent = totalContacts.toLocaleString();
-            document.getElementById('tabContactLeads').textContent = totalLead.toLocaleString();
-            document.getElementById('tabContactCostPerContact').textContent = `฿${Math.round(costPerContact).toLocaleString()}`;
-            document.getElementById('tabContactCostPerLead').textContent = `฿${Math.round(costPerLead).toLocaleString()}`;
-
+            if(contactTrendChartObj) contactTrendChartObj.destroy();
             contactTrendChartObj = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: last12Months,
+                    labels: months,
                     datasets: [
-                        { label: 'New Leads', data: leadData, borderColor: colors.newLead, backgroundColor: colors.newLead, tension: 0.3, borderWidth: 3, pointRadius: 4 },
-                        { label: 'Line OA', data: lineData, borderColor: colors.contactLine, backgroundColor: colors.contactLine, tension: 0.3, pointRadius: 2, borderDash: [5, 5] },
-                        { label: 'Call', data: callData, borderColor: colors.contactCall, backgroundColor: colors.contactCall, tension: 0.3, pointRadius: 2, borderDash: [5, 5] },
-                        { label: 'Chat FB', data: fbData, borderColor: colors.contactFB, backgroundColor: colors.contactFB, tension: 0.3, pointRadius: 2, borderDash: [5, 5] }
+                        { label: 'New Leads', data: dLe, borderColor: colors.newLead, tension: 0.3, borderWidth: 3 },
+                        { label: 'Line', data: dL, borderColor: colors.contactLine, tension: 0.3, borderDash: [5,5] },
+                        { label: 'Call', data: dC, borderColor: colors.contactCall, tension: 0.3, borderDash: [5,5] },
+                        { label: 'Facebook', data: dF, borderColor: colors.contactFB, tension: 0.3, borderDash: [5,5] }
                     ]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { bottom: 5 } },
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: { 
-                        legend: { position: 'top' }, 
-                        datalabels: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            padding: 12,
-                            titleFont: { size: 14 },
-                            bodyFont: { size: 13 }
-                        }
-                    },
-                    scales: { y: { beginAtZero: true, min: 0, title: { display: true, text: 'จำนวนการติดต่อ' } }, x: { grid: { display: false } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
             });
         }
 

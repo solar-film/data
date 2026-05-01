@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Film Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Layout logic -->
+    <link rel="stylesheet" href="style.css">
+    <script src="layout.js" defer></script>
+
+    <style>
+        .loading-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 15px;
+        }
+
+        .analysis-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .details-hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]">
+    <div class="pt-20 md:pt-24 md:pl-[260px] px-4 md:px-6 lg:px-8 min-h-screen">
+        <!-- Back to Top Button -->
+        <button id="backToTop" title="Go to top">↑</button>
+
+        <div id="app" class="min-h-screen p-4 md:p-8">
+            <!-- Header -->
+            <header
+                class="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+                <div>
+                    <h1
+                        class="text-3xl font-bold text-blue-600 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                        วิเคราะห์ข้อมูลการติดตั้ง แผนกฟิล์มรถยนต์
+                    </h1>
+                    <p class="text-slate-500 mt-1 flex items-center gap-2 font-medium">
+                        <i class="fas fa-chart-line text-blue-400"></i> ติดตามและวิเคราะห์ประสิทธิภาพงานติดตั้ง
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3">
+
+                    <!-- ปุ่มไปหน้า Analysis -->
+                    <a href="film_car_analysis.html"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl shadow-sm hover:shadow-md hover:scale-[1.03] transition-all">
+                        <i class="fas fa-chart-pie"></i>
+                        <span class="font-bold">แสดงกราฟข้อมูล</span>
+                    </a>
+
+                    <!-- ปุ่ม Refresh -->
+                    <button onclick="fetchData()" id="refreshBtn"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:bg-slate-50 transition-all active:scale-95">
+                        <i class="fas fa-sync-alt text-blue-500" id="refreshIcon"></i>
+                        <span class="font-bold text-slate-700">อัปเดตข้อมูล</span>
+                    </button>
+
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto space-y-6">
+
+                <!-- Filter Card -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3 text-slate-800 font-bold text-lg">
+                            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-filter text-blue-600 text-sm"></i>
+                            </div>
+                            <span>ตัวเลือกการกรองข้อมูล</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <!-- Time Range Presets -->
+                        <div class="lg:col-span-4 space-y-2">
+                            <label
+                                class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">ช่วงเวลาด่วน</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="setTimeRange('all')" id="range-all"
+                                    class="range-btn px-4 py-2 rounded-lg text-sm font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:border-blue-400">ทั้งหมด</button>
+                                <button onclick="setTimeRange('thisMonth')" id="range-thisMonth"
+                                    class="range-btn px-4 py-2 rounded-lg text-sm font-bold border transition-all bg-blue-600 text-white border-blue-600">เดือนนี้</button>
+                                <button onclick="setTimeRange('lastMonth')" id="range-lastMonth"
+                                    class="range-btn px-4 py-2 rounded-lg text-sm font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:border-blue-400">เดือนที่ผ่านมา</button>
+                                <button onclick="setTimeRange('3months')" id="range-3months"
+                                    class="range-btn px-4 py-2 rounded-lg text-sm font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:border-blue-400">3
+                                    เดือนล่าสุด</button>
+                                <button onclick="setTimeRange('6months')" id="range-6months"
+                                    class="range-btn px-4 py-2 rounded-lg text-sm font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:border-blue-400">6
+                                    เดือนล่าสุด</button>
+                                <button onclick="setTimeRange('thisYear')" id="range-thisYear"
+                                    class="range-btn px-4 py-2 rounded-lg text-sm font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:border-blue-400">ปีนี้</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-bold text-slate-600 ml-1">เลือกเดือนเฉพาะเจาะจง</label>
+                            <select id="monthFilter" onchange="handleMonthChange()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700">
+                                <option value="">เลือกเดือน...</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-bold text-slate-600 ml-1">วัน</label>
+                            <select id="dayFilter" onchange="updateFilters()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700">
+                                <option value="">ทั้งหมด</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-bold text-slate-600 ml-1">รุ่นรถยนต์</label>
+                            <select id="carModelFilter" onchange="updateFilters()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700">
+                                <option value="">ทั้งหมด</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-bold text-slate-600 ml-1">ค้นหาชื่อ/ทะเบียน</label>
+                            <input type="text" id="nameSearch" oninput="updateFilters()"
+                                placeholder="พิมพ์ชื่อหรือทะเบียน..."
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Status Header -->
+                <div id="viewStatus"
+                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 rounded-3xl shadow-lg border-b-4 border-blue-500">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
+                            <i class="fas fa-folder-open text-xl text-blue-400"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 id="currentViewTitle" class="text-xl font-bold tracking-tight">รายการติดตั้ง</h2>
+                                <span id="filterLabel"
+                                    class="px-2 py-0.5 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[15px] rounded-md font-bold uppercase tracking-widest">เดือนนี้</span>
+                            </div>
+                            <p id="currentViewSubtitle" class="text-slate-400 text-sm mt-0.5 italic">
+                                คลิกที่เคสลูกค้าเพื่อดูรายละเอียดรายบาน</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right px-4 border-r border-white/10">
+                            <p class="text-[15px] font-bold text-slate-400 uppercase tracking-widest">รวมทั้งหมด</p>
+                            <p class="text-2xl font-black text-blue-400"><span id="caseCount">0</span> <span
+                                    class="text-xs">เคส</span></p>
+                        </div>
+                        <div class="text-right px-4">
+                            <p class="text-[15px] font-bold text-red-400 uppercase tracking-widest">ความเสียหาย</p>
+                            <p class="text-2xl font-black text-red-500"><span id="totalLossCount">0</span> <span
+                                    class="text-xs">จุด</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Summary Section -->
+                <div id="analysisArea" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 hidden">
+                    <!-- Analytics injected here -->
+                </div>
+
+                <!-- Content Area (Bottom) -->
+                <div id="contentArea" class="grid grid-cols-1 gap-6"></div>
+            </main>
+        </div>
+
+        <script>
+            const SHEET_ID = "1QnbSbWJXl-XvgplCJ1l2eQX5VMDlcA8qFaMfvaYRkSk";
+            const SHEET_NAME = "@DATA-NEW";
+            const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+            const MONTHS_MAP = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค. "];
+
+            let allData = [];
+            // ตั้งค่าเริ่มต้นเป็น 'thisMonth'
+            let currentFilters = { month: '', day: '', carModel: '', search: '', range: 'thisMonth' };
+
+            function parseMonthYear(str) {
+                const parts = str.split(' ');
+                if (parts.length < 2) return new Date();
+                const mStr = parts[0];
+                const yStr = parts[1];
+                const mIdx = MONTHS_MAP.indexOf(mStr);
+                const year = 2000 + parseInt(yStr);
+                return new Date(year, mIdx, 1);
+            }
+
+            function formatGoogleDateString(dateStr) {
+                if (!dateStr || typeof dateStr !== 'string') return dateStr;
+                if (dateStr.includes('Date(')) {
+                    const parts = dateStr.match(/\d+/g);
+                    if (parts && parts.length >= 2) {
+                        const year = parts[0];
+                        const monthIdx = parseInt(parts[1]);
+                        return `${MONTHS_MAP[monthIdx]} ${year.substring(2)}`;
+                    }
+                }
+                return dateStr.replace(/[^\u0E00-\u0E7F a-zA-Z0-9.\/]/g, "").trim();
+            }
+
+            async function fetchData() {
+                const icon = document.getElementById('refreshIcon');
+                const btn = document.getElementById('refreshBtn');
+                icon.classList.add('loading-spin');
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(DATA_URL);
+                    const text = await response.text();
+                    const jsonData = JSON.parse(text.substr(47).slice(0, -2));
+
+                    allData = jsonData.table.rows.map((row) => {
+                        const getVal = (idx) => row.c[idx]?.v !== null && row.c[idx]?.v !== undefined ? row.c[idx].v : '';
+                        const getFormattedVal = (idx) => row.c[idx]?.f || row.c[idx]?.v || '';
+                        const mRaw = formatGoogleDateString(String(getFormattedVal(1)));
+
+                        return {
+                            id: String(getVal(0) || ''),
+                            month: mRaw,
+                            dateObj: parseMonthYear(mRaw),
+                            day: String(getFormattedVal(11)),
+                            customer: String(getVal(14) || 'ไม่ระบุชื่อ'),
+                            custType: String(getVal(2) || ''),
+                            carPlate: String(getVal(13) || ''),
+                            carModel: String(getVal(12) || ''),
+                            carType: String(getVal(15) || ''),
+                            filmBrand: String(getVal(20) || ''),
+                            filmCode: String(getVal(21) || ''),
+                            position: String(getVal(19) || ''),
+                            sqf: parseFloat(getVal(24)) || 0,
+                            width: getFormattedVal(22),
+                            length: getFormattedVal(23),
+                            lossSqf: parseFloat(getVal(29)) || 0,
+                            technician: String(getVal(25) || '').trim(),
+                            lossValue: parseFloat(getVal(31)) || 0,
+                            note: String(getVal(32) || '')
+                        };
+                    }).filter((item, index) => index >= 0 && item.customer !== 'ลูกค้า' && item.month);
+
+                    initialFilterSetup();
+                    renderAll();
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('contentArea').innerHTML = `<div class="p-8 text-center text-red-500 font-bold">ไม่สามารถเชื่อมต่อฐานข้อมูลได้</div>`;
+                } finally {
+                    icon.classList.remove('loading-spin');
+                    btn.disabled = false;
+                }
+            }
+
+            function initialFilterSetup() {
+                const months = [...new Set(allData.map(d => d.month))].sort((a, b) => {
+                    const d1 = parseMonthYear(a); const d2 = parseMonthYear(b);
+                    return d1 - d2;
+                });
+                fillSelect('monthFilter', months, currentFilters.month);
+                updateDependentFilters();
+            }
+
+            function setTimeRange(range) {
+                currentFilters.range = range;
+                currentFilters.month = '';
+                document.getElementById('monthFilter').value = '';
+
+                // UI Update for buttons
+                document.querySelectorAll('.range-btn').forEach(btn => {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                    btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                });
+                const activeBtn = document.getElementById(`range-${range}`);
+                if (activeBtn) {
+                    activeBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+                    activeBtn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                }
+
+                updateFilters();
+            }
+
+            function handleMonthChange() {
+                currentFilters.month = document.getElementById('monthFilter').value;
+                currentFilters.day = '';
+                if (currentFilters.month) {
+                    currentFilters.range = 'custom';
+                    document.querySelectorAll('.range-btn').forEach(btn => {
+                        btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                        btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                    });
+                }
+                updateDependentFilters();
+                updateFilters();
+            }
+
+            function updateDependentFilters() {
+                const filteredByMonth = currentFilters.month ? allData.filter(d => d.month === currentFilters.month) : allData;
+                const days = [...new Set(filteredByMonth.map(d => String(d.day)))].filter(d => d).sort((a, b) => parseInt(a) - parseInt(b));
+                const models = [...new Set(filteredByMonth.map(d => d.carModel))].filter(m => m).sort();
+                fillSelect('dayFilter', days, currentFilters.day);
+                fillSelect('carModelFilter', models, currentFilters.carModel);
+            }
+
+            function fillSelect(id, items, current) {
+                const select = document.getElementById(id);
+                const firstOpt = select.querySelector('option');
+                select.innerHTML = '';
+                select.appendChild(firstOpt);
+                items.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item; opt.textContent = item;
+                    if (item === current) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }
+
+            function updateFilters() {
+                currentFilters.day = document.getElementById('dayFilter').value;
+                currentFilters.carModel = document.getElementById('carModelFilter').value;
+                currentFilters.search = document.getElementById('nameSearch').value.toLowerCase();
+
+                const filterLabel = document.getElementById('filterLabel');
+                let labelText = "ข้อมูลทั้งหมด";
+
+                const labels = {
+                    all: 'ทั้งหมด',
+                    thisMonth: 'เดือนนี้',
+                    lastMonth: 'เดือนที่ผ่านมา',
+                    '3months': '3 เดือนล่าสุด',
+                    '6months': '6 เดือนล่าสุด',
+                    thisYear: 'ปีนี้',
+                    custom: currentFilters.month
+                };
+                labelText = labels[currentFilters.range] || "กำหนดเอง";
+
+                filterLabel.textContent = labelText;
+                renderAll();
+            }
+
+            function renderAll() {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                const filtered = allData.filter(d => {
+                    let matchesTime = true;
+                    const dDate = d.dateObj;
+                    const dMonth = dDate.getMonth();
+                    const dYear = dDate.getFullYear();
+
+                    if (currentFilters.range === 'thisMonth') {
+                        matchesTime = (dMonth === currentMonth && dYear === currentYear);
+                    } else if (currentFilters.range === 'lastMonth') {
+                        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+                        matchesTime = (dMonth === prevMonth && dYear === prevYear);
+                    } else if (currentFilters.range === '3months') {
+                        const threeMonthsAgo = new Date(currentYear, currentMonth - 2, 1);
+                        matchesTime = (dDate >= threeMonthsAgo);
+                    } else if (currentFilters.range === '6months') {
+                        const sixMonthsAgo = new Date(currentYear, currentMonth - 5, 1);
+                        matchesTime = (dDate >= sixMonthsAgo);
+                    } else if (currentFilters.range === 'thisYear') {
+                        matchesTime = (dYear === currentYear);
+                    } else if (currentFilters.range === 'custom' || currentFilters.month) {
+                        matchesTime = !currentFilters.month || d.month === currentFilters.month;
+                    } else if (currentFilters.range === 'all') {
+                        matchesTime = true;
+                    }
+
+                    const matchesSearch = !currentFilters.search ||
+                        d.customer.toLowerCase().includes(currentFilters.search) ||
+                        d.carPlate.toLowerCase().includes(currentFilters.search);
+
+                    return matchesTime &&
+                        (!currentFilters.day || String(d.day) === currentFilters.day) &&
+                        (!currentFilters.carModel || d.carModel === currentFilters.carModel) &&
+                        matchesSearch;
+                });
+
+                renderAnalysis(filtered);
+                renderList(filtered);
+            }
+
+            function renderAnalysis(data) {
+                const area = document.getElementById('analysisArea');
+                area.classList.remove('hidden');
+
+                const totalSqf = data.reduce((sum, d) => sum + d.sqf, 0);
+                const totalLossSqf = data.reduce((sum, d) => sum + d.lossSqf, 0);
+                const totalLossVal = data.reduce((sum, d) => sum + d.lossValue, 0);
+                const lossPoints = data.filter(d => d.lossSqf > 0).length;
+                const wastePercent = totalSqf > 0 ? (totalLossSqf / totalSqf) * 100 : 0;
+
+                const models = {}; data.forEach(d => models[d.carModel] = (models[d.carModel] || 0) + 1);
+                const topModel = Object.entries(models).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+                const brands = {}; data.forEach(d => brands[d.filmBrand] = (brands[d.filmBrand] || 0) + 1);
+                const topBrand = Object.entries(brands).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+
+                const filmLoss = {};
+                data.forEach(d => {
+                    if (d.lossSqf > 0 && d.filmCode) {
+                        const label = `${d.filmBrand} ${d.filmCode}`;
+                        filmLoss[label] = (filmLoss[label] || 0) + d.lossSqf;
+                    }
+                });
+                const worstFilm = Object.entries(filmLoss).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+
+                const techPerf = {};
+                data.forEach(d => {
+                    if (d.technician && d.technician !== '-' && d.technician !== 'ไม่มีชื่อ') {
+                        if (!techPerf[d.technician]) techPerf[d.technician] = { count: 0, sqf: 0 };
+                        techPerf[d.technician].count += 1;
+                        techPerf[d.technician].sqf += d.sqf;
+                    }
+                });
+                const top3Perf = Object.entries(techPerf).sort((a, b) => b[1].count - a[1].count).slice(0, 3);
+
+                const techLoss = {};
+                data.forEach(d => {
+                    if (d.technician && d.technician !== '-' && d.technician !== 'ไม่มีชื่อ') {
+                        if (!techLoss[d.technician]) techLoss[d.technician] = { value: 0, sqf: 0, count: 0 };
+                        if (d.lossSqf > 0) {
+                            techLoss[d.technician].value += d.lossValue;
+                            techLoss[d.technician].sqf += d.lossSqf;
+                            techLoss[d.technician].count += 1;
+                        }
+                    }
+                });
+                const top3Loss = Object.entries(techLoss).filter(entry => entry[1].value > 0).sort((a, b) => b[1].value - a[1].value).slice(0, 3);
+
+                area.innerHTML = `
+                <div class="analysis-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i class="fas fa-car-side"></i></div>
+                        <span class="text-[15px] font-bold text-slate-400 uppercase">รุ่นรถ & ฟิล์ม ยอดนิยม</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[12px] font-bold text-slate-400">รถยนต์:</p>
+                            <h4 class="text-lg font-black text-slate-800 truncate">${topModel}</h4>
+                        </div>
+                        <div>
+                            <p class="text-[12px] font-bold text-slate-400">ยี่ห้อฟิล์ม:</p>
+                            <h4 class="text-lg font-black text-slate-800 truncate">${topBrand}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600"><i class="fas fa-chart-pie"></i></div>
+                        <span class="text-[15px] font-bold text-slate-400 uppercase">สรุปความสูญเสีย</span>
+                    </div>
+                    <div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                             <h4 class="text-3xl font-black text-red-600">${wastePercent.toFixed(2)}<span class="text-lg">%</span></h4>
+                             <span class="text-[12px] font-bold text-slate-400 uppercase">Waste Rate</span>
+                        </div>
+                        <div class="space-y-2 pt-2 border-t border-slate-50">
+                            <div>
+                                <p class="text-[12px] font-bold text-slate-400 uppercase">มูลค่าความเสียหายรวม:</p>
+                                <p class="text-lg font-black text-slate-800">${totalLossVal.toLocaleString()} <span class="text-xs font-normal">฿</span></p>
+                            </div>
+                            <div>
+                                <p class="text-[12px] font-bold text-slate-400 uppercase">รุ่นฟิล์มที่เสียมากสุด:</p>
+                                <p class="text-sm font-bold text-red-500 truncate">${worstFilm}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600"><i class="fas fa-trophy"></i></div>
+                        <span class="text-[15px] font-bold text-slate-400 uppercase">ช่างฝีมือดี (3 อันดับ)</span>
+                    </div>
+                    <div class="space-y-3">
+                        ${top3Perf.map((t, idx) => `
+                            <div class="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                                <div class="truncate pr-2">
+                                    <span class="text-[12px] font-bold text-slate-300 mr-1">#${idx + 1}</span>
+                                    <span class="text-sm font-bold text-slate-700">${t[0]}</span>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="text-sm font-black text-slate-900">${t[1].count} <span class="text-[12px] font-normal">บาน</span></div>
+                                    <div class="text-[9px] text-slate-400 font-mono">${t[1].sqf.toFixed(1)} Sqf</div>
+                                </div>
+                            </div>
+                        `).join('') || '<div class="h-24 flex items-center justify-center text-xs text-slate-400 italic">ไม่พบข้อมูลในระบบ</div>'}
+                    </div>
+                </div>
+
+                <div class="analysis-card bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600"><i class="fas fa-exclamation-circle"></i></div>
+                        <span class="text-[15px] font-bold text-slate-400 uppercase leading-tight">ช่างที่เสียสูงสุด<br>(3 อันดับ)</span>
+                    </div>
+                    <div class="space-y-3">
+                        ${top3Loss.map((t, idx) => `
+                            <div class="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                                <div class="truncate pr-2">
+                                    <span class="text-[12px] font-bold text-slate-300 mr-1">#${idx + 1}</span>
+                                    <span class="text-sm font-bold text-slate-700">${t[0]}</span>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="text-sm font-black text-orange-600">${t[1].value.toLocaleString()} <span class="text-[12px] font-normal">฿</span></div>
+                                    <div class="inline-flex items-center px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[12px] font-black border border-red-100">
+                                        เสีย ${t[1].count} บาน
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') || '<div class="h-24 flex items-center justify-center text-xs text-slate-400 italic">ไม่มีข้อมูลความเสียหาย</div>'}
+                    </div>
+                </div>
+            `;
+                document.getElementById('totalLossCount').textContent = lossPoints;
+            }
+
+            function toggleDetails(groupId) {
+                const detailEl = document.getElementById(`detail-${groupId}`);
+                const arrowIcon = document.getElementById(`arrow-${groupId}`);
+                if (detailEl.classList.contains('details-hidden')) {
+                    detailEl.classList.remove('details-hidden');
+                    if (arrowIcon) arrowIcon.classList.add('rotate-180');
+                } else {
+                    detailEl.classList.add('details-hidden');
+                    if (arrowIcon) arrowIcon.classList.remove('rotate-180');
+                }
+            }
+
+            function renderList(filtered) {
+                const grouped = {};
+                filtered.forEach(item => {
+                    const groupKey = `${item.id}_${item.customer}_${item.carPlate}`.replace(/\s+/g, '-');
+                    if (!grouped[groupKey]) {
+                        grouped[groupKey] = {
+                            ...item, groupKey: groupKey, totalSqf: 0, totalLossSqf: 0, totalLossVal: 0, items: []
+                        };
+                    }
+                    grouped[groupKey].items.push(item);
+                    grouped[groupKey].totalSqf += item.sqf;
+                    grouped[groupKey].totalLossSqf += item.lossSqf;
+                    grouped[groupKey].totalLossVal += item.lossValue;
+                });
+
+                const sortedGroups = Object.values(grouped);
+                document.getElementById('caseCount').textContent = sortedGroups.length;
+
+                const container = document.getElementById('contentArea');
+                if (sortedGroups.length === 0) {
+                    container.innerHTML = `<div class="p-12 text-center text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-3xl bg-white">ไม่พบข้อมูลในเงื่อนไขที่เลือก</div>`;
+                    return;
+                }
+
+                container.innerHTML = sortedGroups.map(group => {
+                    const hasLoss = group.totalLossSqf > 0;
+                    return `
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <div onclick="toggleDetails('${group.groupKey}')" class="flex flex-col md:flex-row min-h-[120px] cursor-pointer hover:bg-slate-50 transition-colors">
+                        <div class="md:w-72 bg-slate-50/50 p-6 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col justify-center">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-[12px] font-black rounded-full uppercase tracking-wider">
+                                    ${group.custType || 'ลูกค้าใหม่'}
+                                </span>
+                                <i id="arrow-${group.groupKey}" class="fas fa-chevron-down text-slate-300 transition-transform duration-300 md:hidden"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-slate-900 leading-tight">${group.customer}</h3>
+                            <div class="text-slate-500 font-bold text-xs mt-1">
+                                <i class="fas fa-id-card-alt text-blue-400 mr-1"></i> ${group.carPlate}
+                            </div>
+                        </div>
+
+                        <div class="flex-1 p-6 flex items-center justify-between">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+                                <div>
+                                    <p class="text-[12px] font-bold text-slate-400 uppercase mb-1">พื้นที่ติดตั้ง</p>
+                                    <p class="text-2xl font-black text-slate-800">${group.totalSqf.toFixed(2)} <span class="text-xs font-normal">ตรฟ.</span></p>
+                                </div>
+                                <div>
+                                    <p class="text-[12px] font-bold text-slate-400 uppercase mb-1">รุ่นรถยนต์</p>
+                                    <p class="text-sm font-bold text-slate-700 truncate">${group.carModel}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[12px] font-bold text-slate-400 uppercase mb-1">วันที่ติดตั้ง</p>
+                                    <p class="text-sm font-bold text-slate-700">${group.day} ${group.month}</p>
+                                </div>
+                                <div class="text-right flex items-center justify-end">
+                                    ${hasLoss ? `
+                                        <div class="text-right">
+                                            <p class="text-[12px] font-bold text-red-400 uppercase mb-1">ความเสียหาย</p>
+                                            <p class="text-xl font-black text-red-500">-${group.totalLossSqf.toFixed(2)}</p>
+                                        </div>
+                                    ` : '<span class="text-emerald-500 text-xs font-bold uppercase tracking-widest"><i class="fas fa-check-circle mr-1"></i> เรียบร้อย</span>'}
+                                    <i id="arrow-${group.groupKey}" class="fas fa-chevron-down text-slate-300 transition-transform duration-300 ml-6 hidden md:block"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="detail-${group.groupKey}" class="details-hidden border-t border-slate-100 p-6 bg-slate-50/20">
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-xs">
+                                <thead class="text-slate-400 font-bold uppercase tracking-wider text-[12px]">
+                                    <tr>
+                                        <th class="text-left pb-3">ตำแหน่งติดตั้ง</th>
+                                        <th class="text-left pb-3">ฟิล์ม / รุ่น</th>
+                                        <th class="text-center pb-3">ขนาด (กxย)</th>
+                                        <th class="text-right pb-3">Sqf</th>
+                                        <th class="text-left pb-3 pl-4">ช่าง</th>
+                                        <th class="text-right pb-3">เสียหาย</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y border-t border-slate-100">
+                                    ${group.items.map(i => `
+                                        <tr class="group">
+                                            <td class="py-3 font-bold text-slate-800">${i.position}</td>
+                                            <td class="py-3">
+                                                <div class="text-slate-500">${i.filmBrand}</div>
+                                                <div class="font-bold text-blue-600">${i.filmCode}</div>
+                                            </td>
+                                            <td class="py-3 text-center text-slate-400 font-mono italic">
+                                                ${i.width || '-'} x ${i.length || '-'}
+                                            </td>
+                                            <td class="py-3 text-right font-mono font-bold text-slate-900">${i.sqf.toFixed(2)}</td>
+                                            <td class="py-3 pl-4 font-bold text-slate-500 italic">${i.technician || '-'}</td>
+                                            <td class="py-3 text-right ${i.lossSqf > 0 ? 'text-red-500 font-black' : 'text-slate-300'} font-mono">
+                                                ${i.lossSqf > 0 ? i.lossSqf.toFixed(2) : '0.00'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 pt-4 border-t flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                             <div class="text-[12px] text-slate-400 font-bold uppercase italic max-w-md">
+                                <i class="fas fa-sticky-note mr-1"></i> หมายเหตุ: ${group.note || 'ไม่มีข้อมูลเพิ่มเติม'}
+                             </div>
+                             <div class="flex gap-4">
+                                <div class="text-right">
+                                    <span class="text-[12px] font-bold text-slate-400 uppercase block mb-1">มูลค่าความเสียหาย</span>
+                                    <div class="text-xl font-black ${hasLoss ? 'text-red-600' : 'text-slate-400'}">${group.totalLossVal.toLocaleString()} ฿</div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                }).join('');
+            }
+
+            window.onload = fetchData;
+        </script>
+    </div>
+</body>
+
+</html>

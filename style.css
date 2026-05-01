@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+
+body { 
+    font-family: 'Kanit', sans-serif; 
+    margin: 0; 
+    background-color: #f8fafc;
+    color: #1e293b;
+    overflow-x: hidden;
+}
+
+/* ซ่อน Scrollbar สำหรับ Sidebar แต่ยังคงให้เลื่อนได้ถ้าจำเป็น (เพื่อความสวยงามตามภาพ) */
+.sidebar-scroll {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+/* Transitions */
+aside, main, #sidebarOverlay { 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+
+/* Main Content: ปรับให้เว้นที่ด้านบนสำหรับ Header ตลอดเวลา */
+#mainContent {
+    min-height: 100vh;
+    padding-top: 5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    margin-left: 0 !important;
+}
+
+@media (min-width: 1024px) {
+    #mainContent {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+}
+
+/* UI Elements */
+.rotate-180 { transform: rotate(180deg); }
+
+.nav-item i { transition: transform 0.2s ease; }
+.nav-item:hover i { transform: scale(1.1); }
+
+/* Dropdown Content Styling */
+.dropdown-content {
+    transition: all 0.3s ease-in-out;
+}
+
+/* เส้นนำสายตาสำหรับเมนูย่อย (เหมือนในภาพตัวอย่าง) */
+.sub-nav-item {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.sub-nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    width: 1px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#backToTop {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 45px;
+  height: 45px;
+  background: transparent;
+  border: 1.5px solid #333; /* สีเส้นขอบเข้ม */
+  border-radius: 50%;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+}
+
+#backToTop:hover {
+  background: #333; /* สลับสีเมื่อ hover */
+  color: #fff;
+}

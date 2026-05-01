@@ -5,7 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales & Ads Dashboard - รายวัน</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+  <link rel="stylesheet" href="style.css">
+  <!-- Layout logic -->
+  <script src="layout.js" defer></script>
+
+  <!-- Tailwind & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
@@ -148,10 +156,10 @@
   </style>
 </head>
 
-<body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+<body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"></br></br></br>
   <div id="app" class="h-full overflow-auto">
     <!-- Header -->
-    <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-md">
+    <header class="gradient-bg text-white py-4 shadow-md">
       <div class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -313,23 +321,59 @@
           <!-- Injected via JS -->
         </div>
 
+        <!-- Monthly Trend Section (Moved to bottom) -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-6 fade-in">
+          <div
+            class="p-5 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                </path>
+              </svg>
+              <h2 class="font-semibold text-gray-800">แนวโน้มรายเดือน (12 เดือนล่าสุด)</h2>
+            </div>
+            <!-- Tabs -->
+            <div class="flex bg-gray-200/60 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
+              <button onclick="setMonthlyTab('ALL')" id="tab-ALL"
+                class="flex-1 md:flex-none px-4 py-1.5 text-sm font-semibold rounded-md transition-all monthly-tab-btn bg-white text-indigo-600 shadow-sm border border-gray-200/50">รวมทั้งหมด</button>
+              <button onclick="setMonthlyTab('GFS')" id="tab-GFS"
+                class="flex-1 md:flex-none px-4 py-1.5 text-sm font-semibold rounded-md transition-all monthly-tab-btn text-gray-500 hover:text-gray-700 border border-transparent">GFS</button>
+              <button onclick="setMonthlyTab('MHL')" id="tab-MHL"
+                class="flex-1 md:flex-none px-4 py-1.5 text-sm font-semibold rounded-md transition-all monthly-tab-btn text-gray-500 hover:text-gray-700 border border-transparent">MHL</button>
+              <button onclick="setMonthlyTab('CAR')" id="tab-CAR"
+                class="flex-1 md:flex-none px-4 py-1.5 text-sm font-semibold rounded-md transition-all monthly-tab-btn text-gray-500 hover:text-gray-700 border border-transparent">CAR</button>
+            </div>
+          </div>
+          <div class="p-5">
+            <div class="h-[400px] relative w-full">
+              <canvas id="monthlyTrendChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
 
     <!-- Floating Action Buttons for Navigation -->
     <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-[100]">
-      <!-- ภาพรวม -->
-      <a href="index.html"
-        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+      <!-- Home -->
+      <a href="../index.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Home Icon -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+            d="M3 10l9-7 9 7M4 10v10a1 1 0 001 1h4m10-11v10a1 1 0 01-1 1h-4m-4 0V14h4v7" />
         </svg>
-        <span class="tooltip">ภาพรวม</span>
+        <!-- Tooltip -->
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
+          หน้าแรก
+        </span>
       </a>
 
       <!-- Lead -->
-      <a href="lead.html"
+      <a href="contact.html"
         class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group relative">
 
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -339,37 +383,43 @@
 
         <span
           class="absolute right-16 top-1/2 -translate-y-1/2 bg-purple-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
-          Lead
+          ปริมาณการติดต่อ
         </span>
       </a>
 
       <!-- รายวัน -->
-      <a href="#"
+      <a href="date.html"
         class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Calendar Day -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span class="tooltip">รายวัน</span>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายวัน</span>
       </a>
 
       <!-- รายเดือน -->
       <a href="month.html"
         class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Calendar Month -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             d="M3 8h18M8 3v2m8-2v2M5 21h14a2 2 0 002-2V8H3v11a2 2 0 002 2z" />
         </svg>
-        <span class="tooltip">รายเดือน</span>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายเดือน</span>
       </a>
 
       <!-- รายปี -->
       <a href="year.html"
         class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Chart Icon -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 3v18m-4-4v4m8-10v10m4-6v6" />
         </svg>
-        <span class="tooltip">รายปี</span>
+        <span
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">รายปี</span>
       </a>
     </div>
   </div>
@@ -384,6 +434,10 @@
     let filteredData = [];
     let chartType = 'line';
     let companyCharts = {};
+
+    // Monthly Trend Chart State
+    let monthlyTrendChart = null;
+    let currentMonthlyTab = 'ALL';
 
     // Element SDK configuration
     const defaultConfig = {
@@ -674,6 +728,7 @@
       });
 
       renderCharts();
+      renderMonthlyTrendChart(); // Ensure macro chart renders alongside normal filters
     }
 
     function formatBaht(value) {
@@ -696,6 +751,168 @@
       renderCharts();
     }
 
+    // ---------------------------------------------------------------------------------------------------------
+    // Render Monthly Trend Chart (12 Months)
+    // ---------------------------------------------------------------------------------------------------------
+    window.setMonthlyTab = function (tab) {
+      currentMonthlyTab = tab;
+      document.querySelectorAll('.monthly-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm', 'border-gray-200/50');
+        btn.classList.add('text-gray-500', 'border-transparent');
+      });
+      const activeBtn = document.getElementById(`tab-${tab}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-gray-500', 'border-transparent');
+        activeBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm', 'border-gray-200/50');
+      }
+      renderMonthlyTrendChart();
+    };
+
+    window.renderMonthlyTrendChart = function () {
+      if (rawData.length === 0) return;
+
+      // Get unique months in order of appearance
+      const allUniqueMonths = [...new Set(rawData.map(d => d.month).filter(Boolean))];
+      const last12Months = allUniqueMonths.slice(-12);
+
+      const aggData = {};
+      last12Months.forEach(m => {
+        aggData[m] = { sales: 0, ads: 0, contacts: 0, leads: 0 };
+      });
+
+      // Loop through un-filtered raw data to always show macro trend
+      rawData.forEach(d => {
+        if (!last12Months.includes(d.month)) return;
+
+        // If tab is specific company, filter data for that company
+        if (currentMonthlyTab !== 'ALL' && d.company !== currentMonthlyTab) return;
+
+        aggData[d.month].sales += (d.salesCAR + d.salesGFS + d.salesMHL);
+        aggData[d.month].ads += (d.googleAd + d.facebookAd + d.lineAd + d.tiktokAd);
+        aggData[d.month].contacts += (d.contactLine + d.contactCall + d.contactFB);
+        aggData[d.month].leads += d.newLead;
+      });
+
+      const labels = last12Months;
+      const dataSales = labels.map(m => aggData[m].sales);
+      const dataAds = labels.map(m => aggData[m].ads);
+      const dataContacts = labels.map(m => aggData[m].contacts);
+      const dataLeads = labels.map(m => aggData[m].leads);
+
+      const ctx = document.getElementById('monthlyTrendChartCanvas').getContext('2d');
+
+      if (monthlyTrendChart) {
+        monthlyTrendChart.destroy();
+      }
+
+      Chart.defaults.font.family = "'Sarabun', sans-serif";
+
+      monthlyTrendChart = new Chart(ctx, {
+        type: 'bar', // Grouped bar chart is best for multi-axis
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'ยอดขายรวม',
+              data: dataSales,
+              backgroundColor: '#eab308',
+              borderRadius: 4,
+              yAxisID: 'y'
+            },
+            {
+              label: 'ค่าโฆษณารวม',
+              data: dataAds,
+              backgroundColor: '#ef4444',
+              borderRadius: 4,
+              yAxisID: 'y'
+            },
+            {
+              label: 'การติดต่อรวม',
+              data: dataContacts,
+              backgroundColor: '#64748b',
+              borderRadius: 4,
+              yAxisID: 'y1'
+            },
+            {
+              label: 'ลูกค้าใหม่ (New Lead)',
+              data: dataLeads,
+              backgroundColor: '#8b5cf6',
+              borderRadius: 4,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { usePointStyle: true, padding: 20 }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              titleColor: '#1e293b',
+              bodyColor: '#334155',
+              borderColor: '#e2e8f0',
+              borderWidth: 1,
+              padding: 12,
+              boxPadding: 6,
+              usePointStyle: true,
+              callbacks: {
+                label: function (context) {
+                  let label = context.dataset.label || '';
+                  if (label) { label += ': '; }
+                  if (context.parsed.y !== null) {
+                    if (context.dataset.yAxisID === 'y') {
+                      label += '฿' + context.parsed.y.toLocaleString();
+                    } else {
+                      label += context.parsed.y.toLocaleString();
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false, drawBorder: false },
+              ticks: { font: { family: "'Sarabun', sans-serif", size: 12 }, color: '#64748b' }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: { display: true, text: 'จำนวนเงิน (บาท)', color: '#64748b', font: { family: "'Sarabun', sans-serif", size: 12, weight: 500 } },
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                font: { family: "'Sarabun', sans-serif", size: 11 }, color: '#64748b',
+                callback: v => {
+                  if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+                  if (v >= 1000) return (v / 1000).toFixed(0) + 'k';
+                  return v;
+                }
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: { display: true, text: 'จำนวนครั้ง / คน', color: '#64748b', font: { family: "'Sarabun', sans-serif", size: 12, weight: 500 } },
+              grid: { drawOnChartArea: false },
+              ticks: { font: { family: "'Sarabun', sans-serif", size: 11 }, color: '#64748b', callback: v => v.toLocaleString() }
+            }
+          }
+        }
+      });
+    };
+
+    // ---------------------------------------------------------------------------------------------------------
+    // Render Charts per Company
+    // ---------------------------------------------------------------------------------------------------------
     function renderCharts() {
       const container = document.getElementById('companyChartsContainer');
       container.innerHTML = '';

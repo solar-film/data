@@ -5,7 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales &amp; Ads Dashboard</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+      <link rel="stylesheet" href="../style.css">
+    <!-- Layout logic -->
+    <script src="../layout.js" defer></script>
+
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&amp;display=swap"
@@ -118,10 +126,10 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
 </head>
 
-<body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+<body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"></br></br></br>
   <div id="app" class="h-full overflow-auto">
     <!-- Header -->
-    <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-md">
+    <header class="gradient-bg text-white py-4 shadow-md">
       <div class="max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -346,47 +354,71 @@
 
           </div>
         </div>
+
+        <!-- Yearly Stacked Chart Section -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-6">
+          <div
+            class="p-5 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                </path>
+              </svg>
+              <h2 class="font-semibold text-gray-800">สรุปยอดขายและค่าโฆษณารายปี</h2>
+            </div>
+            <!-- Tabs -->
+            <div class="bg-gray-100 p-1 rounded-lg inline-flex w-full sm:w-auto overflow-x-auto">
+              <button onclick="changeYearlyTab(this, 'all')"
+                class="yearly-tab-btn flex-1 sm:flex-none bg-white text-indigo-600 shadow-sm px-4 py-1.5 text-sm font-medium rounded-md transition-all active whitespace-nowrap"
+                data-company="all">รวม</button>
+              <button onclick="changeYearlyTab(this, 'GFS')"
+                class="yearly-tab-btn flex-1 sm:flex-none text-gray-500 hover:text-gray-700 px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                data-company="GFS">GFS</button>
+              <button onclick="changeYearlyTab(this, 'MHL')"
+                class="yearly-tab-btn flex-1 sm:flex-none text-gray-500 hover:text-gray-700 px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                data-company="MHL">MHL</button>
+              <button onclick="changeYearlyTab(this, 'CAR')"
+                class="yearly-tab-btn flex-1 sm:flex-none text-gray-500 hover:text-gray-700 px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                data-company="CAR">CAR</button>
+            </div>
+          </div>
+          <div class="p-5">
+            <div class="h-80">
+              <canvas id="yearly-stacked-chart-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
 
     <!-- Floating Action Buttons for Navigation -->
     <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-[100]">
-
-      <!-- ภาพรวม -->
-      <a href="index.html"
-        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
-        <!-- Dashboard Icon -->
+      <!-- Home -->
+      <a href="../index.html"
+        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
+        <!-- Home Icon -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+            d="M3 10l9-7 9 7M4 10v10a1 1 0 001 1h4m10-11v10a1 1 0 01-1 1h-4m-4 0V14h4v7" />
         </svg>
-        <span class="tooltip">ภาพรวม</span>
-      </a>
-
-      <!-- Lead -->
-      <a href="lead.html"
-        class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group relative">
-
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-
+        <!-- Tooltip -->
         <span
-          class="absolute right-16 top-1/2 -translate-y-1/2 bg-purple-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
-          Lead
+          class="absolute right-16 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">
+          หน้าแรก
         </span>
       </a>
 
       <!-- รายวัน -->
-      <a href="date.html"
+      <a href="lead.html"
         class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 group relative">
         <!-- Calendar Day -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span class="tooltip">รายวัน</span>
+        <span class="tooltip">ปริมาณการติดต่อ</span>
       </a>
 
       <!-- รายเดือน -->
@@ -408,7 +440,7 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 3v18m-4-4v4m8-10v10m4-6v6" />
         </svg>
-        <span class="tooltip">รายปี</span>
+        <span class="tooltip">กำลังแสดง-รายปี</span>
       </a>
     </div>
   </div>
@@ -426,6 +458,8 @@
     let rawData = [];
     let rawTargetData = [];
     let yoyChart = null;
+    let yearlyStackedChart = null;
+    let currentYearlyTab = 'all';
     let datasetVisibility = {}; // ตัวแปรสำหรับเก็บสถานะการเปิด/ปิดของเส้นกราฟ
 
     // Default config for Element SDK
@@ -1319,6 +1353,124 @@
       });
     }
 
+    // จัดการ Tab สำหรับกราฟรายปี (รวม/GFS/MHL/CAR)
+    function changeYearlyTab(btnElement, company) {
+      document.querySelectorAll('.yearly-tab-btn').forEach(t => {
+        t.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm', 'active');
+        t.classList.add('text-gray-500');
+      });
+      btnElement.classList.add('bg-white', 'text-indigo-600', 'shadow-sm', 'active');
+      btnElement.classList.remove('text-gray-500');
+
+      currentYearlyTab = company;
+      updateYearlyStackedChart();
+    }
+
+    // สร้างและอัปเดตกราฟสรุปรายปีแบบ Stacked Bar (ยอดขายกับค่าโฆษณาอยู่แท่งเดียวกัน)
+    function updateYearlyStackedChart() {
+      let dataToUse = rawData;
+      if (currentYearlyTab !== 'all') {
+        dataToUse = rawData.filter(d => d.company === currentYearlyTab);
+      }
+
+      const yearDataMap = {};
+
+      dataToUse.forEach(d => {
+        const date = parseMonth(d.month);
+        if (!date) return;
+        const year = date.getFullYear();
+
+        if (!yearDataMap[year]) {
+          yearDataMap[year] = { sales: 0, ads: 0 };
+        }
+        yearDataMap[year].sales += d.totalSales;
+        yearDataMap[year].ads += d.totalAds;
+      });
+
+      // เรียงปีจากน้อยไปมาก
+      const years = Object.keys(yearDataMap).sort((a, b) => parseInt(a) - parseInt(b));
+      const salesData = years.map(y => yearDataMap[y].sales);
+      const adsData = years.map(y => yearDataMap[y].ads);
+
+      const ctx = document.getElementById('yearly-stacked-chart-canvas').getContext('2d');
+      if (yearlyStackedChart) {
+        yearlyStackedChart.destroy();
+      }
+
+      yearlyStackedChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: years.map(y => `ปี ${y}`),
+          datasets: [
+            {
+              label: 'ยอดขาย',
+              data: salesData,
+              backgroundColor: 'rgba(59, 130, 246, 0.8)', // สีน้ำเงิน
+              borderColor: '#2563eb',
+              borderWidth: 1,
+              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 } // มนแค่ด้านล่าง
+            },
+            {
+              label: 'ค่าโฆษณา',
+              data: adsData,
+              backgroundColor: 'rgba(239, 68, 68, 0.8)', // สีแดง
+              borderColor: '#dc2626',
+              borderWidth: 1,
+              borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 } // มนแค่ด้านบน
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 20
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              titleFont: { size: 14 },
+              bodyFont: { size: 13 },
+              callbacks: {
+                label: function (context) {
+                  return context.dataset.label + ': ' + formatCurrency(context.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true, // กำหนดให้อยู่แท่งเดียวกัน แกน X
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true, // กำหนดให้อยู่แท่งเดียวกัน แกน Y
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.05)'
+              },
+              ticks: {
+                callback: function (value) {
+                  return '฿' + (value / 1000000).toFixed(1) + 'M';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
     // Refresh data
     async function refreshData() {
       const refreshIcon = document.getElementById('refresh-icon');
@@ -1345,6 +1497,7 @@
 
         // ส่งโหมด 'init' เพื่อให้ครั้งแรกที่โหลดแสดงกราฟเฉพาะ "ยอดขาย"
         updateYoYChart('init');
+        updateYearlyStackedChart();
 
         document.getElementById('loading-state').classList.add('hidden');
         document.getElementById('dashboard-content').classList.remove('hidden');
@@ -1391,6 +1544,10 @@
 
       // อัปเดตกราฟใหม่ และสั่งให้ซ่อนกราฟทั้งหมด (โหมด 'clear')
       updateYoYChart('clear');
+
+      // รีเซ็ตแท็บรายปีกลับเป็น "รวม"
+      const allTabBtn = document.querySelector('.yearly-tab-btn[data-company="all"]');
+      if (allTabBtn) changeYearlyTab(allTabBtn, 'all');
     }
 
     // Initialize

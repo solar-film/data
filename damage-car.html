@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สรุปความเสียหาย ฟิล์มรถยนต์</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Layout logic -->
+    <script src="layout.js" defer></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+  
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-card-dark {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .loader {
+            border-top-color: #3b82f6;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .filter-btn {
+            color: #475569 !important;
+            border: 1px solid #cbd5e1 !important;
+            background-color: #ffffff !important;
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #1e40af !important;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc]">
+    <div class="pt-20 md:pt-24 md:pl-[260px] px-4 md:px-6 lg:px-8 min-h-screen">
+        <div class="max-w-[1320px] mx-auto">
+
+            <!-- Sidebar & Header จะถูกสร้างอัตโนมัติจาก layout.js -->
+            <!-- Header -->
+            <!-- Header -->
+    <div class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900">รายงานความเสียหาย แผนกฟิล์มรถยนต์</h1>
+            <p class="text-slate-500">รายงานวิเคราะห์มูลค่าและความเสียหายสะสม</p>
+        </div>
+        <button onclick="fetchData()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl transition-all shadow-lg active:scale-95">
+            <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
+            <span class="font-medium">ดึงข้อมูลใหม่</span>
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="max-w-7xl mx-auto mb-8 space-y-4">
+        <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-sm font-bold text-slate-600 mr-2">ตัวกรองด่วน:</span>
+            <button onclick="setFilter('current')" id="btn-current" class="filter-btn px-4 py-2 rounded-full text-sm">เดือนนี้</button>
+            <button onclick="setFilter('3months')" id="btn-3months" class="filter-btn px-4 py-2 rounded-full text-sm">3 เดือนล่าสุด</button>
+            <button onclick="setFilter('year')" id="btn-year" class="filter-btn px-4 py-2 rounded-full text-sm">ปีปัจจุบัน</button>
+            <button onclick="setFilter('all')" id="btn-all" class="filter-btn px-4 py-2 rounded-full text-sm">ทั้งหมด</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-bold text-slate-500 uppercase ml-1">เจาะจงรายเดือน</label>
+                <select id="monthFilter" onchange="setCustomMonth()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 focus:ring-2 focus:ring-blue-500">
+                    <option value="none">-- กรุณาเลือกเดือน --</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-bold text-slate-500 uppercase ml-1">กรองตามชื่อช่าง</label>
+                <select id="staffFilter" onchange="applyFilters()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 focus:ring-2 focus:ring-blue-500">
+                    <option value="all">ช่างทุกคน</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards (Dark Style) -->
+    <div class="max-w-7xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="kpi-card-dark p-6 rounded-2xl border-l-[6px] border-l-red-500 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-red-500/10 p-3 rounded-xl text-red-400"><i data-lucide="banknote"></i></div>
+                <span class="text-[10px] font-black text-red-400 bg-red-400/10 px-2 py-1 rounded-md uppercase tracking-wider">Damage Cost</span>
+            </div>
+            <h3 class="text-slate-400 text-sm font-medium">รวมมูลค่าความเสียหาย (บาท)</h3>
+            <p class="text-4xl kpi-value mt-1 text-white" id="kpi-cost">฿0</p>
+        </div>
+
+        <div class="kpi-card-dark p-6 rounded-2xl border-l-[6px] border-l-blue-500 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-blue-500/10 p-3 rounded-xl text-blue-400"><i data-lucide="car"></i></div>
+                <span class="text-[10px] font-black text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md uppercase tracking-wider">Count</span>
+            </div>
+            <h3 class="text-slate-400 text-sm font-medium">จำนวนรถที่เสียหาย (คัน)</h3>
+            <p class="text-4xl kpi-value mt-1 text-white" id="kpi-count">0</p>
+        </div>
+
+        <div class="kpi-card-dark p-6 rounded-2xl border-l-[6px] border-l-orange-500 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-orange-500/10 p-3 rounded-xl text-orange-400"><i data-lucide="layers"></i></div>
+                <span class="text-[10px] font-black text-orange-400 bg-orange-400/10 px-2 py-1 rounded-md uppercase tracking-wider">Square Feet</span>
+            </div>
+            <h3 class="text-slate-400 text-sm font-medium">พื้นที่เสียหายสะสม (ตรฟ.)</h3>
+            <p class="text-4xl kpi-value mt-1 text-white" id="kpi-sqf">0.00</p>
+        </div>
+    </div>
+
+    <!-- New Analysis Cards Section -->
+    <div class="max-w-7xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+            <div class="bg-emerald-50 p-3 rounded-lg text-emerald-600"><i data-lucide="trending-down"></i></div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-tighter">เฉลี่ยต่อชิ้นงาน (บาท)</p>
+                <p class="text-xl font-bold text-slate-800" id="analysis-avg-cost">฿0</p>
+            </div>
+        </div>
+        <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+            <div class="bg-purple-50 p-3 rounded-lg text-purple-600"><i data-lucide="gauge"></i></div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-tighter">ความถี่เสียหาย</p>
+                <p class="text-xl font-bold text-slate-800" id="analysis-frequency">0 คัน/สัปดาห์</p>
+            </div>
+        </div>
+        <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+            <div class="bg-amber-50 p-3 rounded-lg text-amber-600"><i data-lucide="info"></i></div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-tighter">ฟิล์มที่เสียบ่อยสุด</p>
+                <p class="text-sm font-bold text-slate-800 truncate w-32" id="analysis-top-film">-</p>
+            </div>
+        </div>
+        <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+            <div class="bg-blue-50 p-3 rounded-lg text-blue-600"><i data-lucide="activity"></i></div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-tighter">เฉลี่ยพื้นที่/คัน</p>
+                <p class="text-xl font-bold text-slate-800" id="analysis-avg-sqf">0.00 ตรฟ.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="max-w-7xl mx-auto mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Ranking Table -->
+        <div class="lg:col-span-1 glass-card p-6 rounded-2xl">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
+                <i data-lucide="alert-triangle" class="text-orange-500"></i>
+                ลำดับความเสียหายรายบุคคล
+            </h3>
+            <div id="top-staff-list" class="space-y-4">
+                <p class="text-center text-slate-400 py-10 italic">ไม่มีข้อมูลแสดงผล</p>
+            </div>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="lg:col-span-2 glass-card p-6 rounded-2xl">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
+                <i data-lucide="line-chart" class="text-blue-500"></i>
+                แนวโน้มความเสียหายรายวัน
+            </h3>
+            <div class="chart-container">
+                <canvas id="dailyTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Charts -->
+    <div class="max-w-7xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass-card p-6 rounded-2xl">
+            <h3 class="text-sm font-bold mb-4 text-slate-500 uppercase tracking-widest">มูลค่าความเสียหายตามประเภทฟิล์ม</h3>
+            <div class="chart-container" style="height: 280px;">
+                <canvas id="filmChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-card p-6 rounded-2xl">
+            <h3 class="text-sm font-bold mb-4 text-slate-500 uppercase tracking-widest">เปรียบเทียบมูลค่า 12 เดือนล่าสุด</h3>
+            <div class="chart-container" style="height: 280px;">
+                <canvas id="monthlyBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="max-w-7xl mx-auto mb-20">
+        <div class="flex justify-between items-center mb-4 px-2">
+            <h3 class="text-xl font-bold text-slate-800">รายการละเอียดความเสียหาย</h3>
+            <button onclick="toggleTable()" id="btn-toggle-table" class="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1">
+                <span id="toggle-text">แสดงข้อมูล</span>
+                <i data-lucide="chevron-down" class="w-5 h-5" id="toggle-icon"></i>
+            </button>
+        </div>
+        <div id="table-container" class="hidden glass-card rounded-2xl overflow-hidden border border-slate-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">วันที่</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">ลูกค้า/ทะเบียน</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">รุ่นรถ</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">ช่าง</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase text-right">ตรฟ.</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase text-right">มูลค่า (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 flex flex-col items-center justify-center z-50">
+        <div class="loader rounded-full border-4 border-slate-200 h-16 w-16 mb-4"></div>
+        <p class="font-bold text-slate-700 animate-pulse">กำลังประมวลผลข้อมูลล่าสุด...</p>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1QnbSbWJXl-XvgplCJ1l2eQX5VMDlcA8qFaMfvaYRkSk';
+        const SHEET_NAME = 'เว็บ-ความเสียหาย';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+        let rawData = [];
+        let filteredData = [];
+        let currentFilterRange = 'current';
+        let charts = {};
+
+        function initIcons() {
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        async function fetchData() {
+            showLoading(true);
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('animate-spin');
+
+            try {
+                const res = await fetch(CSV_URL);
+                const text = await res.text();
+                rawData = parseCSV(text);
+                
+                const staffSet = new Set(rawData.map(r => r.staff).filter(Boolean));
+                const monthSet = new Set(rawData.map(r => r.monthStr).filter(Boolean));
+                
+                const sSelect = document.getElementById('staffFilter');
+                sSelect.innerHTML = '<option value="all">ช่างทุกคน</option>';
+                [...staffSet].sort().forEach(s => sSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+                const mSelect = document.getElementById('monthFilter');
+                mSelect.innerHTML = '<option value="none">-- กรุณาเลือกเดือน --</option>';
+                [...monthSet].forEach(m => mSelect.innerHTML += `<option value="${m}">${m}</option>`);
+
+                setFilter(currentFilterRange);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setTimeout(() => {
+                    showLoading(false);
+                    if (icon) icon.classList.remove('animate-spin');
+                    initIcons();
+                }, 400);
+            }
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const row = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+                if (row.length < 10) continue;
+                
+                const costVal = parseFloat(row[9]?.replace(/,/g, '')) || 0;
+                const sqfVal = parseFloat(row[10]?.replace(/,/g, '')) || 0;
+
+                result.push({
+                    monthStr: row[0],
+                    date: parseThaiDate(row[1]),
+                    customer: row[2],
+                    carModel: row[3],
+                    license: row[5],
+                    film: row[6],
+                    staff: row[8],
+                    cost: costVal,
+                    sqf: sqfVal
+                });
+            }
+            return result;
+        }
+
+        function parseThaiDate(s) {
+            if (!s) return new Date();
+            const p = s.split('/');
+            if (p.length === 3) {
+                let y = parseInt(p[2]);
+                if (y > 2500) y -= 543;
+                return new Date(y, parseInt(p[1]) - 1, parseInt(p[0]));
+            }
+            return new Date();
+        }
+
+        function setFilter(r) {
+            currentFilterRange = r;
+            const mf = document.getElementById('monthFilter');
+            if(mf) mf.value = 'none';
+            
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            const active = document.getElementById(`btn-${r}`);
+            if (active) active.classList.add('active');
+            applyFilters();
+        }
+
+        function setCustomMonth() {
+            const v = document.getElementById('monthFilter').value;
+            if (v !== 'none') {
+                currentFilterRange = 'custom';
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                applyFilters();
+            }
+        }
+
+        function applyFilters() {
+            const now = new Date();
+            const staffVal = document.getElementById('staffFilter').value;
+            const monthVal = document.getElementById('monthFilter').value;
+
+            filteredData = rawData.filter(d => {
+                let timeMatch = true;
+                if (currentFilterRange === 'current') {
+                    timeMatch = d.date.getMonth() === now.getMonth() && d.date.getFullYear() === now.getFullYear();
+                } else if (currentFilterRange === '3months') {
+                    const limit = new Date(); limit.setMonth(now.getMonth() - 3);
+                    timeMatch = d.date >= limit;
+                } else if (currentFilterRange === 'year') {
+                    timeMatch = d.date.getFullYear() === now.getFullYear();
+                } else if (currentFilterRange === 'custom') {
+                    timeMatch = d.monthStr === monthVal;
+                }
+
+                const staffMatch = staffVal === 'all' || d.staff === staffVal;
+                return timeMatch && staffMatch;
+            });
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const totalCost = filteredData.reduce((s, i) => s + i.cost, 0);
+            const totalCount = filteredData.length;
+            const totalSqf = filteredData.reduce((s, i) => s + i.sqf, 0);
+
+            document.getElementById('kpi-cost').innerText = '฿' + totalCost.toLocaleString(undefined, {minimumFractionDigits: 0});
+            document.getElementById('kpi-count').innerText = totalCount.toLocaleString();
+            document.getElementById('kpi-sqf').innerText = totalSqf.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // Update Analysis Cards
+            const avgCost = totalCount > 0 ? totalCost / totalCount : 0;
+            const avgSqf = totalCount > 0 ? totalSqf / totalCount : 0;
+            
+            // Frequency calculation (based on days in filter)
+            let frequencyText = "0 คัน/สัปดาห์";
+            if (filteredData.length > 0) {
+                const dates = filteredData.map(d => d.date.getTime());
+                const minD = Math.min(...dates);
+                const maxD = Math.max(...dates);
+                const diffDays = Math.max(1, (maxD - minD) / (1000 * 3600 * 24));
+                const perWeek = (totalCount / diffDays) * 7;
+                frequencyText = `${perWeek.toFixed(1)} คัน/สัปดาห์`;
+            }
+
+            // Top Film Analysis
+            const filmCounts = {};
+            filteredData.forEach(d => filmCounts[d.film] = (filmCounts[d.film] || 0) + 1);
+            const topFilm = Object.entries(filmCounts).sort((a,b) => b[1] - a[1])[0]?.[0] || '-';
+
+            document.getElementById('analysis-avg-cost').innerText = '฿' + avgCost.toLocaleString(undefined, {maximumFractionDigits: 0});
+            document.getElementById('analysis-avg-sqf').innerText = avgSqf.toFixed(2) + ' ตรฟ.';
+            document.getElementById('analysis-frequency').innerText = frequencyText;
+            document.getElementById('analysis-top-film').innerText = topFilm;
+
+            updateRanking();
+            updateCharts();
+            updateTable();
+            initIcons();
+        }
+
+        function updateRanking() {
+            const stats = {};
+            filteredData.forEach(d => {
+                if(!stats[d.staff]) stats[d.staff] = { cost: 0, count: 0, sqf: 0 };
+                stats[d.staff].cost += d.cost;
+                stats[d.staff].count += 1;
+                stats[d.staff].sqf += d.sqf;
+            });
+
+            const sorted = Object.entries(stats).sort((a,b) => b[1].cost - a[1].cost).slice(0, 5);
+            const container = document.getElementById('top-staff-list');
+            
+            if(sorted.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-400 py-10 italic">ไม่พบข้อมูล</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(([name, s], i) => `
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:bg-white hover:shadow-md transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${i < 3 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-600'}">
+                            ${i+1}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1">
+                                <span class="font-bold text-slate-800">${name || 'ไม่ระบุ'}</span>
+                                ${s.cost > 5000 ? '<i data-lucide="alert-circle" class="w-4 h-4 text-orange-500"></i>' : ''}
+                            </div>
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-tight">${s.count} งาน | ${s.sqf.toFixed(2)} ตรฟ.</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-black text-slate-900 leading-none ${s.cost > 5000 ? 'text-red-600' : ''}">฿${s.cost.toLocaleString()}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCharts() {
+            const daily = {};
+            [...filteredData].sort((a,b) => a.date - b.date).forEach(d => {
+                const k = d.date.toLocaleDateString('th-TH', {day:'numeric', month:'short'});
+                daily[k] = (daily[k] || 0) + d.cost;
+            });
+            renderChart('dailyTrendChart', 'line', {
+                labels: Object.keys(daily),
+                datasets: [{ label: 'มูลค่าเสียหาย', data: Object.values(daily), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.05)', fill: true, tension: 0.4 }]
+            });
+
+            const films = {};
+            filteredData.forEach(d => films[d.film] = (films[d.film] || 0) + d.cost);
+            renderChart('filmChart', 'doughnut', {
+                labels: Object.keys(films),
+                datasets: [{ data: Object.values(films), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'] }]
+            }, { plugins: { legend: { position:'bottom', labels: { boxWidth:10, font: {family:'Kanit'} } } } });
+
+            const last12 = [];
+            const d = new Date();
+            for(let i=11; i>=0; i--) {
+                const target = new Date(d.getFullYear(), d.getMonth() - i, 1);
+                const label = target.toLocaleDateString('th-TH', {month:'short', year:'2-digit'});
+                const sum = rawData.filter(r => r.date.getMonth() === target.getMonth() && r.date.getFullYear() === target.getFullYear()).reduce((a,b) => a+b.cost, 0);
+                last12.push({label, sum});
+            }
+            renderChart('monthlyBarChart', 'bar', {
+                labels: last12.map(x => x.label),
+                datasets: [{ label:'มูลค่าเสียหายรวม', data: last12.map(x => x.sum), backgroundColor:'#3b82f6', borderRadius: 5 }]
+            });
+        }
+
+        function updateTable() {
+            const body = document.getElementById('data-table-body');
+            body.innerHTML = [...filteredData].sort((a,b) => b.date - a.date).map(d => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-4 text-slate-500">${d.date.toLocaleDateString('th-TH')}</td>
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800">${d.customer || '-'}</div>
+                        <div class="text-[10px] text-slate-400 font-bold">${d.license || '-'}</div>
+                    </td>
+                    <td class="p-4 text-slate-600">${d.carModel || '-'}</td>
+                    <td class="p-4 font-medium text-slate-700">${d.staff || '-'}</td>
+                    <td class="p-4 text-right">${d.sqf.toFixed(2)}</td>
+                    <td class="p-4 text-right font-black text-red-600">฿${d.cost.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderChart(id, type, data, options = {}) {
+            if (charts[id]) charts[id].destroy();
+            const ctx = document.getElementById(id).getContext('2d');
+            charts[id] = new Chart(ctx, {
+                type, data,
+                options: { responsive: true, maintainAspectRatio: false, ...options }
+            });
+        }
+
+        function toggleTable() {
+            const c = document.getElementById('table-container');
+            const t = document.getElementById('toggle-text');
+            const i = document.getElementById('toggle-icon');
+            const h = c.classList.contains('hidden');
+            
+            if(h) {
+                c.classList.remove('hidden');
+                t.innerText = 'ซ่อนข้อมูล';
+                i.style.transform = 'rotate(180deg)';
+            } else {
+                c.classList.add('hidden');
+                t.innerText = 'แสดงข้อมูล';
+                i.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function showLoading(s) {
+            document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none';
+        }
+
+        window.onload = fetchData;
+    </script>
+
+</body>
+
+</html>

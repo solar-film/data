@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน้าแรก - Good Group</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Layout logic -->
+    <script src="layout.js" defer></script>
+</head>
+
+<body class="bg-[#f8fafc]">
+    </br></br></br>
+    <!-- Sidebar & Header จะถูกสร้างอัตโนมัติจาก layout.js -->
+
+    <main id="mainContent" class="transition-all">
+        <div class="max-w-7xl mx-auto">
+            <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">สรุปภาพรวมระบบ</h1>
+                    <p class="text-slate-500 mt-1">ยินดีต้อนรับกลับมา, ผู้ดูแลระบบ</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-slate-500 hidden sm:block">12 ตุลาคม 2566</span>
+                    <div
+                        class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold">
+                        A</div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div
+                    class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <p class="text-slate-500 text-sm">ยอดขายวันนี้</p>
+                    <h3 class="text-2xl font-bold mt-1 text-slate-900">฿45,000</h3>
+                    <div class="mt-2 text-xs text-green-500 flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i> +12% จากเมื่อวาน
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <p class="text-slate-500 text-sm">งานติดตั้งใหม่</p>
+                    <h3 class="text-2xl font-bold mt-1 text-slate-900">12 เคส</h3>
+                    <div class="mt-2 text-xs text-blue-500 flex items-center">
+                        <i class="fas fa-tools mr-1"></i> กำลังดำเนินการ 5 เคส
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm min-h-[300px] flex items-center justify-center text-slate-400 italic">
+                (ส่วนแสดงกราฟหรือข้อมูลอื่นๆ)
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>
