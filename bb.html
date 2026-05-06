@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Performance Dashboard</title>
+    <!-- โหลด Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลด Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- โหลด Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ตั้งค่าฟอนต์ -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex text-slate-800 font-medium text-base">
+
+    <!-- Loading State -->
+    <div id="loading-view" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 text-slate-500">
+        <i data-lucide="refresh-cw" class="animate-spin mb-4 w-12 h-12 text-blue-600"></i>
+        <p class="text-xl font-bold uppercase tracking-widest">กำลังดึงข้อมูลล่าสุด...</p>
+    </div>
+
+    <!-- SIDEBAR (Left) -->
+    <aside class="w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 hidden lg:flex flex-col h-full border-r border-slate-800">
+        <div class="h-24 flex items-center px-6 border-b border-slate-800">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4 font-bold text-white shadow-lg shadow-blue-500/20 text-lg">BB</div>
+            <div>
+                <h1 class="text-white font-bold tracking-wider leading-tight text-xl">BB-2026</h1>
+                <p class="text-sm text-slate-400">Management System</p>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar text-base">
+            <div>
+                <p class="px-2 text-sm font-bold text-slate-500 mb-3 uppercase tracking-widest">Main Dashboard</p>
+                <ul class="space-y-1">
+                    <li><a href="#" id="menu-overview" onclick="changePage('overview')" class="flex items-center gap-3 px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl font-bold border border-blue-500/20"><i data-lucide="pie-chart" class="w-5 h-5"></i> ภาพรวมธุรกิจ (Overview)</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <p class="px-2 text-sm font-bold text-slate-500 mb-3 uppercase tracking-widest">Revenue Teams</p>
+                <ul class="space-y-1">
+                    <li><a href="#" id="menu-sales" onclick="changePage('sales')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="building-2" class="w-5 h-5"></i> ทีมขาย (ฟิล์มอาคาร)</a></li>
+                    <li><a href="#" id="menu-car" onclick="changePage('car')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="car" class="w-5 h-5"></i> ฟิล์มรถยนต์ (CAR)</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <p class="px-2 text-sm font-bold text-slate-500 mb-3 uppercase tracking-widest">Operations</p>
+                <ul class="space-y-1">
+                    <li><a href="#" id="menu-marketing" onclick="changePage('marketing')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="megaphone" class="w-5 h-5 text-orange-400"></i> MARKETING Online</a></li>
+                    <li><a href="#" id="menu-tech" onclick="changePage('tech')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="wrench" class="w-5 h-5 text-yellow-500"></i> ทีมช่างอาคาร</a></li>
+                    <li><a href="#" id="menu-admin" onclick="changePage('admin')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> SALES ADMIN</a></li>
+                    <li><a href="https://building-film.my.canva.site/feedback-5426" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="message-square" class="w-5 h-5 text-pink-400"></i> Feedback ลูกค้า</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-base">AU</div>
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-base font-medium text-white truncate">ผู้ดูแลระบบ</p>
+                    <p class="text-sm text-slate-400 truncate tracking-tighter">เข้าใช้งาน: วันนี้</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full bg-[#f8fafc] overflow-hidden relative" id="app-view">
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 h-24 px-8 flex items-center justify-between flex-shrink-0 z-10 sticky top-0">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight" id="header-title">ภาพรวมธุรกิจ (Overview)</h1>
+                <p class="text-base text-slate-500 font-bold mt-1" id="header-subtitle">สรุปข้อมูลสถิติรายสัปดาห์</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="loadData()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-95 text-base">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i> รีเฟรชข้อมูล
+                </button>
+            </div>
+        </header>
+
+        <div id="error-banner-container" class="px-8 pt-4 flex-shrink-0"></div>
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8 flex flex-col" id="dashboard-content"></div>
+    </main>
+
+    <script>
+        // กำหนดขนาดฟอนต์เริ่มต้นให้กราฟอ่านง่ายขึ้น
+        Chart.defaults.font.family = 'Sarabun';
+        Chart.defaults.font.size = 14;
+        Chart.defaults.color = '#64748b';
+
+        let dashboardData = [];
+        let selectedId = '';
+        let isUsingMock = false;
+        let errorMessage = null;
+        let currentPage = 'overview';
+        let charts = {};
+        let activeChartTab = 'total';
+        let activeMarketingChartTab = 'compare';
+        let marketingTrendFilter = 'total'; 
+        let buildingTrendFilter = 'total'; 
+        let adminTrendFilter = 'total';
+        let techTrendFilter = 'total'; 
+
+        // ปลั๊กอินเสริมสำหรับแสดง % ความคืบหน้าบนกราฟ พร้อมดาว 100%
+        function createProgressPlugin(isBudget = false) {
+            return {
+                id: 'progressPlugin',
+                afterDatasetsDraw: (chart) => {
+                    const { ctx, data } = chart;
+                    if (data.datasets.length < 2) return;
+                    
+                    // ป้องกันไม่ให้ทำงานกับกราฟที่ไม่ได้มีเป้าหมาย 
+                    const labelStr = data.datasets[1].label || '';
+                    if (!labelStr.includes('เป้า') && !labelStr.includes('งบ')) return;
+
+                    const targetIndex = data.datasets.findIndex(ds => ds.label && (ds.label.includes('เป้า') || ds.label.includes('งบ')));
+                    const actualIndex = data.datasets.findIndex(ds => ds.label && !ds.label.includes('เป้า') && !ds.label.includes('งบ') && !ds.label.includes('ความเสียหาย'));
+
+                    if (actualIndex === -1 || targetIndex === -1) return;
+
+                    const actualMeta = chart.getDatasetMeta(actualIndex);
+                    ctx.save();
+                    ctx.font = 'bold 13px Sarabun';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    actualMeta.data.forEach((dp, i) => {
+                        const actual = data.datasets[actualIndex].data[i];
+                        const target = data.datasets[targetIndex].data[i];
+                        if (target > 0 && actual !== undefined && !isNaN(actual)) {
+                            const percent = (actual / target) * 100;
+                            let text = percent.toFixed(0) + '%';
+                            let icon = '';
+                            if (isBudget) {
+                                if (percent <= 100) { ctx.fillStyle = '#10b981'; } 
+                                else { ctx.fillStyle = '#ef4444'; icon = '⚠️ '; } 
+                            } else {
+                                if (percent >= 100) { ctx.fillStyle = '#10b981'; icon = '🏆 '; } 
+                                else { ctx.fillStyle = '#64748b'; } 
+                            }
+                            ctx.fillText(icon + text, dp.x, dp.y - 12);
+                        }
+                    });
+                    ctx.restore();
+                }
+            };
+        }
+
+        function parseCSV(text) {
+            let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
+            for (l of text) {
+                if ('"' === l) { if (s && l === p) row[i] += l; s = !s; }
+                else if (',' === l && s) l = row[++i] = '';
+                else if ('\n' === l && s) { if ('\r' === p) row[i] = row[i].slice(0, -1); row = ret[++r] = [l = '']; i = 0; }
+                else row[i] += l; p = l;
+            }
+            return ret;
+        }
+
+        function formatCurrency(value) { return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); }
+        function cleanNumber(str) {
+            if (!str) return 0;
+            const cleaned = String(str).replace(/[^\d.-]/g, '');
+            return parseFloat(cleaned) || 0;
+        }
+        function extractMonthGroup(dateRangeStr) {
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            let foundMonth = '';
+            const tokens = dateRangeStr.split(/[\s\-–]+/);
+            for (let i = tokens.length - 1; i >= 0; i--) { if (months.includes(tokens[i].trim())) { foundMonth = tokens[i].trim(); break; } }
+            if (foundMonth) {
+                const yearMatch = dateRangeStr.match(/(20\d{2}|25\d{2})/);
+                return `${foundMonth} ${yearMatch ? yearMatch[0] : '2026'}`;
+            }
+            return dateRangeStr; 
+        }
+
+        function destroyAllCharts() {
+            Object.values(charts).forEach(c => { if (c) c.destroy(); });
+            charts = {};
+        }
+
+        function generateMockData() {
+            return [{ 
+                id: 'mock-1', week: 'Week 1', dateRange: '1-7 ม.ค. 2026', 
+                gfs: { target: 1500000, actual: 1650000 }, mhl: { target: 800000, actual: 750000 }, car: { target: 500000, actual: 520000 }, 
+                marketing: { gfs: { target: 20000, actual: 18000, google: 10000, fb: 8000 }, mhl: { target: 10000, actual: 11000, google: 5000, fb: 6000 }, car: { target: 5000, actual: 4800, google: 2000, fb: 2800 } }, 
+                admin: { contacts: { total: 153, gfs: { line: 44, fb: 24, tel: 22 }, mhl: { line: 36, fb: 5, tel: 22 }, car: 50 }, leads: { target: 60, actual: 45, gfs: { line: 27, tel: 1, fb: 5 }, mhl: { line: 12, tel: 0, fb: 0 }, car: 15 }, sales: { totalSales: 274174, totalInstalls: 14, newSales: { gfs: 894675, mhl: 855899 }, oldSales: { gfs: 877600, mhl: 846000 }, newInstalls: { gfs: 12, mhl: 6 }, oldInstalls: { gfs: 1, mhl: 1 } } },
+                tech: { installs: { target: 50, actual: 45, gfs: 30, mhl: 15 }, area: { target: 15000, actual: 14200, gfs: 9000, mhl: 5200 }, teams: 5, damage: { totalValue: 4500, byTech: 3000, byFilm: 1500, claims: 2, filmArea: 120 } },
+                carDetail: { sales: { target: 500000, actual: 520000 }, installs: { line: 10, fb: 15, tel: 5, walkin: 2, showroom: 8, other: 1 }, contacts: { total: 80, tel: 20, line: 30, fb: 30 }, tech: { claims: 2, filmIssueCount: 1, filmIssueValue: 1000, techIssueCount: 2, techIssueValue: 2000, teamSize: 3 } },
+                buildingSales: { 
+                    bom: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
+                    jay: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
+                    saifha: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
+                    pat: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
+                    image: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
+                    projYa: {ytd:1000000, sales:100000, installs:2, targetMeets:12, meets:10, newMeets:5, oldMeets:5}, 
+                    projTung: {ytd:1000000, sales:100000, installs:2, targetMeets:12, meets:10, newMeets:5, oldMeets:5} 
+                }
+            }];
+        }
+
+        async function loadData() {
+            document.getElementById('loading-view').classList.remove('hidden');
+            isUsingMock = false; errorMessage = null;
+            try {
+                const sheetId = '12BRnIWVT227cltrdeukIAOIEJ_qrL3OH0Aw6a7gIDIo';
+                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=BB-2026`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Cannot fetch data');
+                const csvText = await response.text();
+                const parsed = parseCSV(csvText);
+
+                const weeksData = [];
+                for (let i = 4; i < parsed[1].length; i++) {
+                    const weekName = parsed[1][i]?.trim();
+                    if (!weekName || (!weekName.toLowerCase().includes('week') && !weekName.toLowerCase().match(/^w\d/))) continue;
+
+                    const gfsMkGoogleVal = cleanNumber(parsed[44]?.[i]);
+                    const gfsMkFbVal = cleanNumber(parsed[50]?.[i]);
+                    const mhlMkGoogleVal = cleanNumber(parsed[63]?.[i]);
+                    const mhlMkFbVal = cleanNumber(parsed[69]?.[i]);
+                    const carMkGoogleVal = cleanNumber(parsed[82]?.[i]);
+                    const carMkFbVal = cleanNumber(parsed[83]?.[i]);
+
+                    // Tech Data Extraction
+                    const techInstallsGFS = cleanNumber(parsed[326]?.[i]);
+                    const techInstallsMHL = cleanNumber(parsed[327]?.[i]);
+                    const techAreaGFS = cleanNumber(parsed[332]?.[i]);
+                    const techAreaMHL = cleanNumber(parsed[333]?.[i]);
+
+                    // Sales Reps Meetings/Installs
+                    const bomMeets = cleanNumber(parsed[173]?.[i]);
+                    const bomInstalls = cleanNumber(parsed[174]?.[i]);
+                    const jayMeets = cleanNumber(parsed[193]?.[i]);
+                    const jayInstalls = cleanNumber(parsed[194]?.[i]);
+                    const saifhaMeets = cleanNumber(parsed[229]?.[i]);
+                    const saifhaInstalls = cleanNumber(parsed[230]?.[i]);
+                    const patMeets = cleanNumber(parsed[250]?.[i]);
+                    const patInstalls = cleanNumber(parsed[251]?.[i]);
+                    const imageMeets = cleanNumber(parsed[269]?.[i]);
+                    const imageInstalls = cleanNumber(parsed[270]?.[i]);
+
+                    weeksData.push({
+                        id: `col-${i}`, week: weekName, dateRange: parsed[2][i]?.trim() || '-',
+                        gfs: { target: cleanNumber(parsed[12]?.[i]), actual: cleanNumber(parsed[13]?.[i]) },
+                        mhl: { target: cleanNumber(parsed[18]?.[i]), actual: cleanNumber(parsed[19]?.[i]) },
+                        car: { target: cleanNumber(parsed[24]?.[i]), actual: cleanNumber(parsed[25]?.[i]) },
+                        marketing: {
+                            gfs: { target: cleanNumber(parsed[37]?.[i]), actual: cleanNumber(parsed[44]?.[i]) + cleanNumber(parsed[50]?.[i]), google: gfsMkGoogleVal, fb: gfsMkFbVal },
+                            mhl: { target: cleanNumber(parsed[56]?.[i]), actual: cleanNumber(parsed[63]?.[i]) + cleanNumber(parsed[69]?.[i]), google: mhlMkGoogleVal, fb: mhlMkFbVal },
+                            car: { target: cleanNumber(parsed[75]?.[i]), actual: cleanNumber(parsed[82]?.[i]) + cleanNumber(parsed[83]?.[i]), google: carMkGoogleVal, fb: carMkFbVal }
+                        },
+                        admin: {
+                            contacts: { total: cleanNumber(parsed[112]?.[i]), gfs: { line: cleanNumber(parsed[115]?.[i]), fb: cleanNumber(parsed[116]?.[i]), tel: cleanNumber(parsed[117]?.[i]) }, mhl: { line: cleanNumber(parsed[120]?.[i]), fb: cleanNumber(parsed[121]?.[i]), tel: cleanNumber(parsed[122]?.[i]) }, car: cleanNumber(parsed[371]?.[i]) },
+                            leads: { target: cleanNumber(parsed[125]?.[i]), actual: cleanNumber(parsed[126]?.[i]), gfs: { line: cleanNumber(parsed[129]?.[i]), tel: cleanNumber(parsed[130]?.[i]), fb: cleanNumber(parsed[131]?.[i]) }, mhl: { line: cleanNumber(parsed[134]?.[i]), tel: cleanNumber(parsed[135]?.[i]), fb: cleanNumber(parsed[136]?.[i]) }, car: cleanNumber(parsed[360]?.[i]) },
+                            sales: { totalInstalls: cleanNumber(parsed[156]?.[i]), newInstalls: { gfs: cleanNumber(parsed[158]?.[i]), mhl: cleanNumber(parsed[159]?.[i]) }, oldInstalls: { gfs: cleanNumber(parsed[163]?.[i]), mhl: cleanNumber(parsed[164]?.[i]) }, totalSales: cleanNumber(parsed[146]?.[i]), newSales: { gfs: cleanNumber(parsed[149]?.[i]), mhl: cleanNumber(parsed[150]?.[i]) }, oldSales: { gfs: cleanNumber(parsed[153]?.[i]), mhl: cleanNumber(parsed[154]?.[i]) } }
+                        },
+                        tech: {
+                            installs: { target: cleanNumber(parsed[324]?.[i]), actual: cleanNumber(parsed[326]?.[i]) + cleanNumber(parsed[327]?.[i]), gfs: cleanNumber(parsed[326]?.[i]), mhl: cleanNumber(parsed[327]?.[i]) },
+                            area: { target: cleanNumber(parsed[330]?.[i]), actual: cleanNumber(parsed[331]?.[i]), gfs: cleanNumber(parsed[332]?.[i]), mhl: cleanNumber(parsed[333]?.[i]) },
+                            teams: cleanNumber(parsed[336]?.[i]),
+                            damage: { totalValue: cleanNumber(parsed[342]?.[i]), byTech: cleanNumber(parsed[343]?.[i]), byFilm: cleanNumber(parsed[344]?.[i]), claims: cleanNumber(parsed[347]?.[i]), filmArea: cleanNumber(parsed[348]?.[i]) }
+                        },
+                        carDetail: {
+                            sales: { target: cleanNumber(parsed[356]?.[i]), actual: cleanNumber(parsed[357]?.[i]) },
+                            installs: { line: cleanNumber(parsed[361]?.[i]), fb: cleanNumber(parsed[362]?.[i]), tel: cleanNumber(parsed[363]?.[i]), walkin: cleanNumber(parsed[364]?.[i]), showroom: cleanNumber(parsed[365]?.[i]), other: cleanNumber(parsed[366]?.[i]) },
+                            contacts: { total: cleanNumber(parsed[371]?.[i]), tel: cleanNumber(parsed[372]?.[i]), line: cleanNumber(parsed[373]?.[i]), fb: cleanNumber(parsed[374]?.[i]) },
+                            tech: { claims: cleanNumber(parsed[377]?.[i]), filmIssueCount: cleanNumber(parsed[382]?.[i]), filmIssueValue: cleanNumber(parsed[383]?.[i]), techIssueCount: cleanNumber(parsed[384]?.[i]), techIssueValue: cleanNumber(parsed[385]?.[i]), teamSize: cleanNumber(parsed[386]?.[i]) }
+                        },
+                        buildingSales: {
+                            bom: { ytd: cleanNumber(parsed[172]?.[i]), meets: bomMeets, installs: bomInstalls, sales: cleanNumber(parsed[175]?.[i]), newMeets: cleanNumber(parsed[177]?.[i]), newInstalls: cleanNumber(parsed[178]?.[i]), newSales: cleanNumber(parsed[179]?.[i]), oldMeets: cleanNumber(parsed[181]?.[i]), oldInstalls: cleanNumber(parsed[182]?.[i]), oldSales: cleanNumber(parsed[183]?.[i]), noInstalls: cleanNumber(parsed[185]?.[i]), noInstallSales: cleanNumber(parsed[186]?.[i]), sr: bomMeets > 0 ? (bomInstalls / bomMeets) * 100 : 0 },
+                            jay: { ytd: cleanNumber(parsed[192]?.[i]), meets: jayMeets, installs: jayInstalls, sales: cleanNumber(parsed[195]?.[i]), newMeets: cleanNumber(parsed[197]?.[i]), newInstalls: cleanNumber(parsed[198]?.[i]), newSales: cleanNumber(parsed[199]?.[i]), oldMeets: cleanNumber(parsed[201]?.[i]), oldInstalls: cleanNumber(parsed[202]?.[i]), oldSales: cleanNumber(parsed[203]?.[i]), noInstalls: cleanNumber(parsed[205]?.[i]), noInstallSales: cleanNumber(parsed[206]?.[i]), sr: jayMeets > 0 ? (jayInstalls / jayMeets) * 100 : 0 },
+                            saifha: { ytd: cleanNumber(parsed[228]?.[i]), meets: saifhaMeets, installs: saifhaInstalls, sales: cleanNumber(parsed[231]?.[i]), newMeets: cleanNumber(parsed[233]?.[i]), newInstalls: cleanNumber(parsed[234]?.[i]), newSales: cleanNumber(parsed[235]?.[i]), oldMeets: cleanNumber(parsed[237]?.[i]), oldInstalls: cleanNumber(parsed[238]?.[i]), oldSales: cleanNumber(parsed[239]?.[i]), noInstalls: cleanNumber(parsed[241]?.[i]), noInstallSales: cleanNumber(parsed[242]?.[i]), sr: saifhaMeets > 0 ? (saifhaInstalls / saifhaMeets) * 100 : 0 },
+                            pat: { ytd: cleanNumber(parsed[249]?.[i]), meets: patMeets, installs: patInstalls, sales: cleanNumber(parsed[252]?.[i]), newMeets: cleanNumber(parsed[253]?.[i]), newInstalls: cleanNumber(parsed[254]?.[i]), newSales: cleanNumber(parsed[255]?.[i]), oldMeets: cleanNumber(parsed[257]?.[i]), oldInstalls: cleanNumber(parsed[258]?.[i]), oldSales: cleanNumber(parsed[259]?.[i]), noInstalls: cleanNumber(parsed[261]?.[i]), noInstallSales: cleanNumber(parsed[262]?.[i]), sr: patMeets > 0 ? (patInstalls / patMeets) * 100 : 0 },
+                            image: { ytd: cleanNumber(parsed[268]?.[i]), meets: imageMeets, installs: imageInstalls, sales: cleanNumber(parsed[271]?.[i]), newMeets: cleanNumber(parsed[273]?.[i]), newInstalls: cleanNumber(parsed[274]?.[i]), newSales: cleanNumber(parsed[275]?.[i]), oldMeets: cleanNumber(parsed[277]?.[i]), oldInstalls: cleanNumber(parsed[278]?.[i]), oldSales: cleanNumber(parsed[279]?.[i]), noInstalls: cleanNumber(parsed[281]?.[i]), noInstallSales: cleanNumber(parsed[282]?.[i]), sr: imageMeets > 0 ? (imageInstalls / imageMeets) * 100 : 0 },
+                            projYa: { ytd: cleanNumber(parsed[289]?.[i]), sales: cleanNumber(parsed[290]?.[i]), installs: cleanNumber(parsed[291]?.[i]), targetMeets: cleanNumber(parsed[294]?.[i]), meets: cleanNumber(parsed[295]?.[i]), newMeets: cleanNumber(parsed[296]?.[i]), oldMeets: cleanNumber(parsed[297]?.[i]) },
+                            projTung: { ytd: cleanNumber(parsed[302]?.[i]), sales: cleanNumber(parsed[303]?.[i]), installs: cleanNumber(parsed[304]?.[i]), targetMeets: cleanNumber(parsed[307]?.[i]), meets: cleanNumber(parsed[308]?.[i]), newMeets: cleanNumber(parsed[309]?.[i]), oldMeets: cleanNumber(parsed[310]?.[i]) }
+                        }
+                    });
+                }
+                dashboardData = weeksData;
+                let lastValid = weeksData[0].id;
+                for (let i = weeksData.length - 1; i >= 0; i--) { 
+                    if ((weeksData[i].gfs.actual + weeksData[i].mhl.actual + weeksData[i].car.actual) > 0) { 
+                        lastValid = weeksData[i].id; break; 
+                    } 
+                }
+                selectedId = lastValid;
+            } catch (err) {
+                errorMessage = err.message; isUsingMock = true; 
+                dashboardData = generateMockData();
+                selectedId = dashboardData[0].id;
+            } finally {
+                document.getElementById('loading-view').classList.add('hidden');
+                updateDashboardUI();
+            }
+        }
+
+        function calculateMetrics(current) {
+            const YEARLY_TARGET = 100000000;
+            let ytdActual = dashboardData.reduce((s, d) => s + d.gfs.actual + d.mhl.actual + d.car.actual, 0);
+            const monthGroup = extractMonthGroup(current.dateRange);
+            let mTarget = 0, mActual = 0;
+            dashboardData.forEach(d => {
+                if (extractMonthGroup(d.dateRange) === monthGroup) {
+                    mTarget += (d.gfs.target + d.mhl.target + d.car.target);
+                    mActual += (d.gfs.actual + d.mhl.actual + d.car.actual);
+                }
+            });
+            const cIdx = dashboardData.findIndex(d => d.id === selectedId);
+            const prev = cIdx > 0 ? dashboardData[cIdx - 1] : null;
+            const wA = current.gfs.actual + current.mhl.actual + current.car.actual;
+            const pA = prev ? (prev.gfs.actual + prev.mhl.actual + prev.car.actual) : 0;
+            const growth = pA > 0 ? ((wA - pA) / pA) * 100 : 0;
+            const mkS = current.marketing.gfs.actual + current.marketing.mhl.actual + current.marketing.car.actual;
+            
+            return { ytd: { t: YEARLY_TARGET, a: ytdActual, p: (ytdActual/YEARLY_TARGET)*100 }, monthly: { t: mTarget, a: mActual, p: mTarget > 0 ? (mActual/mTarget)*100 : 0, label: monthGroup }, weekly: { t: current.gfs.target+current.mhl.target+current.car.target, a: wA, p: (wA/(current.gfs.target+current.mhl.target+current.car.target || 1))*100, g: growth, r: mkS > 0 ? (wA/mkS).toFixed(1) : 0 } };
+        }
+
+        function getStatusBadge(prog) {
+            const color = prog >= 100 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200';
+            return `<span class="px-2 py-0.5 ${color} border rounded-lg text-sm font-black">${prog.toFixed(1)}%</span>`;
+        }
+
+        window.handleWeekChange = (e) => { selectedId = e.target.value; updateDashboardUI(); };
+        window.changeChartTab = (t) => { activeChartTab = t; updateDashboardUI(); };
+        window.changeMarketingChartTab = (t) => { activeMarketingChartTab = t; updateDashboardUI(); };
+        window.changeMarketingTrendFilter = (t) => { marketingTrendFilter = t; updateDashboardUI(); };
+        window.changeBuildingTrendFilter = (t) => { buildingTrendFilter = t; updateDashboardUI(); };
+        window.changeAdminTrendFilter = (t) => { adminTrendFilter = t; updateDashboardUI(); };
+        window.changeTechTrendFilter = (t) => { techTrendFilter = t; updateDashboardUI(); };
+
+        window.changePage = (page) => {
+            currentPage = page;
+            updateDashboardUI();
+            
+            const menus = ['overview', 'sales', 'car', 'marketing', 'tech', 'admin'];
+            menus.forEach(m => {
+                const el = document.getElementById('menu-' + m);
+                if (el) el.className = `flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all ${m === page ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-md' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`;
+            });
+                
+            const titles = {
+                'overview': { title: 'ภาพรวมธุรกิจ (Overview)', sub: 'สรุปข้อมูลสถิติรายสัปดาห์' },
+                'sales': { title: 'ทีมขาย (ฟิล์มอาคาร)', sub: 'ประสิทธิภาพการขายของ Sales Reps และ Projects' },
+                'car': { title: 'ฟิล์มรถยนต์ (CAR)', sub: 'เจาะลึกยอดขาย การติดต่อ และทีมช่างฟิล์มรถยนต์' },
+                'marketing': { title: 'เจาะลึก MARKETING Online', sub: 'วิเคราะห์งบโฆษณา การเข้าถึง และความคุ้มค่า (ROAS)' },
+                'tech': { title: 'เจาะลึก ทีมช่างอาคาร', sub: 'วิเคราะห์ประสิทธิภาพงานติดตั้งและบริหารความเสียหาย' },
+                'admin': { title: 'เจาะลึก SALES ADMIN', sub: 'เจาะลึกการประสานงาน ปริมาณติดต่อ และยอดขายแอดมิน' }
+            };
+            
+            document.getElementById('header-title').innerText = titles[page]?.title || titles['overview'].title;
+            const currentData = dashboardData.find(d => d.id === selectedId);
+            const weekStr = currentData ? ` (ข้อมูลประจำ ${currentData.week})` : '';
+            document.getElementById('header-subtitle').innerText = (titles[page]?.sub || titles['overview'].sub) + weekStr;
+        };
+
+        function updateDashboardUI() {
+            const current = dashboardData.find(d => d.id === selectedId);
+            if (!current) return;
+            const m = calculateMetrics(current);
+            const opt = dashboardData.map(d => `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${d.week} (${d.dateRange})</option>`).join('');
+            
+            // อัปเดต Title ให้แสดง Week ปัจจุบันด้วย
+            const titles = {
+                'overview': 'สรุปข้อมูลสถิติรายสัปดาห์',
+                'sales': 'ประสิทธิภาพการขายของ Sales Reps และ Projects',
+                'car': 'เจาะลึกยอดขาย การติดต่อ และทีมช่างฟิล์มรถยนต์',
+                'marketing': 'วิเคราะห์งบโฆษณา การเข้าถึง และความคุ้มค่า (ROAS)',
+                'tech': 'วิเคราะห์ประสิทธิภาพงานติดตั้งและบริหารความเสียหาย',
+                'admin': 'เจาะลึกการประสานงาน ปริมาณติดต่อ และยอดขายแอดมิน'
+            };
+            document.getElementById('header-subtitle').innerText = `${titles[currentPage]} (ข้อมูลประจำ ${current.week})`;
+
+            const bannerContainer = document.getElementById('error-banner-container');
+            bannerContainer.innerHTML = isUsingMock ? `<div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-center gap-3"><i data-lucide="alert-triangle" class="text-amber-500 w-5 h-5 flex-shrink-0"></i><p class="text-amber-800 text-base"><strong>โหมดสาธิต:</strong> ข้อมูลจำลอง (${errorMessage})</p></div>` : '';
+
+            destroyAllCharts();
+            const contentDiv = document.getElementById('dashboard-content');
+
+            if (currentPage === 'overview') renderOverviewHTML(current, m, opt, contentDiv);
+            else if (currentPage === 'sales') renderBuildingSalesHTML(current, m, opt, contentDiv);
+            else if (currentPage === 'car') renderCarDeepDiveHTML(current, m, opt, contentDiv);
+            else if (currentPage === 'admin') renderAdminDeepDiveHTML(current, m, opt, contentDiv);
+            else if (currentPage === 'marketing') renderMarketingDeepDiveHTML(current, m, opt, contentDiv);
+            else if (currentPage === 'tech') renderTechDeepDiveHTML(current, m, opt, contentDiv);
+            else renderOverviewHTML(current, m, opt, contentDiv);
+
+            lucide.createIcons(); 
+        }
+
+        // ==========================================
+        // CHART RENDERING
+        // ==========================================
+        function renderBasicTrendChart(current) {
+            const bCtx = document.getElementById('trendChartCanvas');
+            if(!bCtx) return;
+            if (charts['barTrend']) charts['barTrend'].destroy();
+
+            // ดึงเฉพาะสัปดาห์ที่มีการดำเนินงาน (12 สัปดาห์ล่าสุด)
+            const recentData = dashboardData.filter(d => (d.gfs.actual + d.mhl.actual + d.car.actual) > 0).slice(-12);
+
+            const dLabelAct = activeChartTab === 'total' ? 'ยอดขายจริงรวม' : `ยอดขายจริง ${activeChartTab.toUpperCase()}`;
+            const dLabelTar = activeChartTab === 'total' ? 'เป้าหมายรวม' : `เป้าหมาย ${activeChartTab.toUpperCase()}`;
+
+            const dAct = recentData.map(d => {
+                if(activeChartTab === 'total') return d.gfs.actual + d.mhl.actual + d.car.actual;
+                return d[activeChartTab].actual;
+            });
+            const dTar = recentData.map(d => {
+                if(activeChartTab === 'total') return d.gfs.target + d.mhl.target + d.car.target;
+                return d[activeChartTab].target;
+            });
+
+            const cols = { total: '#6366f1', gfs: '#3b82f6', mhl: '#f59e0b', car: '#10b981' };
+            const lines = { total: '#818cf8', gfs: '#93c5fd', mhl: '#fcd34d', car: '#6ee7b7' };
+
+            charts['barTrend'] = new Chart(bCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: recentData.map(d => d.week),
+                    datasets: [
+                        { type: 'bar', label: dLabelAct, data: dAct, backgroundColor: cols[activeChartTab], borderRadius: 4, barPercentage: 0.6, order: 2 },
+                        { type: 'line', label: dLabelTar, data: dTar, borderColor: lines[activeChartTab], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: lines[activeChartTab], tension: 0.1, order: 1 }
+                    ]
+                },
+                options: { 
+                    layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } } },
+                    scales: { 
+                        x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } }, 
+                        y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 1000000 ? (v/1000000)+'M' : (v>=1000?(v/1000)+'k':v) } } 
+                    }
+                },
+                plugins: [createProgressPlugin(false)]
+            });
+        }
+
+        // ==========================================
+        // RENDER: OVERVIEW (Redesigned - Clean & Pipeline View)
+        // ==========================================
+        function renderOverviewHTML(current, m, opt, container) {
+            // คำนวณข้อมูลสำหรับ Pipeline
+            const mktSpend = current.marketing.gfs.actual + current.marketing.mhl.actual + current.marketing.car.actual;
+            const mktBud = current.marketing.gfs.target + current.marketing.mhl.target + current.marketing.car.target;
+            
+            const adminContacts = current.admin.contacts.total + (current.carDetail ? current.carDetail.contacts.total : 0);
+            const adminLeads = current.admin.leads.actual + (current.carDetail ? current.admin.leads.car : 0);
+            const leadConv = adminContacts > 0 ? (adminLeads / adminContacts) * 100 : 0;
+
+            const totalSales = current.gfs.actual + current.mhl.actual + current.car.actual;
+            const totalTarget = current.gfs.target + current.mhl.target + current.car.target;
+            const totalSalesProgress = totalTarget > 0 ? (totalSales / totalTarget) * 100 : 0;
+
+            const buildingInstalls = current.tech.installs.actual;
+            const carInstalls = current.carDetail ? (current.carDetail.installs.line + current.carDetail.installs.fb + current.carDetail.installs.tel + current.carDetail.installs.walkin + current.carDetail.installs.showroom + current.carDetail.installs.other) : 0;
+            const totalInstalls = buildingInstalls + carInstalls;
+            
+            const totalDamageValue = current.tech.damage.totalValue + (current.carDetail ? (current.carDetail.tech.filmIssueValue + current.carDetail.tech.techIssueValue) : 0);
+            const damagePercent = totalSales > 0 ? (totalDamageValue / totalSales) * 100 : 0;
+
+            container.innerHTML = `
+                <!-- ส่วน Filter สัปดาห์ -->
+                <div class="flex items-center gap-2 mb-6 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                    <i data-lucide="filter" class="w-5 h-5 text-slate-400 ml-2"></i>
+                    <span class="text-base font-bold text-slate-600 mr-2">ตัวกรองสัปดาห์:</span>
+                    <select onchange="handleWeekChange(event)" class="ml-auto bg-slate-50 border border-slate-200 text-slate-700 text-base rounded-lg p-2 w-72 cursor-pointer font-bold">${opt}</select>
+                </div>
+
+                <!-- 1. ส่วนหัว: KPI หลัก (The Big Picture) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0 mb-8">
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-8 shadow-lg text-white relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="bar-chart-2" class="w-48 h-48"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-slate-300 font-bold tracking-widest uppercase mb-2">ยอดขายสัปดาห์นี้ (Weekly Sales)</p>
+                            <h2 class="text-5xl font-black mb-4">฿${formatCurrency(m.weekly.a)}</h2>
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-xl text-sm font-black ${totalSales >= totalTarget ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">
+                                    ${totalSales >= totalTarget ? '⭐ ทะลุเป้า' : '⚠️ ต่ำกว่าเป้า'} ${totalSalesProgress.toFixed(1)}%
+                                </span>
+                                <span class="text-slate-400 text-sm font-bold">เป้า: ฿${formatCurrency(m.weekly.t)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center">
+                        <p class="text-slate-500 font-bold tracking-widest uppercase mb-2 flex items-center gap-2"><i data-lucide="calendar" class="w-5 h-5 text-blue-500"></i> ยอดขายเดือนนี้ (${m.monthly.label})</p>
+                        <h3 class="text-4xl font-black text-slate-900 mb-3">฿${formatCurrency(m.monthly.a)}</h3>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-2">
+                            <div class="bg-blue-500 h-full rounded-full" style="width:${Math.min(m.monthly.p,100)}%"></div>
+                        </div>
+                        <p class="text-slate-500 text-sm font-bold">เป้าเดือน: ฿${formatCurrency(m.monthly.t)} (${m.monthly.p.toFixed(1)}%)</p>
+                    </div>
+
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center">
+                        <p class="text-slate-500 font-bold tracking-widest uppercase mb-2 flex items-center gap-2"><i data-lucide="calendar-days" class="w-5 h-5 text-purple-500"></i> ยอดขายสะสมปีนี้ (YTD)</p>
+                        <h3 class="text-4xl font-black text-slate-900 mb-3">฿${formatCurrency(m.ytd.a)}</h3>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-2">
+                            <div class="bg-purple-500 h-full rounded-full" style="width:${Math.min(m.ytd.p,100)}%"></div>
+                        </div>
+                        <p class="text-slate-500 text-sm font-bold">เป้าปี: ฿${formatCurrency(m.ytd.t)} (${m.ytd.p.toFixed(1)}%)</p>
+                    </div>
+                </div>
+
+                <!-- 2. ส่วนกลาง: ภาพรวมการทำงานทุกแผนก (Business Pipeline) -->
+                <div class="flex items-center gap-3 mb-6 shrink-0">
+                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight">ประสิทธิภาพรายแผนก (Department Pulse)</h3>
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 shrink-0 mb-8">
+                    <!-- การตลาด -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('marketing')">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">1. การตลาด</h4><p class="text-xs font-bold text-slate-400 mt-1">ออนไลน์</p></div>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">งบที่ใช้จริง</p>
+                            <p class="text-3xl font-black text-slate-900">฿${formatCurrency(mktSpend)}</p>
+                        </div>
+                        <div class="mt-auto pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">งบตั้งไว้</p><p class="text-sm font-black text-slate-700">฿${formatCurrency(mktBud)}</p></div>
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">ROAS</p><p class="text-sm font-black text-orange-600">${m.weekly.r}x</p></div>
+                        </div>
+                    </div>
+
+                    <!-- แอดมิน -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('admin')">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="headphones" class="w-6 h-6"></i></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">2. แอดมิน</h4><p class="text-xs font-bold text-slate-400 mt-1">คัดกรองลูกค้า</p></div>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ติดต่อรวมทั้งหมด</p>
+                            <p class="text-3xl font-black text-slate-900">${formatCurrency(adminContacts)} <span class="text-sm text-slate-500 font-bold">คน</span></p>
+                        </div>
+                        <div class="mt-auto pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">ส่งต่อให้เซลล์</p><p class="text-sm font-black text-indigo-600">${formatCurrency(adminLeads)} <span class="text-xs font-normal">งาน</span></p></div>
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">Conversion</p><p class="text-sm font-black text-slate-700">${leadConv.toFixed(1)}%</p></div>
+                        </div>
+                    </div>
+
+                    <!-- ฝ่ายขาย -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${totalSales >= totalTarget ? 'border-emerald-300 ring-2 ring-emerald-50' : 'border-blue-300 ring-2 ring-blue-50'} shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('sales')">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 ${totalSales >= totalTarget ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="award" class="w-6 h-6"></i></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">3. ฝ่ายขาย</h4><p class="text-xs font-bold text-slate-400 mt-1">ปิดยอดขาย</p></div>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ยอดขายปิดได้</p>
+                            <p class="text-3xl font-black ${totalSales >= totalTarget ? 'text-emerald-600' : 'text-blue-600'}">฿${formatCurrency(totalSales)}</p>
+                        </div>
+                        <div class="mt-auto pt-4 border-t border-slate-100 space-y-2">
+                            <div class="flex justify-between items-center text-xs font-bold"><span class="text-slate-500">เป้า: ฿${formatCurrency(totalTarget)}</span><span class="${totalSales >= totalTarget ? 'text-emerald-600' : 'text-slate-700'}">${totalSalesProgress.toFixed(1)}%</span></div>
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="${totalSales >= totalTarget ? 'bg-emerald-500' : 'bg-blue-500'} h-full rounded-full" style="width:${Math.min(totalSalesProgress,100)}%"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- ช่างติดตั้ง -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${damagePercent > 1 ? 'border-red-300 ring-2 ring-red-50' : 'border-slate-200'} shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('tech')">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 ${damagePercent > 1 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-600'} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="wrench" class="w-6 h-6"></i></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">4. ช่างติดตั้ง</h4><p class="text-xs font-bold text-slate-400 mt-1">ส่งมอบงาน</p></div>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">งานติดตั้งสำเร็จ</p>
+                            <p class="text-3xl font-black text-slate-900">${formatCurrency(totalInstalls)} <span class="text-sm text-slate-500 font-bold">คัน/งาน</span></p>
+                        </div>
+                        <div class="mt-auto pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">มูลค่าเสียหาย</p><p class="text-sm font-black ${damagePercent > 1 ? 'text-red-600' : 'text-slate-700'}">฿${formatCurrency(totalDamageValue)}</p></div>
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">% เสียหาย</p><p class="text-sm font-black ${damagePercent > 1 ? 'text-red-600' : 'text-emerald-600'}">${damagePercent.toFixed(2)}%</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ส่วนล่าง: กราฟแนวโน้ม และ สัดส่วนยอดขาย -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 shrink-0 mb-8">
+                    <!-- กราฟแนวโน้ม -->
+                    <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+                            <h3 class="font-black text-slate-800 uppercase tracking-tight text-lg">แนวโน้มรายได้ย้อนหลัง 12 สัปดาห์</h3>
+                            <div class="flex bg-slate-50 p-1.5 rounded-xl border border-slate-100 gap-1 hidden sm:flex">
+                                ${['total','gfs','mhl','car'].map(t => `<button onclick="changeChartTab('${t}')" class="px-4 py-1.5 rounded-lg text-sm font-black tracking-widest transition-all ${activeChartTab === t ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'}">${t.toUpperCase()}</button>`).join('')}
+                            </div>
+                        </div>
+                        <div class="h-[300px] w-full relative"><canvas id="trendChartCanvas"></canvas></div>
+                    </div>
+
+                    <!-- สัดส่วนยอดขาย -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col items-center">
+                        <h3 class="font-black text-slate-800 uppercase tracking-tight text-lg w-full text-center mb-6">สัดส่วนรายได้สัปดาห์นี้</h3>
+                        <div class="w-full h-48 relative mb-8"><canvas id="donutTopCanvas"></canvas></div>
+                        <div class="w-full space-y-4">
+                            <div class="flex justify-between items-center bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
+                                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-blue-500"></div><span class="text-sm font-bold text-slate-700">GFS (อาคาร)</span></div>
+                                <span class="text-base font-black text-slate-900">฿${formatCurrency(current.gfs.actual)}</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-amber-50/50 p-3 rounded-xl border border-amber-100/50">
+                                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-amber-500"></div><span class="text-sm font-bold text-slate-700">MHL (อาคาร)</span></div>
+                                <span class="text-base font-black text-slate-900">฿${formatCurrency(current.mhl.actual)}</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
+                                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500"></div><span class="text-sm font-bold text-slate-700">CAR (รถยนต์)</span></div>
+                                <span class="text-base font-black text-slate-900">฿${formatCurrency(current.car.actual)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                const dCtx = document.getElementById('donutTopCanvas');
+                if(dCtx) {
+                    charts['donutTop'] = new Chart(dCtx.getContext('2d'), { 
+                        type: 'doughnut', 
+                        data: { labels: ['GFS', 'MHL', 'CAR'], datasets: [{ data: [current.gfs.actual, current.mhl.actual, current.car.actual], backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, cutout: '75%' }] }, 
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
+                    });
+                }
+                renderBasicTrendChart(current);
+            }, 50);
+        }
+
+        // ==========================================
+        // RENDER: SALES BUILDING FILM (ฝ่ายขายฟิล์มอาคาร)
+        // ==========================================
+        function renderBuildingSalesHTML(current, m, opt, container) {
+            const b = current.buildingSales;
+            if(!b) { container.innerHTML = `<div class="p-8 text-center text-slate-500 text-lg">ยังไม่มีข้อมูลสำหรับสัปดาห์นี้</div>`; return; }
+
+            const YEARLY_BUILDING_TARGET = 90000000;
+            const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const ytdData = dashboardData.slice(0, cIdx + 1);
+            
+            const ytdActual = ytdData.reduce((sum, d) => sum + d.gfs.actual + d.mhl.actual, 0);
+            const ytdTarget = ytdData.reduce((sum, d) => sum + d.gfs.target + d.mhl.target, 0);
+            const ytdProgressVsTarget = ytdTarget > 0 ? (ytdActual / ytdTarget) * 100 : 0;
+            const ytdProgressVsYearly = (ytdActual / YEARLY_BUILDING_TARGET) * 100;
+
+            const weeklyActual = current.gfs.actual + current.mhl.actual;
+            const weeklyTarget = current.gfs.target + current.mhl.target;
+            const weeklyProgress = weeklyTarget > 0 ? (weeklyActual / weeklyTarget) * 100 : 0;
+
+            const reps = [
+                { id: 'BOM', title: 'Sales Representative', data: b.bom, c: 'blue' },
+                { id: 'Jay', title: 'Sales Representative', data: b.jay, c: 'blue' },
+                { id: 'Saifha', title: 'Sales Representative', data: b.saifha, c: 'blue' },
+                { id: 'Kat', title: 'Sales Representative', data: b.pat, c: 'blue' },
+                { id: 'Image', title: 'Sales Representative', data: b.image, c: 'blue' }
+            ].sort((a,b) => b.data.sales - a.data.sales); 
+            
+            const projects = [
+                { id: 'YA', title: 'Sales Project', data: b.projYa, c: 'amber' },
+                { id: 'Tung', title: 'Sales Project', data: b.projTung, c: 'amber' }
+            ].sort((a,b) => b.data.sales - a.data.sales);
+
+            const topRep = reps.length > 0 ? reps[0] : null;
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-blue-50 border border-blue-200 text-blue-700 text-base rounded-xl p-2 w-72 cursor-pointer font-bold">${opt}</select></div>
+                <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="target" class="text-blue-500 w-7 h-7"></i>เป้ายอดขายสะสม (YTD) - ทีมอาคาร</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><p class="text-sm font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><i data-lucide="wallet" class="w-5 h-5 text-blue-500"></i> ยอดขายสะสม (Total YTD)</p><h3 class="text-5xl font-black text-slate-900 leading-none mt-2">฿${formatCurrency(ytdActual)}</h3><p class="text-sm text-slate-500 mt-2 font-bold uppercase">เป้าสะสม: ฿${formatCurrency(ytdTarget)}</p></div>
+                    <div class="bg-blue-50 rounded-[2rem] p-6 border border-blue-100 shadow-sm flex flex-col justify-center relative overflow-hidden"><div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="trending-up" class="w-24 h-24 text-blue-600"></i></div><p class="text-sm font-black text-blue-600 uppercase tracking-widest mb-1">% ยอดขายสะสม เทียบเป้าสะสม</p><h3 class="text-5xl font-black text-blue-700 leading-none mt-2 relative z-10">${ytdProgressVsTarget.toFixed(1)}%</h3></div>
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><div class="flex justify-between items-center mb-1"><p class="text-sm font-black text-slate-400 uppercase tracking-widest">% ยอดขายเทียบเป้าทั้งปี</p><span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black">เป้า 90M</span></div><h3 class="text-5xl font-black text-indigo-600 leading-none mt-2">${ytdProgressVsYearly.toFixed(1)}%</h3><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mt-3"><div class="bg-indigo-500 h-full rounded-full" style="width:${Math.min(ytdProgressVsYearly,100)}%"></div></div></div>
+                </div>
+                <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="users" class="text-blue-500 w-7 h-7"></i>ฝ่ายขาย (Sales Representative)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 shrink-0">
+                    ${reps.map(r => `
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="user" class="w-32 h-32 text-${r.c}-600"></i></div><div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4 relative z-10"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-${r.c}-100 text-${r.c}-600 flex items-center justify-center font-black text-lg">${r.id.substring(0,2).toUpperCase()}</div><div><h4 class="font-black text-slate-800 text-xl leading-none">${r.id}</h4><p class="text-sm text-slate-500 font-bold">YTD: ฿${formatCurrency(r.data.ytd)}</p></div></div><div class="text-right"><p class="text-sm text-slate-400 font-bold uppercase tracking-widest">ยอดขายสัปดาห์</p><p class="text-3xl font-black text-${r.c}-600">฿${formatCurrency(r.data.sales)}</p></div></div>
+                    <div class="grid grid-cols-2 gap-3 mb-4 relative z-10"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-sm text-slate-500 font-bold mb-1">🏃 พบลูกค้า</p><p class="text-2xl font-black text-slate-800">${r.data.meets} <span class="text-base font-normal">ราย</span></p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-sm text-slate-500 font-bold mb-1">🛠️ ติดตั้ง</p><p class="text-2xl font-black text-slate-800">${r.data.installs} <span class="text-base font-normal">งาน</span></p></div></div>
+                    <div class="space-y-3 mt-auto relative z-10"><div class="flex justify-between items-center text-sm p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-700 font-medium"><span>🆕 ลค.ใหม่ (พบ/ติด): ${r.data.newMeets}/${r.data.newInstalls}</span><span class="font-bold text-base">฿${formatCurrency(r.data.newSales)}</span></div><div class="flex justify-between items-center text-sm p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 font-medium"><span>🔙 ลค.เก่า (พบ/ติด): ${r.data.oldMeets}/${r.data.oldInstalls}</span><span class="font-bold text-base">฿${formatCurrency(r.data.oldSales)}</span></div><div class="flex justify-between items-center text-sm p-3 bg-red-50 border border-red-100 rounded-lg text-red-700 font-medium"><span>❌ ไม่ติดตั้ง: ${r.data.noInstalls} งาน</span><span class="font-bold text-base">฿${formatCurrency(r.data.noInstallSales)}</span></div></div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center"><span class="text-sm font-bold text-slate-500 uppercase">% สำเร็จติดตั้ง/พบ</span><span class="text-base font-black text-blue-600">${r.data.sr.toFixed(1)}%</span></div></div>`).join('')}
+                </div>
+                <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="briefcase" class="text-amber-500 w-7 h-7"></i>ฝ่ายโครงการ (Sales Project)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
+                    ${projects.map(r => {
+                        const mRatio = r.data.targetMeets > 0 ? (r.data.meets/r.data.targetMeets)*100 : 0;
+                        return `<div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="briefcase" class="w-32 h-32 text-${r.c}-600"></i></div><div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4 relative z-10"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-${r.c}-100 text-${r.c}-600 flex items-center justify-center font-black text-lg">${r.id}</div><div><h4 class="font-black text-slate-800 text-xl leading-none">${r.id}</h4><p class="text-sm text-slate-500 font-bold">YTD: ฿${formatCurrency(r.data.ytd)}</p></div></div><div class="text-right"><p class="text-sm text-slate-400 font-bold uppercase tracking-widest">ยอดขายสัปดาห์</p><p class="text-3xl font-black text-${r.c}-600">฿${formatCurrency(r.data.sales)}</p></div></div>
+                        <div class="grid grid-cols-2 gap-4 mb-4 relative z-10"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center"><p class="text-sm text-slate-500 font-bold mb-1 uppercase tracking-widest">จำนวนติดตั้ง</p><p class="text-4xl font-black text-slate-800">${r.data.installs} <span class="text-base font-normal">งาน</span></p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center"><p class="text-sm text-slate-500 font-bold mb-1 flex justify-between"><span>พบลูกค้า</span><span class="${mRatio>=100?'text-emerald-500':'text-red-500'}">${mRatio.toFixed(0)}%</span></p><p class="text-3xl font-black text-slate-800">${r.data.meets} <span class="text-base font-normal text-slate-500">/ ${r.data.targetMeets} ราย</span></p><div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden"><div class="bg-amber-500 h-full" style="width:${Math.min(mRatio,100)}%"></div></div></div></div>
+                        <div class="flex gap-4 relative z-10 mt-auto"><div class="flex-1 p-3 bg-blue-50 border border-blue-100 rounded-lg text-center"><p class="text-sm font-bold text-blue-600 mb-1">ลค.ใหม่</p><p class="text-xl font-black text-slate-800">${r.data.newMeets} <span class="text-base font-normal">ราย</span></p></div><div class="flex-1 p-3 bg-purple-50 border border-purple-100 rounded-lg text-center"><p class="text-sm font-bold text-purple-600 mb-1">ลค.เก่า</p><p class="text-xl font-black text-slate-800">${r.data.oldMeets} <span class="text-base font-normal">ราย</span></p></div></div></div>`;
+                    }).join('')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-start mb-6 pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight text-base flex items-center gap-2"><i data-lucide="trending-up" class="w-5 h-5 text-blue-500"></i> แนวโน้มยอดขายฟิล์มอาคาร (12 สัปดาห์)</h3>
+                                <div class="flex gap-2 mt-3">
+                                    <button onclick="changeBuildingTrendFilter('total')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${buildingTrendFilter === 'total' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวม</button>
+                                    <button onclick="changeBuildingTrendFilter('gfs')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${buildingTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
+                                    <button onclick="changeBuildingTrendFilter('mhl')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${buildingTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full min-h-[350px] relative"><canvas id="buildingTrendChartCanvas"></canvas></div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col bg-gradient-to-b from-white to-blue-50/30 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="zap" class="w-32 h-32 text-blue-600"></i></div><h3 class="font-black text-slate-800 mb-8 flex items-center gap-2 text-xl uppercase tracking-tight relative z-10"><i data-lucide="zap" class="text-blue-500 w-6 h-6"></i>วิเคราะห์ประสิทธิภาพ</h3><div class="space-y-5 flex-1 relative z-10 font-bold"><div class="flex justify-between items-center p-4 rounded-2xl bg-white border border-slate-100 shadow-sm"><span class="text-base font-bold text-slate-500 uppercase">สำเร็จเทียบเป้าสัปดาห์</span><span class="text-lg font-black ${weeklyProgress >= 100 ? 'text-emerald-500' : 'text-blue-600'}">${weeklyProgress >= 100 ? '⭐ ':''}${weeklyProgress.toFixed(1)}%</span></div><div class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">Top Sales ประจำสัปดาห์</p><div class="flex justify-between items-end"><p class="text-2xl font-black text-blue-600">${topRep ? topRep.id : '-'}</p><p class="text-base text-slate-700 font-black">฿${topRep ? formatCurrency(topRep.data.sales) : '0'}</p></div></div><div class="mt-4 p-5 ${weeklyProgress >= 100 ? 'bg-emerald-500/5 border-emerald-100' : 'bg-blue-600/5 border-blue-100'} rounded-2xl border text-sm leading-relaxed text-slate-800 font-medium h-full"><b class="${weeklyProgress >= 100 ? 'text-emerald-600' : 'text-blue-600'} uppercase font-black block mb-2">Automated Insights:</b> ${weeklyProgress >= 100 ? 'ยอดขายสัปดาห์นี้ทำได้ทะลุเป้าหมายที่ตั้งไว้ ยอดเยี่ยมมาก! ⭐' : `ยอดขายรวมสัปดาห์นี้ยังต่ำกว่าเป้าหมาย <b>${formatCurrency(weeklyTarget - weeklyActual)} ฿</b>`}<br/><br/>เซลล์ที่ทำยอดได้สูงสุดคือ <b>${topRep ? topRep.id : '-'}</b> โดยมียอดขายอยู่ที่ <b>฿${topRep ? formatCurrency(topRep.data.sales) : '0'}</b></div></div></div>
+                </div>
+            `;
+            setTimeout(() => {
+                const ctx = document.getElementById('buildingTrendChartCanvas')?.getContext('2d');
+                if(!ctx) return;
+                if (charts['buildingTrend']) charts['buildingTrend'].destroy();
+                
+                let recentData = [];
+                let dLabelAct = '', dLabelTar = '', dAct = [], dTar = [], cBg = '', cLine = '';
+
+                if (buildingTrendFilter === 'total') {
+                    recentData = dashboardData.filter(d => (d.gfs.actual + d.mhl.actual) > 0).slice(-12);
+                    dLabelAct = 'ยอดขายรวม (GFS+MHL)'; dLabelTar = 'เป้าหมายรวม';
+                    dAct = recentData.map(d => d.gfs.actual + d.mhl.actual);
+                    dTar = recentData.map(d => d.gfs.target + d.mhl.target);
+                    cBg = '#3b82f6'; cLine = '#cbd5e1'; 
+                } else if (buildingTrendFilter === 'gfs') {
+                    recentData = dashboardData.filter(d => d.gfs.actual > 0).slice(-12);
+                    dLabelAct = 'ยอดขายจริง GFS'; dLabelTar = 'เป้าหมาย GFS';
+                    dAct = recentData.map(d => d.gfs.actual);
+                    dTar = recentData.map(d => d.gfs.target);
+                    cBg = '#3b82f6'; cLine = '#93c5fd'; 
+                } else if (buildingTrendFilter === 'mhl') {
+                    recentData = dashboardData.filter(d => d.mhl.actual > 0).slice(-12);
+                    dLabelAct = 'ยอดขายจริง MHL'; dLabelTar = 'เป้าหมาย MHL';
+                    dAct = recentData.map(d => d.mhl.actual);
+                    dTar = recentData.map(d => d.mhl.target);
+                    cBg = '#f59e0b'; cLine = '#fcd34d'; 
+                }
+
+                charts['buildingTrend'] = new Chart(ctx, {
+                    type: 'bar',
+                    data: { 
+                        labels: recentData.map(d => d.week), 
+                        datasets: [
+                            { type: 'bar', label: dLabelAct, data: dAct, backgroundColor: cBg, borderRadius: 4, order: 2, barPercentage: 0.6 }, 
+                            { type: 'line', label: dLabelTar, data: dTar, borderColor: cLine, backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: cLine, tension: 0.1, order: 1 }
+                        ] 
+                    },
+                    options: { 
+                        layout: { padding: { top: 30 } },
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } },
+                            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCurrency(c.parsed.y)} ฿` } }
+                        },
+                        scales: { 
+                            x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } },
+                            y: { 
+                                type: 'linear', display: true, position: 'left',
+                                beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, 
+                                ticks: { font: { weight: 'bold' }, callback: (v) => v >= 1000000 ? (v/1000000)+'M' : (v>=1000?(v/1000)+'k':v) } 
+                            }
+                        }
+                    },
+                    plugins: [createProgressPlugin(false)]
+                });
+            }, 50);
+        }
+
+        // ==========================================
+        // RENDER: CAR DEEP DIVE
+        // ==========================================
+        function renderCarDeepDiveHTML(current, m, opt, container) {
+            const cd = current.carDetail;
+            if(!cd) return;
+            const YEARLY_CAR_TARGET = 10000000;
+            const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const ytdData = dashboardData.slice(0, cIdx + 1);
+            
+            const ytdCarActual = ytdData.reduce((sum, d) => sum + d.carDetail.sales.actual, 0);
+            const ytdCarTarget = ytdData.reduce((sum, d) => sum + d.carDetail.sales.target, 0);
+            const ytdProgressVsTarget = ytdCarTarget > 0 ? (ytdCarActual / ytdCarTarget) * 100 : 0;
+            const ytdProgressVsYearly = (ytdCarActual / YEARLY_CAR_TARGET) * 100;
+
+            const sales = cd.sales;
+            const salesProgress = sales.target > 0 ? (sales.actual / sales.target) * 100 : 0;
+            const installs = cd.installs;
+            const totalInstalls = installs.line + installs.fb + installs.tel + installs.walkin + installs.showroom + installs.other;
+            const contacts = cd.contacts;
+            const convRate = contacts.total > 0 ? (totalInstalls / contacts.total) * 100 : 0;
+            const tech = cd.tech;
+            const damagePercentSales = sales.actual > 0 ? (tech.techIssueValue / sales.actual) * 100 : 0;
+            const isDamageOverLimit = damagePercentSales > 5;
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-emerald-50 border border-emerald-200 text-emerald-700 text-base rounded-xl p-2 w-72 cursor-pointer font-bold">${opt}</select></div>
+                <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="target" class="text-emerald-500 w-7 h-7"></i>เป้ายอดขายสะสม (YTD)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><p class="text-sm font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><i data-lucide="wallet" class="w-5 h-5 text-emerald-500"></i> ยอดขายสะสม (Total YTD)</p><h3 class="text-5xl font-black text-slate-900 mt-2">฿${formatCurrency(ytdCarActual)}</h3><p class="text-sm text-slate-500 mt-2 font-bold uppercase">เป้าสะสม: ฿${formatCurrency(ytdCarTarget)}</p></div>
+                    <div class="bg-emerald-50 rounded-[2rem] p-6 border border-emerald-100 shadow-sm flex flex-col justify-center relative overflow-hidden"><div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="trending-up" class="w-24 h-24 text-emerald-600"></i></div><p class="text-sm font-black text-emerald-600 uppercase tracking-widest mb-1">% ยอดขายสะสม เทียบเป้าสะสม</p><h3 class="text-5xl font-black text-emerald-700 mt-2 relative z-10">${ytdProgressVsTarget.toFixed(1)}%</h3></div>
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><div class="flex justify-between items-center mb-1"><p class="text-sm font-black text-slate-400 uppercase tracking-widest">% ยอดขายเทียบเป้าทั้งปี</p><span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black">เป้า 10M</span></div><h3 class="text-5xl font-black text-blue-600 mt-2">${ytdProgressVsYearly.toFixed(1)}%</h3><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mt-3"><div class="bg-blue-500 h-full rounded-full" style="width:${Math.min(ytdProgressVsYearly,100)}%"></div></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden"><div class="absolute -right-6 -bottom-6 opacity-5"><i data-lucide="award" class="w-48 h-48 text-emerald-600"></i></div><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-6 relative z-10"><i data-lucide="user" class="w-5 h-5 text-emerald-500"></i> ❶ ฝ่ายขาย (รายสัปดาห์)</h4><div class="relative z-10 flex flex-col justify-center flex-1"><p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">ยอดขายรายสัปดาห์</p><h3 class="text-5xl font-black text-slate-900 mb-4">฿${formatCurrency(sales.actual)}</h3><div class="flex justify-between text-sm font-bold uppercase mb-2"><span class="text-slate-500">เป้าหมาย: ฿${formatCurrency(sales.target)}</span><span class="${salesProgress>=100?'text-emerald-500':'text-red-500'}">${salesProgress>=100?'⭐ ':''}${salesProgress.toFixed(1)}%</span></div><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${Math.min(salesProgress,100)}%"></div></div></div></div>
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-6"><i data-lucide="message-circle" class="w-5 h-5 text-blue-500"></i> ❶ การติดต่อของลูกค้า</h4><div class="p-6 rounded-2xl bg-blue-50 border border-blue-100 shadow-sm flex flex-col justify-center items-center mb-6"><p class="text-base font-bold text-blue-500 mb-1">ปริมาณการติดต่อรวม</p><p class="text-5xl font-black text-blue-600 mt-1">${formatCurrency(contacts.total)} <span class="text-lg font-bold text-blue-400">Contacts</span></p></div><div class="space-y-3 mt-auto"><div class="flex justify-between items-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"><span class="flex items-center gap-2 text-sm font-bold text-slate-600"><i data-lucide="phone" class="w-4 h-4"></i> โทรเข้า</span><span class="text-lg font-black text-slate-800">${formatCurrency(contacts.tel)}</span></div><div class="flex justify-between items-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"><span class="flex items-center gap-2 text-sm font-bold text-slate-600"><div class="w-3 h-3 rounded-full bg-emerald-500"></div> Line OA</span><span class="text-lg font-black text-slate-800">${formatCurrency(contacts.line)}</span></div><div class="flex justify-between items-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"><span class="flex items-center gap-2 text-sm font-bold text-slate-600"><div class="w-3 h-3 rounded-full bg-blue-500"></div> FB Chat</span><span class="text-lg font-black text-slate-800">${formatCurrency(contacts.fb)}</span></div></div></div>
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-6"><i data-lucide="car" class="w-5 h-5 text-indigo-500"></i> 🚘 ปริมาณรถติดตั้งใหม่</h4><div class="flex justify-between items-end mb-4 px-2"><div><p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">ติดตั้งรวม</p><p class="text-4xl font-black text-slate-900">${formatCurrency(totalInstalls)} <span class="text-base font-bold">คัน</span></p></div><div class="text-right"><p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">% ความสำเร็จ</p><p class="text-2xl font-black text-indigo-600">${convRate.toFixed(1)}%</p></div></div><div class="grid grid-cols-2 gap-x-4 gap-y-3 mt-auto text-base font-bold text-slate-600"><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> LINE</span><span class="text-slate-900 text-lg">${formatCurrency(installs.line)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div> Facebook</span><span class="text-slate-900 text-lg">${formatCurrency(installs.fb)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="phone" class="w-3.5 h-3.5"></i> โทร</span><span class="text-slate-900 text-lg">${formatCurrency(installs.tel)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Walk-In</span><span class="text-slate-900 text-lg">${formatCurrency(installs.walkin)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="store" class="w-3.5 h-3.5"></i> ShowRoom</span><span class="text-slate-900 text-lg">${formatCurrency(installs.showroom)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="more-horizontal" class="w-3.5 h-3.5"></i> อื่นๆ</span><span class="text-slate-900 text-lg">${formatCurrency(installs.other)}</span></div></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
+                    <div class="bg-white rounded-[2rem] p-8 border ${isDamageOverLimit?'border-red-300 ring-4 ring-red-50':'border-slate-200'} shadow-sm flex flex-col relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="wrench" class="w-32 h-32 text-slate-600"></i></div><h4 class="text-base font-black text-slate-700 flex items-center justify-between mb-6 relative z-10"><span class="flex items-center gap-2"><i data-lucide="wrench" class="w-5 h-5"></i> ❶ ช่างติดตั้ง</span><span class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-black"><i data-lucide="users" class="w-4 h-4 inline"></i> ${tech.teamSize} คน</span></h4><div class="flex items-center gap-4 mb-6 relative z-10"><div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-7 h-7"></i></div><div><p class="text-sm font-black text-slate-500 uppercase mb-1">รถเคลม</p><p class="text-3xl font-black text-slate-900">${formatCurrency(tech.claims)} <span class="text-base font-bold text-slate-500">คัน</span></p></div></div><div class="space-y-4 relative z-10"><p class="text-sm font-black text-slate-500 uppercase border-b border-slate-100 pb-2">⚠️ ความเสียหาย</p><div class="grid grid-cols-2 gap-4"><div class="bg-slate-50 p-4 rounded-xl"><p class="text-xs font-bold text-slate-500 uppercase mb-1">จากฟิล์ม</p><p class="text-xl font-black text-slate-800 mb-1">${formatCurrency(tech.filmIssueCount)} <span class="text-sm font-normal">บาน</span></p><p class="text-sm font-bold text-rose-500">฿${formatCurrency(tech.filmIssueValue)}</p></div><div class="bg-slate-50 p-4 rounded-xl"><p class="text-xs font-bold text-slate-500 uppercase mb-1">จากช่าง</p><p class="text-xl font-black text-slate-800 mb-1">${formatCurrency(tech.techIssueCount)} <span class="text-sm font-normal">บาน</span></p><p class="text-sm font-bold text-rose-500">฿${formatCurrency(tech.techIssueValue)}</p></div></div></div><div class="relative z-10 mt-auto pt-6"><div class="flex justify-between items-center bg-${isDamageOverLimit?'red':'emerald'}-50 p-4 rounded-xl"><span class="text-sm font-bold ${isDamageOverLimit?'text-red-600':'text-emerald-700'} uppercase">% เทียบยอดขาย (ช่าง)</span><span class="text-xl font-black ${isDamageOverLimit?'text-red-600':'text-emerald-600'}">${damagePercentSales.toFixed(2)}%</span></div></div></div>
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100"><h3 class="font-black text-slate-800 uppercase tracking-tight text-base"><i data-lucide="trending-up" class="w-6 h-6 inline text-emerald-500"></i> แนวโน้มยอดขายฟิล์มรถยนต์ (12 สัปดาห์)</h3></div><div class="flex-1 w-full min-h-[350px] relative"><canvas id="carTrendChartCanvas"></canvas></div></div>
+                </div>
+            `;
+            setTimeout(() => {
+                const ctx = document.getElementById('carTrendChartCanvas')?.getContext('2d');
+                if(!ctx) return;
+                if (charts['carTrend']) charts['carTrend'].destroy();
+                const recentData = dashboardData.filter(d => d.carDetail.sales.actual > 0).slice(-12);
+                charts['carTrend'] = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: recentData.map(d => d.week), datasets: [{ type: 'bar', label: 'ยอดขายจริง', data: recentData.map(d => d.carDetail.sales.actual), backgroundColor: '#10b981', borderRadius: 4, barPercentage: 0.6, order: 2 }, { type: 'line', label: 'เป้าหมาย', data: recentData.map(d => d.carDetail.sales.target), borderColor: '#cbd5e1', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#cbd5e1', tension: 0.1, order: 1 }] },
+                    options: { 
+                        layout: { padding: { top: 30 } },
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCurrency(c.parsed.y)} ฿` } } },
+                        scales: { x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } }, y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 1000 ? (v/1000)+'k' : v } } }
+                    },
+                    plugins: [createProgressPlugin(false)]
+                });
+            }, 50);
+        }
+
+        // ==========================================
+        // RENDER: MARKETING
+        // ==========================================
+        function renderMarketingDeepDiveHTML(current, m, opt, container) {
+            const tBud = current.marketing.gfs.target + current.marketing.mhl.target + current.marketing.car.target;
+            const tSpend = current.marketing.gfs.actual + current.marketing.mhl.actual + current.marketing.car.actual;
+            const tCont = current.admin.contacts.total + (current.admin.contacts.car || 0);
+            const tLeads = current.admin.leads.actual + (current.admin.leads.car || 0);
+            const tSales = current.gfs.actual + current.mhl.actual + current.car.actual;
+            const tTar = current.gfs.target + current.mhl.target + current.car.target;
+            
+            const costCont = tCont > 0 ? (tSpend / tCont) : 0;
+            const costLead = tLeads > 0 ? (tSpend / tLeads) : 0;
+            const spdSales = tSales > 0 ? (tSpend / tSales) * 100 : 0;
+            const spdTar = tTar > 0 ? (tSpend / tTar) * 100 : 0;
+            const spdBud = tBud > 0 ? (tSpend / tBud) * 100 : 0;
+
+            const mktAnalysis = [
+                { id: 'total', name: 'รวมทุกบริษัท', t: tTar, a: tSpend, cLead: costLead, sales: tSales, cColor: 'orange' },
+                { id: 'gfs', name: 'GFS', t: current.marketing.gfs.target, a: current.marketing.gfs.actual, cLead: (current.admin.leads.gfs?.line + current.admin.leads.gfs?.tel + current.admin.leads.gfs?.fb) > 0 ? current.marketing.gfs.actual / (current.admin.leads.gfs.line + current.admin.leads.gfs.tel + current.admin.leads.gfs.fb) : 0, sales: current.gfs.actual, cColor: 'blue' },
+                { id: 'mhl', name: 'MHL', t: current.marketing.mhl.target, a: current.marketing.mhl.actual, cLead: (current.admin.leads.mhl?.line + current.admin.leads.mhl?.tel + current.admin.leads.mhl?.fb) > 0 ? current.marketing.mhl.actual / (current.admin.leads.mhl.line + current.admin.leads.mhl.tel + current.admin.leads.mhl.fb) : 0, sales: current.mhl.actual, cColor: 'amber' },
+                { id: 'car', name: 'CAR', t: current.marketing.car.target, a: current.marketing.car.actual, cLead: (current.admin.leads.car || 0) > 0 ? current.marketing.car.actual / current.admin.leads.car : 0, sales: current.car.actual, cColor: 'emerald' }
+            ];
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <i data-lucide="filter" class="w-5 h-5 text-slate-400"></i>
+                    <span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span>
+                    <select onchange="handleWeekChange(event)" class="ml-auto bg-orange-50 border border-orange-200 text-orange-700 text-base font-bold rounded-xl p-2 w-72 focus:outline-none focus:ring-2 focus:ring-orange-500">${opt}</select>
+                </div>
+                
+                <!-- การ์ดสรุปการใช้งบโฆษณา (Clean & Robust Grid Design) -->
+                <div class="bg-white rounded-[2rem] p-6 lg:p-10 border border-slate-200 shadow-sm mb-8 relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
+                        <i data-lucide="megaphone" class="w-80 h-80 text-orange-600"></i>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative z-10">
+                        
+                        <!-- ฝั่งซ้าย: ตัวเลขหลัก (Span 7) -->
+                        <div class="lg:col-span-7 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-100 pb-8 lg:pb-0 lg:pr-8">
+                            <div class="flex items-center gap-4 mb-8">
+                                <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center border border-orange-100 shrink-0">
+                                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">สรุปงบโฆษณา (รวมทุกบริษัท)</h3>
+                                    <p class="text-sm font-bold text-slate-500 mt-1">GFS, MHL, CAR</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">ใช้ไปแล้ว (Actual Spend)</p>
+                                <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
+                                    <h2 class="text-5xl xl:text-6xl font-black text-orange-600 leading-none tracking-tighter">
+                                        <span class="text-3xl text-orange-400 mr-1">฿</span>${formatCurrency(tSpend)}
+                                    </h2>
+                                    <div class="text-2xl font-black text-slate-400 mb-1">
+                                        / ฿${formatCurrency(tBud)} <span class="text-sm font-bold bg-slate-100 px-2 py-0.5 rounded-lg">(งบตั้งไว้)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-4">
+                                <div class="${tSpend>tBud ? 'bg-red-500' : 'bg-orange-500'} h-full rounded-full transition-all duration-1000" style="width:${Math.min(spdBud,100)}%"></div>
+                            </div>
+
+                            <!-- Status & Percentage -->
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-black ${tSpend>tBud ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}">
+                                    <i data-lucide="${tSpend>tBud ? 'alert-triangle' : 'check-circle-2'}" class="w-4 h-4"></i>
+                                    ${tSpend>tBud ? `ใช้เกินงบ ฿${formatCurrency(tSpend-tBud)}` : `คงเหลือ ฿${formatCurrency(tBud-tSpend)}`}
+                                </span>
+                                <span class="text-sm font-bold text-slate-500">ใช้ไป ${spdBud.toFixed(1)}% ของงบประมาณ</span>
+                            </div>
+                        </div>
+
+                        <!-- ฝั่งขวา: Metrics ย่อย 4 กล่อง (Span 5) -->
+                        <div class="lg:col-span-5 grid grid-cols-2 gap-4 lg:gap-5 items-center">
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-orange-200 transition-colors flex flex-col justify-center">
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                    <i data-lucide="message-circle" class="w-4 h-4 text-orange-400"></i> จ่าย / 1 ติดต่อ
+                                </p>
+                                <p class="text-2xl lg:text-3xl font-black text-slate-800">฿${formatCurrency(costCont)}</p>
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors flex flex-col justify-center">
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                    <i data-lucide="users" class="w-4 h-4 text-blue-400"></i> จ่าย / 1 ลค.ใหม่
+                                </p>
+                                <p class="text-2xl lg:text-3xl font-black text-slate-800">฿${formatCurrency(costLead)}</p>
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-colors flex flex-col justify-center">
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                    <i data-lucide="percent" class="w-4 h-4 text-emerald-400"></i> % เทียบยอดขาย
+                                </p>
+                                <p class="text-2xl lg:text-3xl font-black text-slate-800">${spdSales.toFixed(1)}%</p>
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-purple-200 transition-colors flex flex-col justify-center">
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                    <i data-lucide="target" class="w-4 h-4 text-purple-400"></i> % เทียบเป้าขาย
+                                </p>
+                                <p class="text-2xl lg:text-3xl font-black text-slate-800">${spdTar.toFixed(1)}%</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    ${['gfs','mhl','car'].map(k => {
+                        const mk = current.marketing[k]; 
+                        const tNames = { gfs: 'Goodfilm (GFS)', mhl: 'Maholan (MHL)', car: 'ฟิล์มรถยนต์ (CAR)' }; 
+                        const c = k==='gfs'?'blue':k==='mhl'?'amber':'emerald'; 
+                        const p = mk.target>0?(mk.actual/mk.target)*100:0; 
+                        const isOver = mk.actual>mk.target && mk.target>0;
+                        const cCont = k==='car'?(current.admin.contacts.car||0):(current.admin.contacts[k]?.line+current.admin.contacts[k]?.fb+current.admin.contacts[k]?.tel||0); 
+                        const cLead = k==='car'?(current.admin.leads.car||0):(current.admin.leads[k]?.line+current.admin.leads[k]?.fb+current.admin.leads[k]?.tel||0);
+                        return `
+                        <div class="bg-white rounded-[2rem] p-6 lg:p-8 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
+                            <div class="absolute -right-4 -top-4 opacity-5 pointer-events-none"><i data-lucide="building-2" class="w-32 h-32 text-${c}-600"></i></div>
+                            <div class="flex justify-between items-start mb-6 relative z-10 gap-2">
+                                <div class="inline-flex px-4 py-2 rounded-xl bg-${c}-100 text-${c}-600 text-sm font-black uppercase tracking-widest whitespace-nowrap overflow-hidden text-ellipsis">${tNames[k]}</div>
+                                <span class="px-3 py-1 shrink-0 ${isOver?'bg-red-50 text-red-500 border-red-200':'bg-emerald-50 text-emerald-600 border-emerald-200'} border rounded-xl text-sm font-black">${p.toFixed(1)}%</span>
+                            </div>
+                            
+                            <div class="relative z-10 mb-8 flex-grow">
+                                <p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">ค่าใช้จ่ายการตลาด</p>
+                                <h3 class="text-4xl xl:text-5xl font-black text-slate-900 leading-none mb-4 tracking-tighter">฿${formatCurrency(mk.actual)}</h3>
+                                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-3">
+                                    <div class="bg-${c}-500 h-full rounded-full transition-all duration-1000" style="width:${Math.min(p,100)}%"></div>
+                                </div>
+                                <div class="flex justify-between text-sm font-bold text-slate-500 uppercase">
+                                    <span>งบ: ฿${formatCurrency(mk.target)}</span>
+                                    <span class="${isOver?'text-red-500':'text-emerald-500'}">${isOver?'⚠️ เกินงบ':'⭐ ในงบ'}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-6 relative z-10">
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center">
+                                    <p class="text-xs font-black text-slate-500 uppercase mb-1">จ่าย/ติดต่อ</p>
+                                    <p class="text-xl lg:text-2xl font-black text-slate-800">${cCont>0?`฿${formatCurrency(mk.actual/cCont)}`:'-'}</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center">
+                                    <p class="text-xs font-black text-slate-500 uppercase mb-1">จ่าย/ลูกค้า</p>
+                                    <p class="text-xl lg:text-2xl font-black text-slate-800">${cLead>0?`฿${formatCurrency(mk.actual/cLead)}`:'-'}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-auto pt-5 border-t border-slate-100 space-y-3 relative z-10">
+                                <div class="flex justify-between items-center text-sm p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                    <span class="text-blue-700 font-bold flex items-center gap-2"><i data-lucide="search" class="w-4 h-4"></i> Google Ads</span>
+                                    <span class="font-black text-blue-800 text-lg">฿${formatCurrency(mk.google)}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                    <span class="text-indigo-700 font-bold flex items-center gap-2"><i data-lucide="facebook" class="w-4 h-4"></i> Facebook Ads</span>
+                                    <span class="font-black text-indigo-800 text-lg">฿${formatCurrency(mk.fb)}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight text-base">แนวโน้มค่าโฆษณา (12 สัปดาห์)</h3>
+                                <div class="flex gap-2 mt-3 ${activeMarketingChartTab === 'trend' ? '' : 'hidden'}">
+                                    <button onclick="changeMarketingTrendFilter('total')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'total' ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวม</button>
+                                    <button onclick="changeMarketingTrendFilter('gfs')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
+                                    <button onclick="changeMarketingTrendFilter('mhl')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+                                    <button onclick="changeMarketingTrendFilter('car')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'car' ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">CAR</button>
+                                </div>
+                            </div>
+                            <div class="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner gap-1">
+                                <button onclick="changeMarketingChartTab('compare')" class="px-5 py-2 rounded-xl text-sm font-black transition-all ${activeMarketingChartTab === 'compare' ? 'bg-white shadow-md text-slate-800' : 'text-slate-500 hover:text-slate-700'}">เปรียบเทียบบริษัท</button>
+                                <button onclick="changeMarketingChartTab('trend')" class="px-5 py-2 rounded-xl text-sm font-black transition-all ${activeMarketingChartTab === 'trend' ? 'bg-white shadow-md text-slate-800' : 'text-slate-500 hover:text-slate-700'}">ย้อนหลัง</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full min-h-[350px] relative">
+                            <canvas id="marketingCompareCanvas" class="${activeMarketingChartTab === 'compare' ? '' : 'hidden'}"></canvas>
+                            <canvas id="marketingTrendCanvas" class="${activeMarketingChartTab === 'trend' ? '' : 'hidden'}"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col bg-gradient-to-b from-white to-orange-50/30 relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-5 pointer-events-none"><i data-lucide="zap" class="w-32 h-32 text-orange-600"></i></div>
+                        <h3 class="font-black text-slate-800 mb-6 flex items-center gap-2 text-xl uppercase tracking-tight relative z-10"><i data-lucide="zap" class="text-orange-500 w-6 h-6"></i>วิเคราะห์ประสิทธิภาพ (ROAS)</h3>
+                        <div class="space-y-3 flex-1 relative z-10 overflow-y-auto custom-scrollbar pr-2 pb-2">
+                            ${mktAnalysis.map(mkt => {
+                                const roas = mkt.a > 0 ? (mkt.sales / mkt.a).toFixed(1) : 0;
+                                const spendVsSales = mkt.sales > 0 ? (mkt.a / mkt.sales) * 100 : 0;
+                                return `
+                                <div class="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex flex-col gap-2 relative overflow-hidden hover:border-${mkt.cColor}-200 transition-colors">
+                                    <div class="absolute -right-2 -bottom-2 opacity-5 pointer-events-none"><i data-lucide="bar-chart-3" class="w-16 h-16 text-${mkt.cColor}-500"></i></div>
+                                    <div class="flex justify-between items-center border-b border-slate-50 pb-2">
+                                        <span class="text-sm font-black text-${mkt.cColor}-600 uppercase tracking-widest">${mkt.name}</span>
+                                        <span class="text-xs text-slate-500 font-bold bg-slate-50 px-2 py-1 rounded-lg">ROAS <span class="text-base font-black text-slate-800 ml-1">${roas}x</span></span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span class="text-slate-400">ต้นทุน/ลูกค้า</span> <span class="text-slate-800">฿${formatCurrency(mkt.cLead)}</span></div>
+                                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span class="text-slate-400">% เทียบยอดขาย</span> <span class="${spendVsSales < 15 && spendVsSales > 0 ? 'text-emerald-500' : 'text-red-500'}">${spendVsSales.toFixed(1)}%</span></div>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                if (activeMarketingChartTab === 'compare') {
+                    const ctx = document.getElementById('marketingCompareCanvas')?.getContext('2d');
+                    if(ctx) {
+                        if (charts['marketingCompare']) charts['marketingCompare'].destroy();
+                        charts['marketingCompare'] = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['GFS', 'MHL', 'CAR'],
+                                datasets: [
+                                    { type: 'bar', label: 'ค่าใช้จ่ายจริง (Actual)', data: [current.marketing.gfs.actual, current.marketing.mhl.actual, current.marketing.car.actual], backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'], borderRadius: 6, order: 1, barPercentage: 0.5 },
+                                    { type: 'bar', label: 'งบประมาณ (Budget)', data: [current.marketing.gfs.target, current.marketing.mhl.target, current.marketing.car.target], backgroundColor: ['#e0f2fe', '#fef3c7', '#d1fae5'], borderColor: ['#bae6fd', '#fde68a', '#a7f3d0'], borderWidth: 1, borderRadius: 6, order: 2, grouped: false, barPercentage: 0.85 }
+                                ]
+                            },
+                            options: { 
+                                layout: { padding: { top: 30 } },
+                                responsive: true, maintainAspectRatio: false, 
+                                plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + formatCurrency(c.parsed.y) + ' ฿' } } }, 
+                                scales: { y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 100000 ? (v/1000)+'k' : v } }, x: { grid: { display: false } } } 
+                            },
+                            plugins: [createProgressPlugin(true)]
+                        });
+                    }
+                } else if (activeMarketingChartTab === 'trend') {
+                    const ctx = document.getElementById('marketingTrendCanvas')?.getContext('2d');
+                    if(ctx) {
+                        if (charts['marketingTrend']) charts['marketingTrend'].destroy();
+                        
+                        let recentData = [];
+                        let dLabelAct = '', dLabelTar = '', dAct = [], dTar = [], cLine = '', cBg = '', cBorder = '';
+
+                        if (marketingTrendFilter === 'total') {
+                            recentData = dashboardData.filter(d => (d.marketing.gfs.actual + d.marketing.mhl.actual + d.marketing.car.actual) > 0).slice(-12);
+                            dLabelAct = 'จ่ายจริงรวม'; dLabelTar = 'งบรวม';
+                            dAct = recentData.map(d => d.marketing.gfs.actual + d.marketing.mhl.actual + d.marketing.car.actual);
+                            dTar = recentData.map(d => d.marketing.gfs.target + d.marketing.mhl.target + d.marketing.car.target);
+                            cLine = '#f97316'; cBg = '#ffedd5'; cBorder = '#fdba74'; 
+                        } else if (marketingTrendFilter === 'gfs') {
+                            recentData = dashboardData.filter(d => d.marketing.gfs.actual > 0).slice(-12);
+                            dLabelAct = 'จ่ายจริง GFS'; dLabelTar = 'งบ GFS';
+                            dAct = recentData.map(d => d.marketing.gfs.actual);
+                            dTar = recentData.map(d => d.marketing.gfs.target);
+                            cLine = '#3b82f6'; cBg = '#dbeafe'; cBorder = '#93c5fd'; 
+                        } else if (marketingTrendFilter === 'mhl') {
+                            recentData = dashboardData.filter(d => d.marketing.mhl.actual > 0).slice(-12);
+                            dLabelAct = 'จ่ายจริง MHL'; dLabelTar = 'งบ MHL';
+                            dAct = recentData.map(d => d.marketing.mhl.actual);
+                            dTar = recentData.map(d => d.marketing.mhl.target);
+                            cLine = '#f59e0b'; cBg = '#fef3c7'; cBorder = '#fcd34d'; 
+                        } else if (marketingTrendFilter === 'car') {
+                            recentData = dashboardData.filter(d => d.marketing.car.actual > 0).slice(-12);
+                            dLabelAct = 'จ่ายจริง CAR'; dLabelTar = 'งบ CAR';
+                            dAct = recentData.map(d => d.marketing.car.actual);
+                            dTar = recentData.map(d => d.marketing.car.target);
+                            cLine = '#10b981'; cBg = '#d1fae5'; cBorder = '#6ee7b7'; 
+                        }
+
+                        charts['marketingTrend'] = new Chart(ctx, { 
+                            type: 'bar', 
+                            data: { 
+                                labels: recentData.map(d => d.week), 
+                                datasets: [
+                                    { type: 'bar', label: dLabelAct, data: dAct, backgroundColor: cLine, borderRadius: 4, barPercentage: 0.6, order: 2 }, 
+                                    { type: 'line', label: dLabelTar, data: dTar, borderColor: cBorder, backgroundColor: 'transparent', borderWidth: 2, borderDash: [5,5], pointBackgroundColor: cBorder, tension: 0.1, order: 1 }
+                                ] 
+                            }, 
+                            options: { 
+                                layout: { padding: { top: 30 } },
+                                responsive: true, maintainAspectRatio: false, 
+                                plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + formatCurrency(c.parsed.y) + ' ฿' } } }, 
+                                scales: { x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } }, y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 10000 ? (v/1000)+'k' : v } } } 
+                            },
+                            plugins: [createProgressPlugin(true)] 
+                        });
+                    }
+                }
+            }, 50);
+        }
+
+        // ==========================================
+        // RENDER: TECH TEAM 
+        // ==========================================
+        function renderTechDeepDiveHTML(current, m, opt, container) {
+            const t = current.tech;
+            const YEARLY_INSTALL_TARGET = 2640;
+            const YEARLY_AREA_TARGET = 792000;
+            const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const ytdData = dashboardData.slice(0, cIdx + 1);
+            const ytdInstalls = ytdData.reduce((sum, d) => sum + d.tech.installs.actual, 0);
+            const ytdArea = ytdData.reduce((sum, d) => sum + d.tech.area.actual, 0);
+            const ytdDamageValue = ytdData.reduce((sum, d) => sum + d.tech.damage.totalValue, 0);
+            const ytdInstallPercent = (ytdInstalls / YEARLY_INSTALL_TARGET) * 100;
+            const ytdAreaPercent = (ytdArea / YEARLY_AREA_TARGET) * 100;
+            const installProgress = t.installs.target > 0 ? (t.installs.actual / t.installs.target) * 100 : 0;
+            const areaProgress = t.area.target > 0 ? (t.area.actual / t.area.target) * 100 : 0;
+            const avgInstallsPerTeam = t.teams > 0 ? (t.installs.actual / t.teams) : 0;
+            const avgAreaPerTeam = t.teams > 0 ? (t.area.actual / t.teams) : 0;
+            const buildingSales = current.gfs.actual + current.mhl.actual;
+            const damagePercentSales = buildingSales > 0 ? (t.damage.totalValue / buildingSales) * 100 : 0;
+            const isDamageOverLimit = damagePercentSales > 1;
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-amber-50 border border-amber-200 text-amber-700 text-base font-bold rounded-xl p-2 w-72 cursor-pointer">${opt}</select></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">จำนวนงานติดตั้งสะสม (YTD)</p><h3 class="text-4xl font-black text-slate-900">${formatCurrency(ytdInstalls)} <span class="text-lg">งาน</span></h3><p class="text-base font-bold text-blue-600 mt-2">เป้า: ${formatCurrency(YEARLY_INSTALL_TARGET)} (${ytdInstallPercent.toFixed(1)}%)</p></div>
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">พื้นที่ติดตั้งสะสม (YTD)</p><h3 class="text-4xl font-black text-slate-900">${formatCurrency(ytdArea)} <span class="text-lg">ตร.ฟ.</span></h3><p class="text-base font-bold text-emerald-600 mt-2">เป้า: ${formatCurrency(YEARLY_AREA_TARGET)} (${ytdAreaPercent.toFixed(1)}%)</p></div>
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">มูลค่าความเสียหายสะสม (YTD)</p><h3 class="text-4xl font-black text-rose-600">฿${formatCurrency(ytdDamageValue)}</h3></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 shrink-0">
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm"><h4 class="text-base font-black text-blue-600 mb-4">จำนวนงานติดตั้ง</h4><h3 class="text-5xl font-black text-slate-900 mb-4">${formatCurrency(t.installs.actual)} <span class="text-lg">งาน</span></h3><p class="text-base font-bold text-slate-500 mb-2">เป้าหมาย: ${formatCurrency(t.installs.target)} งาน (${installProgress.toFixed(1)}%)</p><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="bg-blue-500 h-full" style="width:${Math.min(installProgress,100)}%"></div></div><div class="grid grid-cols-2 gap-4 mt-6"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">GFS: ${formatCurrency(t.installs.gfs)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">MHL: ${formatCurrency(t.installs.mhl)}</p></div></div></div>
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm"><h4 class="text-base font-black text-emerald-600 mb-4">พื้นที่ติดตั้ง</h4><h3 class="text-5xl font-black text-slate-900 mb-4">${formatCurrency(t.area.actual)} <span class="text-lg">ตร.ฟ.</span></h3><p class="text-base font-bold text-slate-500 mb-2">เป้าหมาย: ${formatCurrency(t.area.target)} ตร.ฟ. (${areaProgress.toFixed(1)}%)</p><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${Math.min(areaProgress,100)}%"></div></div><div class="grid grid-cols-2 gap-4 mt-6"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">GFS: ${formatCurrency(t.area.gfs)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">MHL: ${formatCurrency(t.area.mhl)}</p></div></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
+                    <div class="bg-white rounded-[2rem] p-8 border ${isDamageOverLimit?'border-red-300 ring-4 ring-red-50':'border-slate-200'} shadow-sm"><h4 class="text-base font-black text-slate-700 mb-4">มูลค่าความเสียหาย</h4><h3 class="text-4xl font-black ${isDamageOverLimit?'text-red-600':'text-slate-900'} mb-4">฿${formatCurrency(t.damage.totalValue)}</h3><div class="space-y-3 mb-6"><p class="text-base text-slate-600 font-medium">จากช่าง: ฿${formatCurrency(t.damage.byTech)}</p><p class="text-base text-slate-600 font-medium">จากฟิล์ม: ฿${formatCurrency(t.damage.byFilm)}</p></div><div class="bg-${isDamageOverLimit?'red':'emerald'}-50 p-4 rounded-xl"><p class="text-sm font-bold ${isDamageOverLimit?'text-red-600':'text-emerald-600'} uppercase">% เทียบยอดขายอาคาร: ${damagePercentSales.toFixed(2)}%</p></div></div>
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center"><div class="mb-8"><p class="text-sm font-bold text-slate-500 uppercase">จำนวนงานเคลม</p><p class="text-4xl font-black text-slate-900 mt-2">${formatCurrency(t.damage.claims)} <span class="text-base">งาน</span></p></div><div><p class="text-sm font-bold text-slate-500 uppercase">ปริมาณฟิล์มเสียหาย</p><p class="text-4xl font-black text-slate-900 mt-2">${formatCurrency(t.damage.filmArea)} <span class="text-base">ตร.ฟ.</span></p></div></div>
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center"><h4 class="text-base font-black text-slate-700 mb-6 flex items-center gap-2">ประสิทธิภาพทีมช่าง <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black"><i data-lucide="users" class="w-4 h-4 inline"></i> ${t.teams} ทีม</span></h4><div class="mb-6"><p class="text-sm font-bold text-slate-500 uppercase">เฉลี่ย งาน/ทีม</p><p class="text-4xl font-black text-indigo-600 mt-2">${avgInstallsPerTeam.toFixed(1)} <span class="text-base">งาน</span></p></div><div><p class="text-sm font-bold text-slate-500 uppercase">เฉลี่ย พื้นที่/ทีม</p><p class="text-4xl font-black text-indigo-600 mt-2">${formatCurrency(avgAreaPerTeam)} <span class="text-base">ตร.ฟ.</span></p></div></div>
+                </div>
+                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col shrink-0">
+                    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                        <h3 class="font-black text-slate-800 uppercase tracking-tight text-base">แนวโน้มงานติดตั้ง (12 สัปดาห์)</h3>
+                        <div class="flex gap-2">
+                            <button onclick="changeTechTrendFilter('total')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${techTrendFilter === 'total' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวม</button>
+                            <button onclick="changeTechTrendFilter('gfs')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${techTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
+                            <button onclick="changeTechTrendFilter('mhl')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${techTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full min-h-[350px] relative"><canvas id="techTrendChartCanvas"></canvas></div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                const ctx = document.getElementById('techTrendChartCanvas')?.getContext('2d');
+                if(!ctx) return;
+                if (charts['techTrend']) charts['techTrend'].destroy();
+                
+                let recentData = [];
+                let dLabelAct = '', dAct = [], cBg = '';
+                
+                if (techTrendFilter === 'total') {
+                    recentData = dashboardData.filter(d => d.tech.installs.actual > 0).slice(-12);
+                    dLabelAct = 'งานติดตั้งรวม'; dAct = recentData.map(d => d.tech.installs.actual); cBg = '#3b82f6';
+                } else if (techTrendFilter === 'gfs') {
+                    recentData = dashboardData.filter(d => d.tech.installs.gfs > 0).slice(-12);
+                    dLabelAct = 'งานติดตั้ง GFS'; dAct = recentData.map(d => d.tech.installs.gfs); cBg = '#3b82f6';
+                } else if (techTrendFilter === 'mhl') {
+                    recentData = dashboardData.filter(d => d.tech.installs.mhl > 0).slice(-12);
+                    dLabelAct = 'งานติดตั้ง MHL'; dAct = recentData.map(d => d.tech.installs.mhl); cBg = '#f59e0b';
+                }
+
+                let datasets = [{ type: 'bar', label: dLabelAct, data: dAct, backgroundColor: cBg, order: 2, borderRadius: 4, barPercentage: 0.6, yAxisID: 'y' }];
+
+                if (techTrendFilter === 'total') {
+                    datasets.push({ type: 'line', label: 'เป้าหมายรวม (งาน)', data: recentData.map(d => d.tech.installs.target), borderColor: '#cbd5e1', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], tension: 0.1, order: 1, yAxisID: 'y' });
+                }
+
+                datasets.push({ type: 'line', label: 'ความเสียหาย (฿)', data: recentData.map(d => d.tech.damage.totalValue), borderColor: '#f43f5e', backgroundColor: '#f43f5e', borderWidth: 2, tension: 0.4, order: 0, yAxisID: 'y1' });
+
+                charts['techTrend'] = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: recentData.map(d => d.week), datasets: datasets },
+                    options: { 
+                        layout: { padding: { top: 30 } },
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } },
+                            tooltip: { 
+                                callbacks: { 
+                                    label: (c) => {
+                                        let val = c.parsed.y;
+                                        if (c.dataset.label.includes('ความเสียหาย')) return `ความเสียหาย: ฿${formatCurrency(val)}`;
+                                        return `${c.dataset.label}: ${formatCurrency(val)} งาน`;
+                                    } 
+                                } 
+                            }
+                        },
+                        scales: { 
+                            x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } },
+                            y: { type: 'linear', position: 'left', beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' } } },
+                            y1: { type: 'linear', position: 'right', beginAtZero: true, grace: '25%', grid: { drawOnChartArea: false }, ticks: { font: { family: 'Sarabun' }, color: '#f43f5e', callback: (v) => v >= 1000 ? (v/1000)+'k' : v } }
+                        }
+                    },
+                    plugins: [createProgressPlugin(false)]
+                });
+            }, 50);
+        }
+
+        // ==========================================
+        // RENDER: ADMIN 
+        // ==========================================
+        function renderAdminDeepDiveHTML(current, m, opt, container) {
+            const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const prev = cIdx > 0 ? dashboardData[cIdx - 1] : null;
+            const currentAdminSales = current.admin.sales.totalSales;
+            const prevAdminSales = prev ? prev.admin.sales.totalSales : 0;
+            const adminGrowth = prevAdminSales > 0 ? ((currentAdminSales - prevAdminSales) / prevAdminSales) * 100 : 0;
+            
+            const convRate = current.admin.contacts.total > 0 ? ((current.admin.leads.actual / current.admin.contacts.total) * 100) : 0;
+            const closeRate = current.admin.leads.actual > 0 ? ((current.admin.sales.totalInstalls / current.admin.leads.actual) * 100) : 0;
+            const leadTargetProgress = current.admin.leads.target > 0 ? ((current.admin.leads.actual / current.admin.leads.target) * 100) : 0;
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-indigo-50 border border-indigo-200 text-indigo-700 text-base cursor-pointer font-bold rounded-xl p-2 w-72">${opt}</select></div>
+                
+                <div class="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm mt-8 mb-8 shrink-0">
+                    <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-4"><h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none"><i data-lucide="headphones" class="text-indigo-600 w-8 h-8"></i>❶ SALES ADMIN</h3></div>
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                        <div class="flex flex-col h-full"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-4"><i data-lucide="users" class="w-5 h-5 text-indigo-500"></i> การติดต่อของลูกค้า</h4><div class="p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm flex flex-col justify-center flex-1 mb-4"><p class="text-sm font-bold text-slate-500 mb-2 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-400"></i> ปริมาณการติดต่อ</p><p class="text-6xl font-black text-slate-900">${formatCurrency(current.admin.contacts.total)}</p></div><div class="grid grid-cols-2 gap-4"><div class="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] shadow-sm"><p class="text-sm font-black text-slate-500 mb-3">GFS</p><p class="text-sm text-slate-600 font-bold mb-1">LINE: ${formatCurrency(current.admin.contacts.gfs.line)}</p><p class="text-sm text-slate-600 font-bold mb-1">FB: ${formatCurrency(current.admin.contacts.gfs.fb)}</p><p class="text-sm text-slate-600 font-bold">TEL: ${formatCurrency(current.admin.contacts.gfs.tel)}</p></div><div class="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] shadow-sm"><p class="text-sm font-black text-slate-500 mb-3">MHL</p><p class="text-sm text-slate-600 font-bold mb-1">LINE: ${formatCurrency(current.admin.contacts.mhl.line)}</p><p class="text-sm text-slate-600 font-bold mb-1">FB: ${formatCurrency(current.admin.contacts.mhl.fb)}</p><p class="text-sm text-slate-600 font-bold">TEL: ${formatCurrency(current.admin.contacts.mhl.tel)}</p></div></div></div>
+                        <div class="flex flex-col h-full"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-4"><i data-lucide="target" class="w-5 h-5 text-blue-500"></i> ปริมาณลูกค้าใหม่</h4><div class="p-6 rounded-[1.5rem] bg-white border border-blue-100 shadow-sm flex flex-col justify-center flex-1 mb-4"><p class="text-sm font-bold text-blue-500 mb-2 flex items-center gap-2"><i data-lucide="send" class="w-5 h-5 text-blue-400"></i> จำนวนส่งงานให้ทีมขาย</p><p class="text-6xl font-black text-blue-600 mb-4">${formatCurrency(current.admin.leads.actual)}</p><p class="text-sm mt-2 font-bold text-slate-500">เทียบเป้า: <span class="text-blue-600">${leadTargetProgress.toFixed(1)}%</span> | เทียบติดต่อ: <span class="text-blue-600">${convRate.toFixed(1)}%</span></p></div><div class="grid grid-cols-2 gap-4"><div class="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] shadow-sm"><p class="text-sm font-black text-slate-500 mb-3">GFS</p><p class="text-sm text-slate-600 font-bold mb-1">LINE: ${formatCurrency(current.admin.leads.gfs.line)}</p><p class="text-sm text-slate-600 font-bold mb-1">FB: ${formatCurrency(current.admin.leads.gfs.fb)}</p><p class="text-sm text-slate-600 font-bold">TEL: ${formatCurrency(current.admin.leads.gfs.tel)}</p></div><div class="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] shadow-sm"><p class="text-sm font-black text-slate-500 mb-3">MHL</p><p class="text-sm text-slate-600 font-bold mb-1">LINE: ${formatCurrency(current.admin.leads.mhl.line)}</p><p class="text-sm text-slate-600 font-bold mb-1">FB: ${formatCurrency(current.admin.leads.mhl.fb)}</p><p class="text-sm text-slate-600 font-bold">TEL: ${formatCurrency(current.admin.leads.mhl.tel)}</p></div></div></div>
+                        <div class="flex flex-col h-full"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-4"><i data-lucide="award" class="w-5 h-5 text-amber-500"></i> ปิดการขาย</h4><div class="flex flex-col p-6 rounded-[1.5rem] bg-[#5c50e6] text-white flex-1"><div class="flex justify-between items-start mb-6 border-b border-white/10 pb-4"><div><p class="text-sm font-bold text-indigo-200 mb-1">ยอดขายรวมแอดมิน</p><p class="text-4xl font-black">฿${formatCurrency(current.admin.sales.totalSales)}</p></div><div class="text-right"><p class="text-sm font-bold text-emerald-300 mb-1">ปิดการขาย</p><p class="text-3xl font-black">${formatCurrency(current.admin.sales.totalInstalls)} <span class="text-base font-normal">งาน</span></p></div></div>
+                        <div class="space-y-4"><div class="bg-white/10 p-5 rounded-xl"><p class="text-sm font-black text-amber-300 mb-3">งานติดตั้ง (ลค.ใหม่)</p><p class="text-sm mb-2">GFS: ${formatCurrency(current.admin.sales.newInstalls.gfs)} งาน | ฿${formatCurrency(current.admin.sales.newSales.gfs)}</p><p class="text-sm">MHL: ${formatCurrency(current.admin.sales.newInstalls.mhl)} งาน | ฿${formatCurrency(current.admin.sales.newSales.mhl)}</p></div><div class="bg-white/10 p-5 rounded-xl"><p class="text-sm font-black text-indigo-200 mb-3">งานติดตั้ง (ลค.เก่า)</p><p class="text-sm mb-2">GFS: ${formatCurrency(current.admin.sales.oldInstalls.gfs)} งาน | ฿${formatCurrency(current.admin.sales.oldSales.gfs)}</p><p class="text-sm">MHL: ${formatCurrency(current.admin.sales.oldInstalls.mhl)} งาน | ฿${formatCurrency(current.admin.sales.oldSales.mhl)}</p></div></div>
+                        </div></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                            <h3 class="font-black text-slate-800 uppercase tracking-tight text-base"><i data-lucide="trending-up" class="w-6 h-6 inline text-indigo-500"></i> แนวโน้ม (12 สัปดาห์)</h3>
+                            <div class="flex gap-2">
+                                <button onclick="changeAdminTrendFilter('total')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${adminTrendFilter === 'total' ? 'bg-indigo-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวม</button>
+                                <button onclick="changeAdminTrendFilter('gfs')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${adminTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
+                                <button onclick="changeAdminTrendFilter('mhl')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${adminTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full min-h-[350px] relative"><canvas id="adminTrendChartCanvas"></canvas></div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm"><h3 class="font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="zap" class="text-indigo-500 w-6 h-6"></i> วิเคราะห์แอดมิน</h3><div class="space-y-4"><div class="flex justify-between bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-sm font-bold text-slate-500">Growth ยอดขาย</span><span class="text-lg font-black ${adminGrowth>=0?'text-emerald-500':'text-red-500'}">${adminGrowth.toFixed(1)}%</span></div><div class="flex justify-between bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-sm font-bold text-slate-500">อัตราส่งงาน</span><span class="text-lg font-black text-blue-600">${convRate.toFixed(1)}%</span></div><div class="flex justify-between bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-sm font-bold text-slate-500">อัตราปิดการขาย</span><span class="text-lg font-black text-indigo-600">${closeRate.toFixed(1)}%</span></div></div></div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                const adminCtx = document.getElementById('adminTrendChartCanvas')?.getContext('2d');
+                if(!adminCtx) return;
+                if (charts['adminTrend']) charts['adminTrend'].destroy();
+                
+                const recentData = dashboardData.filter(d => d.admin.contacts.total > 0).slice(-12);
+                let dSales = [], dCont = [], dLeads = [], cBg = '#6366f1';
+                
+                if (adminTrendFilter === 'total') {
+                    dSales = recentData.map(d => d.admin.sales.totalSales);
+                    dCont = recentData.map(d => d.admin.contacts.total);
+                    dLeads = recentData.map(d => d.admin.leads.actual);
+                    cBg = '#6366f1';
+                } else if (adminTrendFilter === 'gfs') {
+                    dSales = recentData.map(d => d.admin.sales.newSales.gfs + d.admin.sales.oldSales.gfs);
+                    dCont = recentData.map(d => d.admin.contacts.gfs.line + d.admin.contacts.gfs.fb + d.admin.contacts.gfs.tel);
+                    dLeads = recentData.map(d => d.admin.leads.gfs.line + d.admin.leads.gfs.fb + d.admin.leads.gfs.tel);
+                    cBg = '#3b82f6';
+                } else if (adminTrendFilter === 'mhl') {
+                    dSales = recentData.map(d => d.admin.sales.newSales.mhl + d.admin.sales.oldSales.mhl);
+                    dCont = recentData.map(d => d.admin.contacts.mhl.line + d.admin.contacts.mhl.fb + d.admin.contacts.mhl.tel);
+                    dLeads = recentData.map(d => d.admin.leads.mhl.line + d.admin.leads.mhl.fb + d.admin.leads.mhl.tel);
+                    cBg = '#f59e0b';
+                }
+
+                charts['adminTrend'] = new Chart(adminCtx, {
+                    type: 'line',
+                    data: { 
+                        labels: recentData.map(d => d.week), 
+                        datasets: [
+                            { type: 'bar', label: 'ยอดขาย (฿)', data: dSales, backgroundColor: cBg, borderRadius: 4, yAxisID: 'y', order: 3, barPercentage: 0.6 }, 
+                            { type: 'line', label: 'ติดต่อรวม', data: dCont, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, yAxisID: 'y1', order: 2 }, 
+                            { type: 'line', label: 'ส่งงาน', data: dLeads, borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5,5], tension: 0.4, yAxisID: 'y1', order: 1 }
+                        ] 
+                    },
+                    options: { 
+                        layout: { padding: { top: 30 } },
+                        responsive: true, maintainAspectRatio: false, 
+                        plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => c.datasetIndex === 0 ? `${c.dataset.label}: ฿${formatCurrency(c.parsed.y)}` : `${c.dataset.label}: ${formatCurrency(c.parsed.y)}` } } },
+                        scales: { 
+                            x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } },
+                            y: { type: 'linear', position: 'left', beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9' }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 1000 ? (v/1000)+'k' : v } }, 
+                            y1: { type: 'linear', position: 'right', beginAtZero: true, grace: '25%', grid: { drawOnChartArea: false }, ticks: { font: { family: 'Sarabun' } } } 
+                        } 
+                    }
+                });
+            }, 50);
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>

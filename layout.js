@@ -125,9 +125,9 @@ const sidebarHTML = `
                 <section>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.2em] mb-4 px-4">Others</p>
                     <nav class="space-y-1">
-                        <a href="#" class="nav-item flex items-center p-3 px-4 rounded-xl transition-all duration-200">
+                        <a href="bb.html" target="_blank" class="nav-item flex items-center p-3 px-4 rounded-xl transition-all duration-200">
                             <i class="fas fa-file-invoice-dollar w-6 text-lg"></i>
-                            <span class="ml-3 font-medium">รายงาน (Reports)</span>
+                            <span class="ml-3 font-medium">BB Meeting Weekly</span>
                         </a>
                         <a href="#" class="nav-item flex items-center p-3 px-4 rounded-xl transition-all duration-200">
                             <i class="fas fa-cog w-6 text-lg"></i>
