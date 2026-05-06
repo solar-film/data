@@ -41,7 +41,7 @@
             <div>
                 <p class="px-2 text-sm font-bold text-slate-500 mb-3 uppercase tracking-widest">Main Dashboard</p>
                 <ul class="space-y-1">
-                    <li><a href="#" id="menu-overview" onclick="changePage('overview')" class="flex items-center gap-3 px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl font-bold border border-blue-500/20"><i data-lucide="pie-chart" class="w-5 h-5"></i> ภาพรวมธุรกิจ (Overview)</a></li>
+                    <li><a href="#" id="menu-overview" onclick="changePage('overview')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="pie-chart" class="w-5 h-5"></i> ภาพรวมธุรกิจ (Overview)</a></li>
                 </ul>
             </div>
 
@@ -56,9 +56,9 @@
             <div>
                 <p class="px-2 text-sm font-bold text-slate-500 mb-3 uppercase tracking-widest">Operations</p>
                 <ul class="space-y-1">
-                    <li><a href="#" id="menu-marketing" onclick="changePage('marketing')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="megaphone" class="w-5 h-5 text-orange-400"></i> MARKETING Online</a></li>
-                    <li><a href="#" id="menu-tech" onclick="changePage('tech')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="wrench" class="w-5 h-5 text-yellow-500"></i> ทีมช่างอาคาร</a></li>
-                    <li><a href="#" id="menu-admin" onclick="changePage('admin')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> SALES ADMIN</a></li>
+                    <li><a href="#" id="menu-marketing" onclick="changePage('marketing')" class="flex items-center gap-3 px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl font-bold border border-blue-500/20"><i data-lucide="megaphone" class="w-5 h-5"></i> MARKETING Online</a></li>
+                    <li><a href="#" id="menu-tech" onclick="changePage('tech')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="wrench" class="w-5 h-5"></i> ทีมช่างอาคาร</a></li>
+                    <li><a href="#" id="menu-admin" onclick="changePage('admin')" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="file-text" class="w-5 h-5"></i> SALES ADMIN</a></li>
                     <li><a href="https://building-film.my.canva.site/feedback-5426" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3 py-3 hover:bg-slate-800/50 hover:text-slate-200 rounded-xl transition-colors font-bold text-slate-400"><i data-lucide="message-square" class="w-5 h-5 text-pink-400"></i> Feedback ลูกค้า</a></li>
                 </ul>
             </div>
@@ -103,7 +103,7 @@
         let selectedId = '';
         let isUsingMock = false;
         let errorMessage = null;
-        let currentPage = 'overview';
+        let currentPage = 'marketing'; // เริ่มต้นที่หน้า Marketing เพื่อดูผลลัพธ์
         let charts = {};
         let activeChartTab = 'total';
         let activeMarketingChartTab = 'compare';
@@ -448,7 +448,7 @@
         }
 
         // ==========================================
-        // RENDER: OVERVIEW (Redesigned - Clean & Pipeline View)
+        // RENDER: OVERVIEW 
         // ==========================================
         function renderOverviewHTML(current, m, opt, container) {
             // คำนวณข้อมูลสำหรับ Pipeline
@@ -616,6 +616,47 @@
                                 <span class="text-base font-black text-slate-900">฿${formatCurrency(current.car.actual)}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 4. ส่วนวิเคราะห์ภาพรวม (Executive Insights) -->
+                <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm shrink-0 mb-8 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="zap" class="w-64 h-64 text-blue-600"></i></div>
+                    <h3 class="font-black text-slate-800 flex items-center gap-2 text-xl uppercase tracking-tight mb-6 relative z-10">
+                        <i data-lucide="lightbulb" class="text-amber-500 w-6 h-6"></i> วิเคราะห์ประสิทธิภาพภาพรวม (Executive Insights)
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-blue-200 transition-colors">
+                            <div>
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Growth (เทียบสัปดาห์ก่อน)</p>
+                                <p class="text-2xl font-black ${m.weekly.g >= 0 ? 'text-emerald-600' : 'text-red-600'}">${m.weekly.g >= 0 ? '↑' : '↓'} ${Math.abs(m.weekly.g).toFixed(1)}%</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl ${m.weekly.g >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0"><i data-lucide="trending-${m.weekly.g >= 0 ? 'up' : 'down'}" class="w-6 h-6"></i></div>
+                        </div>
+                        
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-blue-200 transition-colors">
+                            <div>
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">ส่วนต่างเป้าหมายสัปดาห์นี้</p>
+                                <p class="text-2xl font-black ${(m.weekly.a - m.weekly.t) >= 0 ? 'text-emerald-600' : 'text-red-600'}">${(m.weekly.a - m.weekly.t) >= 0 ? '+' : ''}${formatCurrency(m.weekly.a - m.weekly.t)} ฿</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl ${(m.weekly.a - m.weekly.t) >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0"><i data-lucide="target" class="w-6 h-6"></i></div>
+                        </div>
+
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-blue-200 transition-colors">
+                            <div>
+                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">ROAS ภาพรวม</p>
+                                <p class="text-2xl font-black text-blue-600">${m.weekly.r}x</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i data-lucide="bar-chart-3" class="w-6 h-6"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-5 sm:p-6 ${m.weekly.a >= m.weekly.t ? 'bg-emerald-50/50 border-emerald-100' : 'bg-blue-50/50 border-blue-100'} rounded-2xl border text-sm lg:text-base leading-relaxed text-slate-800 font-medium relative z-10">
+                        <b class="${m.weekly.a >= m.weekly.t ? 'text-emerald-600' : 'text-blue-600'} uppercase font-black tracking-widest block mb-2">💡 สรุปสถานการณ์ (Automated Insight):</b> 
+                        ${m.weekly.a >= m.weekly.t 
+                            ? `สัปดาห์นี้ภาพรวมธุรกิจทำยอดขายได้ <b class="text-emerald-700">ทะลุเป้าหมายที่ตั้งไว้</b> ⭐ โดยมีอัตราผลตอบแทนโฆษณา (ROAS) รวมอยู่ที่ <b class="text-emerald-700">${m.weekly.r}x</b> ถือว่ากระบวนการ (Pipeline) ตั้งแต่การทำการตลาด การคัดกรอง ไปจนถึงการปิดการขาย ทำงานร่วมกันได้ดีเยี่ยม ควรรักษาโมเมนตัมนี้ไว้` 
+                            : `ภาพรวมสัปดาห์นี้ยอดขายรวมยัง <b class="text-red-600">ต่ำกว่าเป้าหมาย ${formatCurrency(m.weekly.t - m.weekly.a)} ฿</b> แนะนำให้ตรวจสอบคอขวด (Pipeline) ด้านบน ว่าปัญหาหลักเกิดจาก การตลาด (จำนวนคนทักลดลง), แอดมิน (ส่งงานให้เซลล์ได้น้อย), หรือ ฝ่ายขาย (อัตราการปิดการขายต่ำ) เพื่อนำไปแก้ไขจุดนั้นโดยตรง`}
                     </div>
                 </div>
             `;
@@ -831,210 +872,239 @@
         }
 
         // ==========================================
-        // RENDER: MARKETING
+        // RENDER: MARKETING (Redesigned - Modern & Clean Layout)
         // ==========================================
         function renderMarketingDeepDiveHTML(current, m, opt, container) {
             const tBud = current.marketing.gfs.target + current.marketing.mhl.target + current.marketing.car.target;
             const tSpend = current.marketing.gfs.actual + current.marketing.mhl.actual + current.marketing.car.actual;
-            const tCont = current.admin.contacts.total + (current.admin.contacts.car || 0);
+            const tCont = current.admin.contacts.total + (current.carDetail ? current.carDetail.contacts.total : 0);
             const tLeads = current.admin.leads.actual + (current.admin.leads.car || 0);
             const tSales = current.gfs.actual + current.mhl.actual + current.car.actual;
-            const tTar = current.gfs.target + current.mhl.target + current.car.target;
             
             const costCont = tCont > 0 ? (tSpend / tCont) : 0;
             const costLead = tLeads > 0 ? (tSpend / tLeads) : 0;
-            const spdSales = tSales > 0 ? (tSpend / tSales) * 100 : 0;
-            const spdTar = tTar > 0 ? (tSpend / tTar) * 100 : 0;
+            const totalRoas = tSpend > 0 ? (tSales / tSpend).toFixed(1) : 0;
             const spdBud = tBud > 0 ? (tSpend / tBud) * 100 : 0;
 
-            const mktAnalysis = [
-                { id: 'total', name: 'รวมทุกบริษัท', t: tTar, a: tSpend, cLead: costLead, sales: tSales, cColor: 'orange' },
-                { id: 'gfs', name: 'GFS', t: current.marketing.gfs.target, a: current.marketing.gfs.actual, cLead: (current.admin.leads.gfs?.line + current.admin.leads.gfs?.tel + current.admin.leads.gfs?.fb) > 0 ? current.marketing.gfs.actual / (current.admin.leads.gfs.line + current.admin.leads.gfs.tel + current.admin.leads.gfs.fb) : 0, sales: current.gfs.actual, cColor: 'blue' },
-                { id: 'mhl', name: 'MHL', t: current.marketing.mhl.target, a: current.marketing.mhl.actual, cLead: (current.admin.leads.mhl?.line + current.admin.leads.mhl?.tel + current.admin.leads.mhl?.fb) > 0 ? current.marketing.mhl.actual / (current.admin.leads.mhl.line + current.admin.leads.mhl.tel + current.admin.leads.mhl.fb) : 0, sales: current.mhl.actual, cColor: 'amber' },
-                { id: 'car', name: 'CAR', t: current.marketing.car.target, a: current.marketing.car.actual, cLead: (current.admin.leads.car || 0) > 0 ? current.marketing.car.actual / current.admin.leads.car : 0, sales: current.car.actual, cColor: 'emerald' }
-            ];
+            const isOverTotal = tSpend > tBud;
+
+            // คำนวณข้อมูลย้อนหลังสำหรับ Insight
+            const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const prev = cIdx > 0 ? dashboardData[cIdx - 1] : null;
+            let prevSpend = 0, prevSales = 0, prevRoas = 0;
+            if (prev) {
+                prevSpend = prev.marketing.gfs.actual + prev.marketing.mhl.actual + prev.marketing.car.actual;
+                prevSales = prev.gfs.actual + prev.mhl.actual + prev.car.actual;
+                prevRoas = prevSpend > 0 ? (prevSales / prevSpend).toFixed(1) : 0;
+            }
+            const roasDiff = totalRoas - prevRoas;
 
             container.innerHTML = `
-                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <i data-lucide="filter" class="w-5 h-5 text-slate-400"></i>
+                <!-- Filter -->
+                <div class="flex items-center gap-2 mb-6 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                    <i data-lucide="filter" class="w-5 h-5 text-slate-400 ml-2"></i>
                     <span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span>
-                    <select onchange="handleWeekChange(event)" class="ml-auto bg-orange-50 border border-orange-200 text-orange-700 text-base font-bold rounded-xl p-2 w-72 focus:outline-none focus:ring-2 focus:ring-orange-500">${opt}</select>
+                    <select onchange="handleWeekChange(event)" class="ml-auto bg-orange-50 border border-orange-200 text-orange-700 text-base font-bold rounded-xl p-2 w-72 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">${opt}</select>
                 </div>
                 
-                <!-- การ์ดสรุปการใช้งบโฆษณา (Clean & Robust Grid Design) -->
-                <div class="bg-white rounded-[2rem] p-6 lg:p-10 border border-slate-200 shadow-sm mb-8 relative overflow-hidden">
-                    <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
-                        <i data-lucide="megaphone" class="w-80 h-80 text-orange-600"></i>
+                <!-- Section 1: Top KPI Cards (4 กล่อง) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 shrink-0">
+                    <!-- Total Spend Card (Hero) -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="megaphone" class="w-40 h-40 text-orange-600"></i></div>
+                        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-orange-500"></i> งบโฆษณารวม (Total Spend)</p>
+                        <div class="flex items-baseline gap-2 mt-2 mb-3 relative z-10">
+                            <h2 class="text-5xl font-black text-slate-900 tracking-tighter">฿${formatCurrency(tSpend)}</h2>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2 relative z-10">
+                            <div class="${isOverTotal ? 'bg-red-500' : 'bg-orange-500'} h-full rounded-full transition-all duration-1000" style="width:${Math.min(spdBud,100)}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm font-bold relative z-10">
+                            <span class="text-slate-500">งบตั้งไว้: ฿${formatCurrency(tBud)}</span>
+                            <span class="${isOverTotal ? 'text-red-500' : 'text-emerald-500'}">${isOverTotal ? '⚠️ ใช้เกินงบ' : '⭐ อยู่ในงบ'} (${spdBud.toFixed(1)}%)</span>
+                        </div>
                     </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative z-10">
-                        
-                        <!-- ฝั่งซ้าย: ตัวเลขหลัก (Span 7) -->
-                        <div class="lg:col-span-7 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-100 pb-8 lg:pb-0 lg:pr-8">
-                            <div class="flex items-center gap-4 mb-8">
-                                <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center border border-orange-100 shrink-0">
-                                    <i data-lucide="wallet" class="w-6 h-6"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">สรุปงบโฆษณา (รวมทุกบริษัท)</h3>
-                                    <p class="text-sm font-bold text-slate-500 mt-1">GFS, MHL, CAR</p>
-                                </div>
-                            </div>
 
-                            <div class="mb-6">
-                                <p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">ใช้ไปแล้ว (Actual Spend)</p>
-                                <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
-                                    <h2 class="text-5xl xl:text-6xl font-black text-orange-600 leading-none tracking-tighter">
-                                        <span class="text-3xl text-orange-400 mr-1">฿</span>${formatCurrency(tSpend)}
-                                    </h2>
-                                    <div class="text-2xl font-black text-slate-400 mb-1">
-                                        / ฿${formatCurrency(tBud)} <span class="text-sm font-bold bg-slate-100 px-2 py-0.5 rounded-lg">(งบตั้งไว้)</span>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- ROAS Card -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center">
+                        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-5 h-5 text-emerald-500"></i> ผลตอบแทน (Total ROAS)</p>
+                        <h2 class="text-5xl font-black text-emerald-600 mt-2 tracking-tighter">${totalRoas}x</h2>
+                        <p class="text-sm font-bold text-slate-500 mt-3 border-t border-slate-100 pt-3">ยอดขายรวม: ฿${formatCurrency(tSales)}</p>
+                    </div>
 
-                            <!-- Progress Bar -->
-                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-4">
-                                <div class="${tSpend>tBud ? 'bg-red-500' : 'bg-orange-500'} h-full rounded-full transition-all duration-1000" style="width:${Math.min(spdBud,100)}%"></div>
-                            </div>
+                    <!-- Cost per Contact Card -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center">
+                        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><i data-lucide="message-circle" class="w-5 h-5 text-blue-500"></i> ต้นทุน / 1 ติดต่อ</p>
+                        <h2 class="text-5xl font-black text-slate-900 mt-2 tracking-tighter">฿${formatCurrency(costCont)}</h2>
+                        <p class="text-sm font-bold text-slate-500 mt-3 border-t border-slate-100 pt-3">จากทั้งหมด ${formatCurrency(tCont)} ติดต่อ</p>
+                    </div>
 
-                            <!-- Status & Percentage -->
-                            <div class="flex flex-wrap items-center gap-3">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-black ${tSpend>tBud ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}">
-                                    <i data-lucide="${tSpend>tBud ? 'alert-triangle' : 'check-circle-2'}" class="w-4 h-4"></i>
-                                    ${tSpend>tBud ? `ใช้เกินงบ ฿${formatCurrency(tSpend-tBud)}` : `คงเหลือ ฿${formatCurrency(tBud-tSpend)}`}
-                                </span>
-                                <span class="text-sm font-bold text-slate-500">ใช้ไป ${spdBud.toFixed(1)}% ของงบประมาณ</span>
-                            </div>
-                        </div>
-
-                        <!-- ฝั่งขวา: Metrics ย่อย 4 กล่อง (Span 5) -->
-                        <div class="lg:col-span-5 grid grid-cols-2 gap-4 lg:gap-5 items-center">
-                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-orange-200 transition-colors flex flex-col justify-center">
-                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                    <i data-lucide="message-circle" class="w-4 h-4 text-orange-400"></i> จ่าย / 1 ติดต่อ
-                                </p>
-                                <p class="text-2xl lg:text-3xl font-black text-slate-800">฿${formatCurrency(costCont)}</p>
-                            </div>
-                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors flex flex-col justify-center">
-                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                    <i data-lucide="users" class="w-4 h-4 text-blue-400"></i> จ่าย / 1 ลค.ใหม่
-                                </p>
-                                <p class="text-2xl lg:text-3xl font-black text-slate-800">฿${formatCurrency(costLead)}</p>
-                            </div>
-                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-colors flex flex-col justify-center">
-                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                    <i data-lucide="percent" class="w-4 h-4 text-emerald-400"></i> % เทียบยอดขาย
-                                </p>
-                                <p class="text-2xl lg:text-3xl font-black text-slate-800">${spdSales.toFixed(1)}%</p>
-                            </div>
-                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-purple-200 transition-colors flex flex-col justify-center">
-                                <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                    <i data-lucide="target" class="w-4 h-4 text-purple-400"></i> % เทียบเป้าขาย
-                                </p>
-                                <p class="text-2xl lg:text-3xl font-black text-slate-800">${spdTar.toFixed(1)}%</p>
-                            </div>
-                        </div>
-
+                    <!-- Cost per Lead Card -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center">
+                        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-purple-500"></i> ต้นทุน / 1 ลูกค้าใหม่</p>
+                        <h2 class="text-5xl font-black text-slate-900 mt-2 tracking-tighter">฿${formatCurrency(costLead)}</h2>
+                        <p class="text-sm font-bold text-slate-500 mt-3 border-t border-slate-100 pt-3">ได้มาทั้งหมด ${formatCurrency(tLeads)} ราย</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div class="flex items-center gap-3 mb-6 shrink-0">
+                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight">เจาะลึกรายบริษัท (Company Breakdown)</h3>
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                </div>
+
+                <!-- Section 2: Company Breakdown (3 คอลัมน์) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 shrink-0">
                     ${['gfs','mhl','car'].map(k => {
                         const mk = current.marketing[k]; 
                         const tNames = { gfs: 'Goodfilm (GFS)', mhl: 'Maholan (MHL)', car: 'ฟิล์มรถยนต์ (CAR)' }; 
                         const c = k==='gfs'?'blue':k==='mhl'?'amber':'emerald'; 
                         const p = mk.target>0?(mk.actual/mk.target)*100:0; 
                         const isOver = mk.actual>mk.target && mk.target>0;
-                        const cCont = k==='car'?(current.admin.contacts.car||0):(current.admin.contacts[k]?.line+current.admin.contacts[k]?.fb+current.admin.contacts[k]?.tel||0); 
+                        
+                        const companySales = current[k].actual;
+                        const cCont = k==='car'?(current.carDetail ? current.carDetail.contacts.total : 0):(current.admin.contacts[k]?.line+current.admin.contacts[k]?.fb+current.admin.contacts[k]?.tel||0); 
                         const cLead = k==='car'?(current.admin.leads.car||0):(current.admin.leads[k]?.line+current.admin.leads[k]?.fb+current.admin.leads[k]?.tel||0);
+                        
+                        const coRoas = mk.actual > 0 ? (companySales / mk.actual).toFixed(1) : 0;
+                        const coCpa = cLead > 0 ? (mk.actual / cLead) : 0;
+                        const coCpc = cCont > 0 ? (mk.actual / cCont) : 0;
+                        const coSalesRatio = companySales > 0 ? (mk.actual / companySales) * 100 : 0;
+
+                        // คำนวณ % Ad Split
+                        const totalAds = mk.google + mk.fb;
+                        const pGoogle = totalAds > 0 ? (mk.google / totalAds) * 100 : 0;
+                        const pFb = totalAds > 0 ? (mk.fb / totalAds) * 100 : 0;
+
                         return `
-                        <div class="bg-white rounded-[2rem] p-6 lg:p-8 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
+                        <div class="bg-white rounded-[2rem] p-6 xl:p-8 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
                             <div class="absolute -right-4 -top-4 opacity-5 pointer-events-none"><i data-lucide="building-2" class="w-32 h-32 text-${c}-600"></i></div>
-                            <div class="flex justify-between items-start mb-6 relative z-10 gap-2">
-                                <div class="inline-flex px-4 py-2 rounded-xl bg-${c}-100 text-${c}-600 text-sm font-black uppercase tracking-widest whitespace-nowrap overflow-hidden text-ellipsis">${tNames[k]}</div>
-                                <span class="px-3 py-1 shrink-0 ${isOver?'bg-red-50 text-red-500 border-red-200':'bg-emerald-50 text-emerald-600 border-emerald-200'} border rounded-xl text-sm font-black">${p.toFixed(1)}%</span>
+                            
+                            <!-- Header -->
+                            <div class="flex justify-between items-center mb-6 relative z-10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-${c}-50 text-${c}-600 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border border-${c}-100">${k.toUpperCase()}</div>
+                                    <h4 class="font-black text-slate-800 text-lg whitespace-nowrap overflow-hidden text-ellipsis">${tNames[k]}</h4>
+                                </div>
                             </div>
                             
-                            <div class="relative z-10 mb-8 flex-grow">
-                                <p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">ค่าใช้จ่ายการตลาด</p>
-                                <h3 class="text-4xl xl:text-5xl font-black text-slate-900 leading-none mb-4 tracking-tighter">฿${formatCurrency(mk.actual)}</h3>
-                                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-3">
+                            <!-- Spend vs Budget -->
+                            <div class="mb-6 relative z-10">
+                                <div class="flex items-baseline gap-2 mb-3">
+                                    <h3 class="text-4xl font-black text-slate-900 tracking-tighter">฿${formatCurrency(mk.actual)}</h3>
+                                    <span class="text-base font-bold text-slate-400">/ ฿${formatCurrency(mk.target)}</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2">
                                     <div class="bg-${c}-500 h-full rounded-full transition-all duration-1000" style="width:${Math.min(p,100)}%"></div>
                                 </div>
-                                <div class="flex justify-between text-sm font-bold text-slate-500 uppercase">
-                                    <span>งบ: ฿${formatCurrency(mk.target)}</span>
+                                <div class="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500">
+                                    <span>ใช้ไป ${p.toFixed(1)}%</span>
                                     <span class="${isOver?'text-red-500':'text-emerald-500'}">${isOver?'⚠️ เกินงบ':'⭐ ในงบ'}</span>
                                 </div>
                             </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 mb-6 relative z-10">
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center">
-                                    <p class="text-xs font-black text-slate-500 uppercase mb-1">จ่าย/ติดต่อ</p>
-                                    <p class="text-xl lg:text-2xl font-black text-slate-800">${cCont>0?`฿${formatCurrency(mk.actual/cCont)}`:'-'}</p>
+
+                            <!-- Ad Platform Split Bar -->
+                            <div class="mb-6 relative z-10">
+                                <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
+                                    <span class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-blue-500"></div>Google (${pGoogle.toFixed(0)}%)</span>
+                                    <span class="flex items-center gap-1.5">FB (${pFb.toFixed(0)}%)<div class="w-2 h-2 rounded-full bg-indigo-500"></div></span>
                                 </div>
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center">
-                                    <p class="text-xs font-black text-slate-500 uppercase mb-1">จ่าย/ลูกค้า</p>
-                                    <p class="text-xl lg:text-2xl font-black text-slate-800">${cLead>0?`฿${formatCurrency(mk.actual/cLead)}`:'-'}</p>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex shadow-inner">
+                                    <div class="bg-blue-500 h-full" style="width:${pGoogle}%"></div>
+                                    <div class="bg-indigo-500 h-full" style="width:${pFb}%"></div>
+                                </div>
+                                <div class="flex justify-between text-sm font-black text-slate-800 mt-1">
+                                    <span>฿${formatCurrency(mk.google)}</span>
+                                    <span>฿${formatCurrency(mk.fb)}</span>
                                 </div>
                             </div>
                             
-                            <div class="mt-auto pt-5 border-t border-slate-100 space-y-3 relative z-10">
-                                <div class="flex justify-between items-center text-sm p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                                    <span class="text-blue-700 font-bold flex items-center gap-2"><i data-lucide="search" class="w-4 h-4"></i> Google Ads</span>
-                                    <span class="font-black text-blue-800 text-lg">฿${formatCurrency(mk.google)}</span>
+                            <!-- Detail Grid -->
+                            <div class="grid grid-cols-2 gap-3 mt-auto relative z-10 border-t border-slate-100 pt-5">
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <p class="text-xs font-bold text-slate-400 uppercase mb-0.5">ผลตอบแทน</p>
+                                    <p class="text-lg font-black text-emerald-600">ROAS ${coRoas}x</p>
                                 </div>
-                                <div class="flex justify-between items-center text-sm p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                    <span class="text-indigo-700 font-bold flex items-center gap-2"><i data-lucide="facebook" class="w-4 h-4"></i> Facebook Ads</span>
-                                    <span class="font-black text-indigo-800 text-lg">฿${formatCurrency(mk.fb)}</span>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <p class="text-xs font-bold text-slate-400 uppercase mb-0.5">% เทียบยอดขาย</p>
+                                    <p class="text-lg font-black text-slate-800">${coSalesRatio.toFixed(1)}%</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <p class="text-xs font-bold text-slate-400 uppercase mb-0.5">จ่าย / ลูกค้า</p>
+                                    <p class="text-lg font-black text-slate-800">${cLead > 0 ? `฿${formatCurrency(coCpa)}` : '-'}</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <p class="text-xs font-bold text-slate-400 uppercase mb-0.5">จ่าย / ติดต่อ</p>
+                                    <p class="text-lg font-black text-slate-800">${cCont > 0 ? `฿${formatCurrency(coCpc)}` : '-'}</p>
                                 </div>
                             </div>
                         </div>`;
                     }).join('')}
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <div class="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col">
-                        <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+
+                <!-- Section 3 & 4: Charts and Insights (รวมในบรรทัดเดียวกัน) -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8 shrink-0">
+                    
+                    <!-- Chart Section (ซ้าย) -->
+                    <div class="xl:col-span-2 bg-white rounded-3xl p-6 lg:p-8 border border-slate-200 shadow-sm flex flex-col shrink-0">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 pb-4 border-b border-slate-100">
                             <div>
-                                <h3 class="font-black text-slate-800 uppercase tracking-tight text-base">แนวโน้มค่าโฆษณา (12 สัปดาห์)</h3>
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight text-lg">แนวโน้มค่าโฆษณาย้อนหลัง 12 สัปดาห์</h3>
                                 <div class="flex gap-2 mt-3 ${activeMarketingChartTab === 'trend' ? '' : 'hidden'}">
-                                    <button onclick="changeMarketingTrendFilter('total')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'total' ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวม</button>
-                                    <button onclick="changeMarketingTrendFilter('gfs')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
-                                    <button onclick="changeMarketingTrendFilter('mhl')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
-                                    <button onclick="changeMarketingTrendFilter('car')" class="px-4 py-1.5 rounded-lg text-sm font-black transition-all ${marketingTrendFilter === 'car' ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">CAR</button>
+                                    <button onclick="changeMarketingTrendFilter('total')" class="px-4 py-1.5 rounded-lg text-xs lg:text-sm font-black transition-all ${marketingTrendFilter === 'total' ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวมทั้งหมด</button>
+                                    <button onclick="changeMarketingTrendFilter('gfs')" class="px-4 py-1.5 rounded-lg text-xs lg:text-sm font-black transition-all ${marketingTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
+                                    <button onclick="changeMarketingTrendFilter('mhl')" class="px-4 py-1.5 rounded-lg text-xs lg:text-sm font-black transition-all ${marketingTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+                                    <button onclick="changeMarketingTrendFilter('car')" class="px-4 py-1.5 rounded-lg text-xs lg:text-sm font-black transition-all ${marketingTrendFilter === 'car' ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">CAR</button>
                                 </div>
                             </div>
-                            <div class="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner gap-1">
-                                <button onclick="changeMarketingChartTab('compare')" class="px-5 py-2 rounded-xl text-sm font-black transition-all ${activeMarketingChartTab === 'compare' ? 'bg-white shadow-md text-slate-800' : 'text-slate-500 hover:text-slate-700'}">เปรียบเทียบบริษัท</button>
-                                <button onclick="changeMarketingChartTab('trend')" class="px-5 py-2 rounded-xl text-sm font-black transition-all ${activeMarketingChartTab === 'trend' ? 'bg-white shadow-md text-slate-800' : 'text-slate-500 hover:text-slate-700'}">ย้อนหลัง</button>
+                            <div class="flex bg-slate-50 p-1.5 rounded-xl border border-slate-100 shrink-0 self-start sm:self-auto">
+                                <button onclick="changeMarketingChartTab('compare')" class="px-4 py-2 rounded-lg text-sm font-black transition-all ${activeMarketingChartTab === 'compare' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-700'}">เปรียบเทียบบริษัท</button>
+                                <button onclick="changeMarketingChartTab('trend')" class="px-4 py-2 rounded-lg text-sm font-black transition-all ${activeMarketingChartTab === 'trend' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-700'}">กราฟแนวโน้ม</button>
                             </div>
                         </div>
-                        <div class="flex-1 w-full min-h-[350px] relative">
+                        <div class="flex-1 w-full min-h-[450px] relative">
                             <canvas id="marketingCompareCanvas" class="${activeMarketingChartTab === 'compare' ? '' : 'hidden'}"></canvas>
                             <canvas id="marketingTrendCanvas" class="${activeMarketingChartTab === 'trend' ? '' : 'hidden'}"></canvas>
                         </div>
                     </div>
-                    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col bg-gradient-to-b from-white to-orange-50/30 relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 opacity-5 pointer-events-none"><i data-lucide="zap" class="w-32 h-32 text-orange-600"></i></div>
-                        <h3 class="font-black text-slate-800 mb-6 flex items-center gap-2 text-xl uppercase tracking-tight relative z-10"><i data-lucide="zap" class="text-orange-500 w-6 h-6"></i>วิเคราะห์ประสิทธิภาพ (ROAS)</h3>
-                        <div class="space-y-3 flex-1 relative z-10 overflow-y-auto custom-scrollbar pr-2 pb-2">
-                            ${mktAnalysis.map(mkt => {
-                                const roas = mkt.a > 0 ? (mkt.sales / mkt.a).toFixed(1) : 0;
-                                const spendVsSales = mkt.sales > 0 ? (mkt.a / mkt.sales) * 100 : 0;
-                                return `
-                                <div class="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex flex-col gap-2 relative overflow-hidden hover:border-${mkt.cColor}-200 transition-colors">
-                                    <div class="absolute -right-2 -bottom-2 opacity-5 pointer-events-none"><i data-lucide="bar-chart-3" class="w-16 h-16 text-${mkt.cColor}-500"></i></div>
-                                    <div class="flex justify-between items-center border-b border-slate-50 pb-2">
-                                        <span class="text-sm font-black text-${mkt.cColor}-600 uppercase tracking-widest">${mkt.name}</span>
-                                        <span class="text-xs text-slate-500 font-bold bg-slate-50 px-2 py-1 rounded-lg">ROAS <span class="text-base font-black text-slate-800 ml-1">${roas}x</span></span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2 text-xs font-bold">
-                                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span class="text-slate-400">ต้นทุน/ลูกค้า</span> <span class="text-slate-800">฿${formatCurrency(mkt.cLead)}</span></div>
-                                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span class="text-slate-400">% เทียบยอดขาย</span> <span class="${spendVsSales < 15 && spendVsSales > 0 ? 'text-emerald-500' : 'text-red-500'}">${spendVsSales.toFixed(1)}%</span></div>
-                                    </div>
+
+                    <!-- Executive Insights Section (ขวา) -->
+                    <div class="bg-white rounded-[2rem] p-6 lg:p-8 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="lightbulb" class="w-64 h-64 text-orange-600"></i></div>
+                        <h3 class="font-black text-slate-800 flex items-center gap-2 text-xl uppercase tracking-tight mb-6 relative z-10">
+                            <i data-lucide="lightbulb" class="text-amber-500 w-6 h-6"></i> วิเคราะห์การตลาด
+                        </h3>
+                        
+                        <div class="flex flex-col gap-4 relative z-10">
+                            <div class="bg-slate-50 p-4 xl:p-5 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">เทียบงบสัปดาห์นี้</p>
+                                    <p class="text-xl xl:text-2xl font-black ${isOverTotal ? 'text-red-600' : 'text-emerald-600'}">${isOverTotal ? '+' : '-'}${formatCurrency(Math.abs(tSpend - tBud))} ฿</p>
                                 </div>
-                                `;
-                            }).join('')}
+                                <div class="w-12 h-12 rounded-xl ${isOverTotal ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'} flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-6 h-6"></i></div>
+                            </div>
+                            
+                            <div class="bg-slate-50 p-4 xl:p-5 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">ROAS (เทียบวีคก่อน)</p>
+                                    <p class="text-xl xl:text-2xl font-black ${roasDiff >= 0 ? 'text-emerald-600' : 'text-red-600'}">${roasDiff >= 0 ? '↑' : '↓'} ${Math.abs(roasDiff).toFixed(1)}x</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${roasDiff >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0"><i data-lucide="trending-${roasDiff >= 0 ? 'up' : 'down'}" class="w-6 h-6"></i></div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 xl:p-5 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">ต้นทุน / ลูกค้าใหม่</p>
+                                    <p class="text-xl xl:text-2xl font-black text-blue-600">฿${formatCurrency(costLead)}</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i data-lucide="users" class="w-6 h-6"></i></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex-1 p-5 ${!isOverTotal && roasDiff >= 0 ? 'bg-emerald-50/50 border-emerald-100' : (isOverTotal ? 'bg-red-50/50 border-red-100' : 'bg-orange-50/50 border-orange-100')} rounded-2xl border text-sm leading-relaxed text-slate-800 font-medium relative z-10 flex flex-col justify-center">
+                            <b class="${!isOverTotal && roasDiff >= 0 ? 'text-emerald-600' : (isOverTotal ? 'text-red-600' : 'text-orange-600')} uppercase font-black tracking-widest block mb-2">💡 สรุปสถานการณ์:</b> 
+                            ${!isOverTotal 
+                                ? `สัปดาห์นี้คุมงบได้ยอดเยี่ยม <b class="text-emerald-700">อยู่ในงบ (ใช้ไป ${spdBud.toFixed(1)}%)</b> และผลตอบแทน (ROAS) อยู่ที่ <b class="text-emerald-700">${totalRoas}x</b> ${roasDiff >= 0 ? 'ซึ่งเติบโตดีขึ้น แนะนำให้รักษามาตรฐานนี้ไว้' : 'แต่อาจต้องปรับคอนเทนต์เพิ่มเติมเพื่อให้ ROAS ฟื้นตัวขึ้น'}` 
+                                : `สัปดาห์นี้ใช้งบโฆษณา <b class="text-red-600">เกินเป้า ${formatCurrency(tSpend - tBud)} ฿</b> ต้นทุน/ลูกค้า (CPL) อยู่ที่ <b class="text-red-600">฿${formatCurrency(costLead)}</b> ควรตรวจสอบแพลตฟอร์มที่งบเกินด่วน`}
                         </div>
                     </div>
                 </div>
@@ -1048,17 +1118,17 @@
                         charts['marketingCompare'] = new Chart(ctx, {
                             type: 'bar',
                             data: {
-                                labels: ['GFS', 'MHL', 'CAR'],
+                                labels: ['GFS (ฟิล์มอาคาร)', 'MHL (ฟิล์มอาคาร)', 'CAR (ฟิล์มรถยนต์)'],
                                 datasets: [
-                                    { type: 'bar', label: 'ค่าใช้จ่ายจริง (Actual)', data: [current.marketing.gfs.actual, current.marketing.mhl.actual, current.marketing.car.actual], backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'], borderRadius: 6, order: 1, barPercentage: 0.5 },
-                                    { type: 'bar', label: 'งบประมาณ (Budget)', data: [current.marketing.gfs.target, current.marketing.mhl.target, current.marketing.car.target], backgroundColor: ['#e0f2fe', '#fef3c7', '#d1fae5'], borderColor: ['#bae6fd', '#fde68a', '#a7f3d0'], borderWidth: 1, borderRadius: 6, order: 2, grouped: false, barPercentage: 0.85 }
+                                    { type: 'bar', label: 'ค่าใช้จ่ายจริง (Actual)', data: [current.marketing.gfs.actual, current.marketing.mhl.actual, current.marketing.car.actual], backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'], borderRadius: 6, order: 1, barPercentage: 0.4 },
+                                    { type: 'bar', label: 'งบประมาณ (Budget)', data: [current.marketing.gfs.target, current.marketing.mhl.target, current.marketing.car.target], backgroundColor: ['#e0f2fe', '#fef3c7', '#d1fae5'], borderColor: ['#bae6fd', '#fde68a', '#a7f3d0'], borderWidth: 1, borderRadius: 6, order: 2, grouped: false, barPercentage: 0.7 }
                                 ]
                             },
                             options: { 
                                 layout: { padding: { top: 30 } },
                                 responsive: true, maintainAspectRatio: false, 
                                 plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + formatCurrency(c.parsed.y) + ' ฿' } } }, 
-                                scales: { y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 100000 ? (v/1000)+'k' : v } }, x: { grid: { display: false } } } 
+                                scales: { y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 100000 ? (v/1000)+'k' : v } }, x: { grid: { display: false }, ticks: { font: { family: 'Sarabun', weight: 'bold' } } } } 
                             },
                             plugins: [createProgressPlugin(true)]
                         });
