@@ -197,12 +197,13 @@
         function generateMockData() {
             return [{ 
                 id: 'mock-1', week: 'Week 1', dateRange: '1-7 ม.ค. 2026', 
-                gfs: { target: 1500000, actual: 1650000 }, mhl: { target: 800000, actual: 750000 }, car: { target: 500000, actual: 520000 }, 
+                gfs: { target: 1500000, actual: 1650000, ytdTarget: 15000000, ytdActual: 16500000 }, mhl: { target: 800000, actual: 750000, ytdTarget: 8000000, ytdActual: 7500000 }, car: { target: 500000, actual: 520000 }, 
                 marketing: { gfs: { target: 20000, actual: 18000, google: 10000, fb: 8000 }, mhl: { target: 10000, actual: 11000, google: 5000, fb: 6000 }, car: { target: 5000, actual: 4800, google: 2000, fb: 2800 } }, 
                 admin: { contacts: { total: 153, gfs: { line: 44, fb: 24, tel: 22 }, mhl: { line: 36, fb: 5, tel: 22 }, car: 50 }, leads: { target: 60, actual: 45, gfs: { line: 27, tel: 1, fb: 5 }, mhl: { line: 12, tel: 0, fb: 0 }, car: 15 }, sales: { totalSales: 274174, totalInstalls: 14, newSales: { gfs: 894675, mhl: 855899 }, oldSales: { gfs: 877600, mhl: 846000 }, newInstalls: { gfs: 12, mhl: 6 }, oldInstalls: { gfs: 1, mhl: 1 } } },
                 tech: { installs: { target: 50, actual: 45, gfs: 30, mhl: 15 }, area: { target: 15000, actual: 14200, gfs: 9000, mhl: 5200 }, teams: 5, damage: { totalValue: 4500, byTech: 3000, byFilm: 1500, claims: 2, filmArea: 120 } },
                 carDetail: { sales: { target: 500000, actual: 520000 }, installs: { line: 10, fb: 15, tel: 5, walkin: 2, showroom: 8, other: 1 }, contacts: { total: 80, tel: 20, line: 30, fb: 30 }, tech: { claims: 2, filmIssueCount: 1, filmIssueValue: 1000, techIssueCount: 2, techIssueValue: 2000, teamSize: 3 } },
                 buildingSales: { 
+                    totalRepSales: 15200000, totalProjSales: 8400000, totalAdminSales: 5321763,
                     bom: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
                     jay: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
                     saifha: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
@@ -257,8 +258,8 @@
 
                     weeksData.push({
                         id: `col-${i}`, week: weekName, dateRange: parsed[2][i]?.trim() || '-',
-                        gfs: { target: cleanNumber(parsed[12]?.[i]), actual: cleanNumber(parsed[13]?.[i]) },
-                        mhl: { target: cleanNumber(parsed[18]?.[i]), actual: cleanNumber(parsed[19]?.[i]) },
+                        gfs: { target: cleanNumber(parsed[12]?.[i]), actual: cleanNumber(parsed[13]?.[i]), ytdTarget: cleanNumber(parsed[12]?.[i]), ytdActual: cleanNumber(parsed[13]?.[i]) },
+                        mhl: { target: cleanNumber(parsed[18]?.[i]), actual: cleanNumber(parsed[19]?.[i]), ytdTarget: cleanNumber(parsed[18]?.[i]), ytdActual: cleanNumber(parsed[19]?.[i]) },
                         car: { target: cleanNumber(parsed[24]?.[i]), actual: cleanNumber(parsed[25]?.[i]) },
                         marketing: {
                             gfs: { target: cleanNumber(parsed[37]?.[i]), actual: cleanNumber(parsed[44]?.[i]) + cleanNumber(parsed[50]?.[i]), google: gfsMkGoogleVal, fb: gfsMkFbVal },
@@ -283,6 +284,9 @@
                             tech: { claims: cleanNumber(parsed[377]?.[i]), filmIssueCount: cleanNumber(parsed[382]?.[i]), filmIssueValue: cleanNumber(parsed[383]?.[i]), techIssueCount: cleanNumber(parsed[384]?.[i]), techIssueValue: cleanNumber(parsed[385]?.[i]), teamSize: cleanNumber(parsed[386]?.[i]) }
                         },
                         buildingSales: {
+                            totalRepSales: cleanNumber(parsed[168]?.[i]), // Row 169
+                            totalProjSales: cleanNumber(parsed[169]?.[i]), // Row 170
+                            totalAdminSales: cleanNumber(parsed[170]?.[i]), // Row 171
                             bom: { ytd: cleanNumber(parsed[172]?.[i]), meets: bomMeets, installs: bomInstalls, sales: cleanNumber(parsed[175]?.[i]), newMeets: cleanNumber(parsed[177]?.[i]), newInstalls: cleanNumber(parsed[178]?.[i]), newSales: cleanNumber(parsed[179]?.[i]), oldMeets: cleanNumber(parsed[181]?.[i]), oldInstalls: cleanNumber(parsed[182]?.[i]), oldSales: cleanNumber(parsed[183]?.[i]), noInstalls: cleanNumber(parsed[185]?.[i]), noInstallSales: cleanNumber(parsed[186]?.[i]), sr: bomMeets > 0 ? (bomInstalls / bomMeets) * 100 : 0 },
                             jay: { ytd: cleanNumber(parsed[192]?.[i]), meets: jayMeets, installs: jayInstalls, sales: cleanNumber(parsed[195]?.[i]), newMeets: cleanNumber(parsed[197]?.[i]), newInstalls: cleanNumber(parsed[198]?.[i]), newSales: cleanNumber(parsed[199]?.[i]), oldMeets: cleanNumber(parsed[201]?.[i]), oldInstalls: cleanNumber(parsed[202]?.[i]), oldSales: cleanNumber(parsed[203]?.[i]), noInstalls: cleanNumber(parsed[205]?.[i]), noInstallSales: cleanNumber(parsed[206]?.[i]), sr: jayMeets > 0 ? (jayInstalls / jayMeets) * 100 : 0 },
                             saifha: { ytd: cleanNumber(parsed[228]?.[i]), meets: saifhaMeets, installs: saifhaInstalls, sales: cleanNumber(parsed[231]?.[i]), newMeets: cleanNumber(parsed[233]?.[i]), newInstalls: cleanNumber(parsed[234]?.[i]), newSales: cleanNumber(parsed[235]?.[i]), oldMeets: cleanNumber(parsed[237]?.[i]), oldInstalls: cleanNumber(parsed[238]?.[i]), oldSales: cleanNumber(parsed[239]?.[i]), noInstalls: cleanNumber(parsed[241]?.[i]), noInstallSales: cleanNumber(parsed[242]?.[i]), sr: saifhaMeets > 0 ? (saifhaInstalls / saifhaMeets) * 100 : 0 },
@@ -727,9 +731,10 @@
             const cIdx = dashboardData.findIndex(d => d.id === current.id);
             const ytdData = dashboardData.slice(0, cIdx + 1);
             
+            // ยอดขายสะสมปีนี้ (YTD) = ยอดรวมทุก Week ของแถว 14 (gfs.actual) + แถว 20 (mhl.actual)
             const ytdActual = ytdData.reduce((sum, d) => sum + d.gfs.actual + d.mhl.actual, 0);
-            const ytdTarget = ytdData.reduce((sum, d) => sum + d.gfs.target + d.mhl.target, 0);
-            const ytdProgressVsTarget = ytdTarget > 0 ? (ytdActual / ytdTarget) * 100 : 0;
+            
+            // เป้ายอดขายปีนี้ 90 ล้าน
             const ytdProgressVsYearly = (ytdActual / YEARLY_BUILDING_TARGET) * 100;
 
             const weeklyActual = current.gfs.actual + current.mhl.actual;
@@ -754,11 +759,66 @@
             container.innerHTML = `
                 <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-blue-50 border border-blue-200 text-blue-700 text-base rounded-xl p-2 w-72 cursor-pointer font-bold">${opt}</select></div>
                 <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="target" class="text-blue-500 w-7 h-7"></i>เป้ายอดขายสะสม (YTD) - ทีมอาคาร</h3>
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
-                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><p class="text-sm font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><i data-lucide="wallet" class="w-5 h-5 text-blue-500"></i> ยอดขายสะสม (Total YTD)</p><h3 class="text-5xl font-black text-slate-900 leading-none mt-2">฿${formatCurrency(ytdActual)}</h3><p class="text-sm text-slate-500 mt-2 font-bold uppercase">เป้าสะสม: ฿${formatCurrency(ytdTarget)}</p></div>
-                    <div class="bg-blue-50 rounded-[2rem] p-6 border border-blue-100 shadow-sm flex flex-col justify-center relative overflow-hidden"><div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="trending-up" class="w-24 h-24 text-blue-600"></i></div><p class="text-sm font-black text-blue-600 uppercase tracking-widest mb-1">% ยอดขายสะสม เทียบเป้าสะสม</p><h3 class="text-5xl font-black text-blue-700 leading-none mt-2 relative z-10">${ytdProgressVsTarget.toFixed(1)}%</h3></div>
-                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><div class="flex justify-between items-center mb-1"><p class="text-sm font-black text-slate-400 uppercase tracking-widest">% ยอดขายเทียบเป้าทั้งปี</p><span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black">เป้า 90M</span></div><h3 class="text-5xl font-black text-indigo-600 leading-none mt-2">${ytdProgressVsYearly.toFixed(1)}%</h3><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mt-3"><div class="bg-indigo-500 h-full rounded-full" style="width:${Math.min(ytdProgressVsYearly,100)}%"></div></div></div>
+                    <!-- การ์ด 1: ยอดขายสัปดาห์นี้ (Weekly Sales) และ % เทียบเป้า -->
+                    <div class="bg-blue-50 rounded-[2rem] p-6 border border-blue-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="wallet" class="w-32 h-32 text-blue-600"></i></div>
+                        <p class="text-sm font-black text-blue-600 uppercase tracking-widest mb-1 flex items-center gap-1.5 relative z-10"><i data-lucide="wallet" class="w-5 h-5"></i> ยอดขายสัปดาห์นี้ (Weekly Sales)</p>
+                        <h3 class="text-4xl lg:text-5xl font-black text-blue-700 leading-none mt-2 mb-4 relative z-10">฿${formatCurrency(weeklyActual)}</h3>
+                        <div class="relative z-10 flex justify-between items-end border-t border-blue-200/50 pt-3">
+                            <div>
+                                <p class="text-xs text-blue-500 font-bold uppercase">เป้าสัปดาห์นี้ (Weekly Target)</p>
+                                <p class="text-lg font-black text-blue-700">฿${formatCurrency(weeklyTarget)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-black ${weeklyProgress >= 100 ? 'text-emerald-500' : 'text-blue-600'}">${weeklyProgress >= 100 ? '⭐ ' : ''}${weeklyProgress.toFixed(1)}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- การ์ด 2: ยอดขายแยกแต่ละแผนก -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center relative">
+                        <p class="text-sm font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i> ยอดขายแยกแต่ละแผนก (YTD)</p>
+                        <div class="space-y-2.5 flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-sm font-bold text-slate-600 flex items-center gap-2">👤 Sales Representative</span>
+                                <span class="text-lg font-black text-slate-800">฿${formatCurrency(b.totalRepSales)}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-sm font-bold text-slate-600 flex items-center gap-2">💼 Sales Project</span>
+                                <span class="text-lg font-black text-slate-800">฿${formatCurrency(b.totalProjSales)}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-sm font-bold text-slate-600 flex items-center gap-2">🖥️ Sales Admin</span>
+                                <span class="text-lg font-black text-slate-800">฿${formatCurrency(b.totalAdminSales)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- การ์ด 3: % ยอดขายเทียบเป้าทั้งปี -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center">
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="text-sm font-black text-slate-400 uppercase tracking-widest">% ยอดขายเทียบเป้าทั้งปี</p>
+                            <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black">เป้า 90M</span>
+                        </div>
+                        <h3 class="text-5xl font-black ${ytdProgressVsYearly >= 100 ? 'text-emerald-500' : 'text-indigo-600'} leading-none mt-2 mb-3">${ytdProgressVsYearly >= 100 ? '⭐ ' : ''}${ytdProgressVsYearly.toFixed(1)}%</h3>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mt-1 mb-4">
+                            <div class="${ytdProgressVsYearly >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'} h-full rounded-full" style="width:${Math.min(ytdProgressVsYearly,100)}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-auto">
+                            <div>
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-0.5">ยอดขายสะสม (YTD)</p>
+                                <p class="text-base font-black text-slate-800">฿${formatCurrency(ytdActual)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-0.5">เป้ายอดขายปีนี้</p>
+                                <p class="text-base font-black text-slate-800">฿${formatCurrency(YEARLY_BUILDING_TARGET)}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                
                 <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="users" class="text-blue-500 w-7 h-7"></i>ฝ่ายขาย (Sales Representative)</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 shrink-0">
                     ${reps.map(r => `
