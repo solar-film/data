@@ -201,7 +201,7 @@
                 marketing: { gfs: { target: 20000, actual: 18000, google: 10000, fb: 8000 }, mhl: { target: 10000, actual: 11000, google: 5000, fb: 6000 }, car: { target: 5000, actual: 4800, google: 2000, fb: 2800 } }, 
                 admin: { contacts: { total: 153, gfs: { line: 44, fb: 24, tel: 22 }, mhl: { line: 36, fb: 5, tel: 22 }, car: 50 }, leads: { target: 60, actual: 45, gfs: { line: 27, tel: 1, fb: 5 }, mhl: { line: 12, tel: 0, fb: 0 }, car: 15 }, sales: { totalSales: 274174, totalInstalls: 14, newSales: { gfs: 894675, mhl: 855899 }, oldSales: { gfs: 877600, mhl: 846000 }, newInstalls: { gfs: 12, mhl: 6 }, oldInstalls: { gfs: 1, mhl: 1 } } },
                 tech: { installs: { target: 50, actual: 45, gfs: 30, mhl: 15 }, area: { target: 15000, actual: 14200, gfs: 9000, mhl: 5200 }, teams: 5, damage: { totalValue: 4500, byTech: 3000, byFilm: 1500, claims: 2, filmArea: 120 } },
-                carDetail: { sales: { target: 500000, actual: 520000 }, installs: { line: 10, fb: 15, tel: 5, walkin: 2, showroom: 8, other: 1 }, contacts: { total: 80, tel: 20, line: 30, fb: 30 }, tech: { claims: 2, filmIssueCount: 1, filmIssueValue: 1000, techIssueCount: 2, techIssueValue: 2000, teamSize: 3 } },
+                carDetail: { sales: { target: 500000, actual: 520000 }, installs: { line: 10, fb: 15, tel: 5, walkin: 2, showroom: 8, other: 1 }, contacts: { total: 80, tel: 20, line: 30, fb: 30 }, tech: { claims: 2, filmIssueCount: 1, filmIssueValue: 1000, techIssueCount: 2, techIssueValue: 2000, damagePercent: 0.4, teamSize: 3 } },
                 buildingSales: { 
                     totalRepSales: 15200000, totalProjSales: 8400000, totalAdminSales: 5321763,
                     bom: {ytd:1000000, meets:5, installs:3, sales:100000, newMeets:3, newInstalls:2, newSales:60000, oldMeets:2, oldInstalls:1, oldSales:40000, noInstalls:2, noInstallSales:10000, sr:60}, 
@@ -281,7 +281,15 @@
                             sales: { target: cleanNumber(parsed[356]?.[i]), actual: cleanNumber(parsed[357]?.[i]) },
                             installs: { line: cleanNumber(parsed[361]?.[i]), fb: cleanNumber(parsed[362]?.[i]), tel: cleanNumber(parsed[363]?.[i]), walkin: cleanNumber(parsed[364]?.[i]), showroom: cleanNumber(parsed[365]?.[i]), other: cleanNumber(parsed[366]?.[i]) },
                             contacts: { total: cleanNumber(parsed[371]?.[i]), tel: cleanNumber(parsed[372]?.[i]), line: cleanNumber(parsed[373]?.[i]), fb: cleanNumber(parsed[374]?.[i]) },
-                            tech: { claims: cleanNumber(parsed[377]?.[i]), filmIssueCount: cleanNumber(parsed[382]?.[i]), filmIssueValue: cleanNumber(parsed[383]?.[i]), techIssueCount: cleanNumber(parsed[384]?.[i]), techIssueValue: cleanNumber(parsed[385]?.[i]), teamSize: cleanNumber(parsed[386]?.[i]) }
+                            tech: { 
+                                claims: cleanNumber(parsed[377]?.[i]), 
+                                filmIssueCount: cleanNumber(parsed[379]?.[i]), 
+                                filmIssueValue: cleanNumber(parsed[380]?.[i]), 
+                                techIssueCount: cleanNumber(parsed[382]?.[i]), 
+                                techIssueValue: cleanNumber(parsed[383]?.[i]), 
+                                damagePercent: cleanNumber(parsed[384]?.[i]),
+                                teamSize: cleanNumber(parsed[386]?.[i]) 
+                            }
                         },
                         buildingSales: {
                             totalRepSales: cleanNumber(parsed[168]?.[i]), // Row 169
@@ -504,6 +512,9 @@
             const totalSalesProgress = totalTarget > 0 ? (totalSales / totalTarget) * 100 : 0;
 
             const buildingSales = current.gfs.actual + current.mhl.actual;
+            const buildingTarget = current.gfs.target + current.mhl.target;
+            const buildingSalesProgress = buildingTarget > 0 ? (buildingSales / buildingTarget) * 100 : 0;
+            
             const buildingInstalls = current.tech.installs.actual;
             
             const buildingDamageValue = current.tech.damage.totalValue;
@@ -579,7 +590,7 @@
                     <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('admin')">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="headphones" class="w-6 h-6"></i></div>
-                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">2. แอดมิน</h4><p class="text-xs font-bold text-slate-400 mt-1">คัดกรองลูกค้า</p></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">2. แอดมิน(อาคาร)</h4><p class="text-xs font-bold text-slate-400 mt-1">คัดกรองลูกค้า</p></div>
                         </div>
                         <div class="mb-4">
                             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ติดต่อรวมทั้งหมด</p>
@@ -592,18 +603,18 @@
                     </div>
 
                     <!-- ฝ่ายขาย -->
-                    <div class="bg-white rounded-[2rem] p-6 border ${totalSales >= totalTarget ? 'border-emerald-300 ring-2 ring-emerald-50' : 'border-blue-300 ring-2 ring-blue-50'} shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('sales')">
+                    <div class="bg-white rounded-[2rem] p-6 border ${buildingSales >= buildingTarget ? 'border-emerald-300 ring-2 ring-emerald-50' : 'border-blue-300 ring-2 ring-blue-50'} shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('sales')">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 ${totalSales >= totalTarget ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="award" class="w-6 h-6"></i></div>
-                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">3. ฝ่ายขาย</h4><p class="text-xs font-bold text-slate-400 mt-1">ปิดยอดขาย</p></div>
+                            <div class="w-12 h-12 ${buildingSales >= buildingTarget ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="award" class="w-6 h-6"></i></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">3. ฝ่ายขาย (อาคาร)</h4><p class="text-xs font-bold text-slate-400 mt-1">ปิดยอดขาย</p></div>
                         </div>
                         <div class="mb-4">
                             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ยอดขายปิดได้</p>
-                            <p class="text-3xl font-black ${totalSales >= totalTarget ? 'text-emerald-600' : 'text-blue-600'}">฿${formatCurrency(totalSales)}</p>
+                            <p class="text-3xl font-black ${buildingSales >= buildingTarget ? 'text-emerald-600' : 'text-blue-600'}">฿${formatCurrency(buildingSales)}</p>
                         </div>
                         <div class="mt-auto pt-4 border-t border-slate-100 space-y-2">
-                            <div class="flex justify-between items-center text-xs font-bold"><span class="text-slate-500">เป้า: ฿${formatCurrency(totalTarget)}</span><span class="${totalSales >= totalTarget ? 'text-emerald-600' : 'text-slate-700'}">${totalSalesProgress.toFixed(1)}%</span></div>
-                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="${totalSales >= totalTarget ? 'bg-emerald-500' : 'bg-blue-500'} h-full rounded-full" style="width:${Math.min(totalSalesProgress,100)}%"></div></div>
+                            <div class="flex justify-between items-center text-xs font-bold"><span class="text-slate-500">เป้า: ฿${formatCurrency(buildingTarget)}</span><span class="${buildingSales >= buildingTarget ? 'text-emerald-600' : 'text-slate-700'}">${buildingSalesProgress.toFixed(1)}%</span></div>
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="${buildingSales >= buildingTarget ? 'bg-emerald-500' : 'bg-blue-500'} h-full rounded-full" style="width:${Math.min(buildingSalesProgress,100)}%"></div></div>
                         </div>
                     </div>
 
@@ -913,13 +924,14 @@
         }
 
         // ==========================================
-        // RENDER: CAR DEEP DIVE
+        // RENDER: CAR DEEP DIVE (Redesigned - Modern & Clean Layout)
         // ==========================================
         function renderCarDeepDiveHTML(current, m, opt, container) {
             const cd = current.carDetail;
             if(!cd) return;
             const YEARLY_CAR_TARGET = 10000000;
             const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const prev = cIdx > 0 ? dashboardData[cIdx - 1] : null;
             const ytdData = dashboardData.slice(0, cIdx + 1);
             
             const ytdCarActual = ytdData.reduce((sum, d) => sum + d.carDetail.sales.actual, 0);
@@ -929,30 +941,251 @@
 
             const sales = cd.sales;
             const salesProgress = sales.target > 0 ? (sales.actual / sales.target) * 100 : 0;
+            const isSalesOverTarget = sales.actual >= sales.target;
+            
+            const prevSales = prev ? prev.carDetail.sales.actual : 0;
+            const salesGrowth = prevSales > 0 ? ((sales.actual - prevSales) / prevSales) * 100 : 0;
+
             const installs = cd.installs;
             const totalInstalls = installs.line + installs.fb + installs.tel + installs.walkin + installs.showroom + installs.other;
             const contacts = cd.contacts;
             const convRate = contacts.total > 0 ? (totalInstalls / contacts.total) * 100 : 0;
+            
             const tech = cd.tech;
-            const damagePercentSales = sales.actual > 0 ? (tech.techIssueValue / sales.actual) * 100 : 0;
-            const isDamageOverLimit = damagePercentSales > 5;
+            const totalDamageValue = tech.techIssueValue + tech.filmIssueValue;
+            let techDamagePercentSales = tech.damagePercent;
+            if (techDamagePercentSales > 0 && techDamagePercentSales < 1 && tech.techIssueValue > 0) {
+                techDamagePercentSales = techDamagePercentSales * 100;
+            } else if (techDamagePercentSales === 0 && tech.techIssueValue > 0) {
+                 techDamagePercentSales = sales.actual > 0 ? (tech.techIssueValue / sales.actual) * 100 : 0;
+            }
+            const damagePercentSales = sales.actual > 0 ? (totalDamageValue / sales.actual) * 100 : 0;
+            const isDamageOverLimit = techDamagePercentSales > 5;
+
+            let insightType = 'good';
+            if (isDamageOverLimit) insightType = 'high_damage';
+            else if (!isSalesOverTarget) insightType = 'low_sales';
 
             container.innerHTML = `
-                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-emerald-50 border border-emerald-200 text-emerald-700 text-base rounded-xl p-2 w-72 cursor-pointer font-bold">${opt}</select></div>
-                <h3 class="font-black text-slate-800 flex items-center gap-3 text-2xl uppercase tracking-tight leading-none mb-6 shrink-0"><i data-lucide="target" class="text-emerald-500 w-7 h-7"></i>เป้ายอดขายสะสม (YTD)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
-                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><p class="text-sm font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><i data-lucide="wallet" class="w-5 h-5 text-emerald-500"></i> ยอดขายสะสม (Total YTD)</p><h3 class="text-5xl font-black text-slate-900 mt-2">฿${formatCurrency(ytdCarActual)}</h3><p class="text-sm text-slate-500 mt-2 font-bold uppercase">เป้าสะสม: ฿${formatCurrency(ytdCarTarget)}</p></div>
-                    <div class="bg-emerald-50 rounded-[2rem] p-6 border border-emerald-100 shadow-sm flex flex-col justify-center relative overflow-hidden"><div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="trending-up" class="w-24 h-24 text-emerald-600"></i></div><p class="text-sm font-black text-emerald-600 uppercase tracking-widest mb-1">% ยอดขายสะสม เทียบเป้าสะสม</p><h3 class="text-5xl font-black text-emerald-700 mt-2 relative z-10">${ytdProgressVsTarget.toFixed(1)}%</h3></div>
-                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-center"><div class="flex justify-between items-center mb-1"><p class="text-sm font-black text-slate-400 uppercase tracking-widest">% ยอดขายเทียบเป้าทั้งปี</p><span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black">เป้า 10M</span></div><h3 class="text-5xl font-black text-blue-600 mt-2">${ytdProgressVsYearly.toFixed(1)}%</h3><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mt-3"><div class="bg-blue-500 h-full rounded-full" style="width:${Math.min(ytdProgressVsYearly,100)}%"></div></div></div>
+                <!-- Filter Section -->
+                <div class="flex items-center gap-2 mb-6 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                    <i data-lucide="filter" class="w-5 h-5 text-slate-400 ml-2"></i>
+                    <span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span>
+                    <select onchange="handleWeekChange(event)" class="ml-auto bg-emerald-50 border border-emerald-200 text-emerald-700 text-base font-bold rounded-xl p-2 w-72 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">${opt}</select>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden"><div class="absolute -right-6 -bottom-6 opacity-5"><i data-lucide="award" class="w-48 h-48 text-emerald-600"></i></div><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-6 relative z-10"><i data-lucide="user" class="w-5 h-5 text-emerald-500"></i> ❶ ฝ่ายขาย (รายสัปดาห์)</h4><div class="relative z-10 flex flex-col justify-center flex-1"><p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">ยอดขายรายสัปดาห์</p><h3 class="text-5xl font-black text-slate-900 mb-4">฿${formatCurrency(sales.actual)}</h3><div class="flex justify-between text-sm font-bold uppercase mb-2"><span class="text-slate-500">เป้าหมาย: ฿${formatCurrency(sales.target)}</span><span class="${salesProgress>=100?'text-emerald-500':'text-red-500'}">${salesProgress>=100?'⭐ ':''}${salesProgress.toFixed(1)}%</span></div><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${Math.min(salesProgress,100)}%"></div></div></div></div>
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-6"><i data-lucide="message-circle" class="w-5 h-5 text-blue-500"></i> ❶ การติดต่อของลูกค้า</h4><div class="p-6 rounded-2xl bg-blue-50 border border-blue-100 shadow-sm flex flex-col justify-center items-center mb-6"><p class="text-base font-bold text-blue-500 mb-1">ปริมาณการติดต่อรวม</p><p class="text-5xl font-black text-blue-600 mt-1">${formatCurrency(contacts.total)} <span class="text-lg font-bold text-blue-400">Contacts</span></p></div><div class="space-y-3 mt-auto"><div class="flex justify-between items-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"><span class="flex items-center gap-2 text-sm font-bold text-slate-600"><i data-lucide="phone" class="w-4 h-4"></i> โทรเข้า</span><span class="text-lg font-black text-slate-800">${formatCurrency(contacts.tel)}</span></div><div class="flex justify-between items-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"><span class="flex items-center gap-2 text-sm font-bold text-slate-600"><div class="w-3 h-3 rounded-full bg-emerald-500"></div> Line OA</span><span class="text-lg font-black text-slate-800">${formatCurrency(contacts.line)}</span></div><div class="flex justify-between items-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"><span class="flex items-center gap-2 text-sm font-bold text-slate-600"><div class="w-3 h-3 rounded-full bg-blue-500"></div> FB Chat</span><span class="text-lg font-black text-slate-800">${formatCurrency(contacts.fb)}</span></div></div></div>
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col"><h4 class="text-base font-black text-slate-700 flex items-center gap-2 mb-6"><i data-lucide="car" class="w-5 h-5 text-indigo-500"></i> 🚘 ปริมาณรถติดตั้งใหม่</h4><div class="flex justify-between items-end mb-4 px-2"><div><p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">ติดตั้งรวม</p><p class="text-4xl font-black text-slate-900">${formatCurrency(totalInstalls)} <span class="text-base font-bold">คัน</span></p></div><div class="text-right"><p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">% ความสำเร็จ</p><p class="text-2xl font-black text-indigo-600">${convRate.toFixed(1)}%</p></div></div><div class="grid grid-cols-2 gap-x-4 gap-y-3 mt-auto text-base font-bold text-slate-600"><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> LINE</span><span class="text-slate-900 text-lg">${formatCurrency(installs.line)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div> Facebook</span><span class="text-slate-900 text-lg">${formatCurrency(installs.fb)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="phone" class="w-3.5 h-3.5"></i> โทร</span><span class="text-slate-900 text-lg">${formatCurrency(installs.tel)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Walk-In</span><span class="text-slate-900 text-lg">${formatCurrency(installs.walkin)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="store" class="w-3.5 h-3.5"></i> ShowRoom</span><span class="text-slate-900 text-lg">${formatCurrency(installs.showroom)}</span></div><div class="flex justify-between items-center px-4 py-2 bg-slate-50 rounded-lg"><span class="flex items-center gap-2 text-sm"><i data-lucide="more-horizontal" class="w-3.5 h-3.5"></i> อื่นๆ</span><span class="text-slate-900 text-lg">${formatCurrency(installs.other)}</span></div></div></div>
+                
+                <!-- Section 1: YTD Hero Cards -->
+                <div class="flex items-center gap-3 mb-6 shrink-0 mt-2">
+                    <h3 class="font-black text-slate-800 text-2xl uppercase tracking-tight flex items-center gap-3"><i data-lucide="target" class="text-emerald-600 w-7 h-7"></i> เป้าหมายสะสมปีนี้ (YTD Goals)</h3>
+                    <div class="h-px bg-slate-200 flex-1 ml-2"></div>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
-                    <div class="bg-white rounded-[2rem] p-8 border ${isDamageOverLimit?'border-red-300 ring-4 ring-red-50':'border-slate-200'} shadow-sm flex flex-col relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="wrench" class="w-32 h-32 text-slate-600"></i></div><h4 class="text-base font-black text-slate-700 flex items-center justify-between mb-6 relative z-10"><span class="flex items-center gap-2"><i data-lucide="wrench" class="w-5 h-5"></i> ❶ ช่างติดตั้ง</span><span class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-black"><i data-lucide="users" class="w-4 h-4 inline"></i> ${tech.teamSize} คน</span></h4><div class="flex items-center gap-4 mb-6 relative z-10"><div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-7 h-7"></i></div><div><p class="text-sm font-black text-slate-500 uppercase mb-1">รถเคลม</p><p class="text-3xl font-black text-slate-900">${formatCurrency(tech.claims)} <span class="text-base font-bold text-slate-500">คัน</span></p></div></div><div class="space-y-4 relative z-10"><p class="text-sm font-black text-slate-500 uppercase border-b border-slate-100 pb-2">⚠️ ความเสียหาย</p><div class="grid grid-cols-2 gap-4"><div class="bg-slate-50 p-4 rounded-xl"><p class="text-xs font-bold text-slate-500 uppercase mb-1">จากฟิล์ม</p><p class="text-xl font-black text-slate-800 mb-1">${formatCurrency(tech.filmIssueCount)} <span class="text-sm font-normal">บาน</span></p><p class="text-sm font-bold text-rose-500">฿${formatCurrency(tech.filmIssueValue)}</p></div><div class="bg-slate-50 p-4 rounded-xl"><p class="text-xs font-bold text-slate-500 uppercase mb-1">จากช่าง</p><p class="text-xl font-black text-slate-800 mb-1">${formatCurrency(tech.techIssueCount)} <span class="text-sm font-normal">บาน</span></p><p class="text-sm font-bold text-rose-500">฿${formatCurrency(tech.techIssueValue)}</p></div></div></div><div class="relative z-10 mt-auto pt-6"><div class="flex justify-between items-center bg-${isDamageOverLimit?'red':'emerald'}-50 p-4 rounded-xl"><span class="text-sm font-bold ${isDamageOverLimit?'text-red-600':'text-emerald-700'} uppercase">% เทียบยอดขาย (ช่าง)</span><span class="text-xl font-black ${isDamageOverLimit?'text-red-600':'text-emerald-600'}">${damagePercentSales.toFixed(2)}%</span></div></div></div>
-                    <div class="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col"><div class="flex items-center justify-between gap-6 mb-6 pb-4 border-b border-slate-100 overflow-x-auto custom-scrollbar w-full"><div class="flex items-center gap-6 shrink-0"><h3 class="font-black text-slate-800 uppercase tracking-tight text-base whitespace-nowrap m-0"><i data-lucide="trending-up" class="w-5 h-5 text-emerald-500 inline mr-2"></i> แนวโน้มยอดขายฟิล์มรถยนต์ (12 สัปดาห์)</h3></div></div><div class="flex-1 w-full min-h-[350px] relative"><canvas id="carTrendChartCanvas"></canvas></div></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
+                    <!-- 1. YTD Sales -->
+                    <div class="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-[2rem] p-8 shadow-sm flex flex-col justify-center relative overflow-hidden text-white">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 pointer-events-none"><i data-lucide="wallet" class="w-40 h-40"></i></div>
+                        <p class="text-sm font-bold text-emerald-200 uppercase tracking-widest mb-1 flex items-center gap-2 relative z-10"><i data-lucide="wallet" class="w-5 h-5 text-emerald-300"></i> ยอดขายสะสม (Total YTD)</p>
+                        <h2 class="text-5xl lg:text-6xl font-black mt-2 mb-4 relative z-10 tracking-tighter">฿${formatCurrency(ytdCarActual)}</h2>
+                        <div class="w-full bg-black/20 h-2 rounded-full overflow-hidden mb-2 relative z-10">
+                            <div class="bg-emerald-400 h-full rounded-full shadow-[0_0_10px_rgba(52,211,153,0.8)]" style="width:${Math.min(ytdProgressVsTarget, 100)}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm font-bold relative z-10">
+                            <span class="text-emerald-100">เป้าสะสม: ฿${formatCurrency(ytdCarTarget)}</span>
+                            <span class="text-emerald-300">${ytdProgressVsTarget >= 100 ? '⭐ ทะลุเป้า' : ''} ${ytdProgressVsTarget.toFixed(1)}%</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Yearly Goal -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="flag" class="w-40 h-40 text-blue-600"></i></div>
+                        <div class="flex justify-between items-center mb-1 relative z-10">
+                            <p class="text-sm font-black text-slate-400 uppercase tracking-widest">% ยอดขายเทียบเป้าทั้งปี</p>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black border border-slate-200">เป้า 10 ล้าน</span>
+                        </div>
+                        <h3 class="text-6xl font-black text-blue-600 mt-2 mb-4 relative z-10 tracking-tighter">${ytdProgressVsYearly.toFixed(1)}%</h3>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden relative z-10">
+                            <div class="bg-blue-500 h-full rounded-full" style="width:${Math.min(ytdProgressVsYearly,100)}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 mb-6 shrink-0 mt-4">
+                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight flex items-center gap-3"><i data-lucide="car" class="text-teal-500 w-6 h-6"></i> ผลงานประจำสัปดาห์ (Weekly Performance)</h3>
+                    <div class="h-px bg-slate-200 flex-1 ml-2"></div>
+                </div>
+
+                <!-- Section 2: Weekly Deep Dive (Grid) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 shrink-0">
+                    
+                    <!-- 1. Weekly Sales -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${isSalesOverTarget ? 'border-emerald-300 ring-2 ring-emerald-50' : 'border-slate-200'} shadow-sm flex flex-col relative overflow-hidden">
+                        <div class="absolute -right-4 top-1/2 -translate-y-1/2 opacity-5 pointer-events-none"><i data-lucide="award" class="w-24 h-24 text-emerald-600"></i></div>
+                        <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4 relative z-10">
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-black shrink-0 border border-emerald-100"><i data-lucide="award" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-black text-slate-800 text-base leading-none">ยอดขายสัปดาห์นี้</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase mt-1">ฟิล์มรถยนต์</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 text-center relative z-10">
+                            <h3 class="text-4xl font-black text-slate-900 tracking-tighter">฿${formatCurrency(sales.actual)}</h3>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2 relative z-10">
+                            <div class="${isSalesOverTarget ? 'bg-emerald-500' : 'bg-slate-400'} h-full rounded-full" style="width:${Math.min(salesProgress, 100)}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold uppercase text-slate-500 mb-2 relative z-10">
+                            <span>เป้า: ฿${formatCurrency(sales.target)}</span>
+                            <span class="${isSalesOverTarget ? 'text-emerald-600' : ''}">${salesProgress.toFixed(1)}%</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Contacts (Redesigned) -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col">
+                        <h4 class="font-black text-slate-700 text-lg mb-4 flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-5 h-5 text-blue-500"></i> การติดต่อของลูกค้า
+                        </h4>
+                        <div class="bg-[#eff6ff] rounded-2xl p-6 flex flex-col items-center justify-center mb-6 border border-blue-100">
+                            <p class="text-sm font-black text-blue-600 mb-1">ปริมาณการติดต่อรวม</p>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-5xl font-black text-blue-600 tracking-tighter">${formatCurrency(contacts.total)}</span>
+                                <span class="text-base font-bold text-blue-400">Contacts</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3 mt-auto">
+                            <div class="flex justify-between items-center px-4 py-3 bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-50">
+                                <span class="flex items-center gap-3 text-sm font-bold text-slate-600"><i data-lucide="phone" class="w-4 h-4 text-slate-500"></i> โทรเข้า</span>
+                                <span class="text-lg font-black text-slate-900">${formatCurrency(contacts.tel)}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-4 py-3 bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-50">
+                                <span class="flex items-center gap-3 text-sm font-bold text-slate-600"><div class="w-3 h-3 rounded-full bg-emerald-500"></div> Line OA</span>
+                                <span class="text-lg font-black text-slate-900">${formatCurrency(contacts.line)}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-4 py-3 bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-50">
+                                <span class="flex items-center gap-3 text-sm font-bold text-slate-600"><div class="w-3 h-3 rounded-full bg-blue-500"></div> FB Chat</span>
+                                <span class="text-lg font-black text-slate-900">${formatCurrency(contacts.fb)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Installs Source Grid (Redesigned) -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col">
+                        <h4 class="font-black text-slate-700 text-lg mb-6 flex items-center gap-2">
+                            <i data-lucide="car" class="w-5 h-5 text-indigo-500"></i> ปริมาณรถติดตั้งใหม่
+                        </h4>
+                        <div class="flex justify-between items-start mb-8 px-2">
+                            <div>
+                                <p class="text-sm font-black text-slate-400 mb-1 tracking-widest">ติดตั้งรวม</p>
+                                <p class="text-4xl font-black text-slate-900">${formatCurrency(totalInstalls)} <span class="text-base font-bold text-slate-800">คัน</span></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-black text-slate-400 mb-1 tracking-widest">% ความสำเร็จ</p>
+                                <p class="text-2xl font-black text-[#5c50e6]">${convRate.toFixed(1)}%</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-auto">
+                            <div class="bg-slate-50 px-4 py-3.5 rounded-xl flex justify-between items-center"><span class="text-xs font-bold text-slate-700 flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> LINE</span><span class="text-base font-black text-slate-900">${formatCurrency(installs.line)}</span></div>
+                            <div class="bg-slate-50 px-4 py-3.5 rounded-xl flex justify-between items-center"><span class="text-xs font-bold text-slate-700 flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div> Facebook</span><span class="text-base font-black text-slate-900">${formatCurrency(installs.fb)}</span></div>
+                            <div class="bg-slate-50 px-4 py-3.5 rounded-xl flex justify-between items-center"><span class="text-xs font-bold text-slate-700 flex items-center gap-2"><i data-lucide="phone" class="w-4 h-4 text-slate-400"></i> โทร</span><span class="text-base font-black text-slate-900">${formatCurrency(installs.tel)}</span></div>
+                            <div class="bg-slate-50 px-4 py-3.5 rounded-xl flex justify-between items-center"><span class="text-xs font-bold text-slate-700 flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-slate-400"></i> Walk-In</span><span class="text-base font-black text-slate-900">${formatCurrency(installs.walkin)}</span></div>
+                            <div class="bg-slate-50 px-4 py-3.5 rounded-xl flex justify-between items-center"><span class="text-xs font-bold text-slate-700 flex items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-slate-400"></i> ShowRoom</span><span class="text-base font-black text-slate-900">${formatCurrency(installs.showroom)}</span></div>
+                            <div class="bg-slate-50 px-4 py-3.5 rounded-xl flex justify-between items-center"><span class="text-xs font-bold text-slate-700 flex items-center gap-2"><i data-lucide="more-horizontal" class="w-4 h-4 text-slate-400"></i> อื่นๆ</span><span class="text-base font-black text-slate-900">${formatCurrency(installs.other)}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Damage Control -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${isDamageOverLimit?'border-red-300 ring-4 ring-red-50':'border-slate-200'} shadow-sm flex flex-col relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="wrench" class="w-32 h-32 text-slate-600"></i></div>
+                        <h4 class="text-base font-black text-slate-700 flex items-center justify-between mb-6 relative z-10">
+                            <span class="flex items-center gap-2"><i data-lucide="wrench" class="w-5 h-5"></i> ❶ ช่างติดตั้ง</span>
+                            <span class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-black"><i data-lucide="users" class="w-4 h-4 inline"></i> ${tech.teamSize || 0} คน</span>
+                        </h4>
+                        <div class="flex items-center gap-4 mb-6 relative z-10">
+                            <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-slate-500 uppercase mb-1">รถเคลม</p>
+                                <p class="text-3xl font-black text-slate-900">${formatCurrency(tech.claims)} <span class="text-base font-bold text-slate-500">คัน</span></p>
+                            </div>
+                        </div>
+                        <div class="space-y-4 relative z-10">
+                            <p class="text-sm font-black text-slate-500 uppercase border-b border-slate-100 pb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i> ความเสียหาย</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <p class="text-xs font-bold text-slate-500 uppercase mb-1">จากฟิล์ม</p>
+                                    <p class="text-xl font-black text-slate-800 mb-1">${formatCurrency(tech.filmIssueCount)} <span class="text-sm font-normal">บาน/ครั้ง</span></p>
+                                    <p class="text-sm font-bold text-rose-500">฿${formatCurrency(tech.filmIssueValue)}</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <p class="text-xs font-bold text-slate-500 uppercase mb-1">จากช่าง</p>
+                                    <p class="text-xl font-black text-slate-800 mb-1">${formatCurrency(tech.techIssueCount)} <span class="text-sm font-normal">บาน/ครั้ง</span></p>
+                                    <p class="text-sm font-bold text-rose-500">฿${formatCurrency(tech.techIssueValue)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="relative z-10 mt-auto pt-6">
+                            <div class="flex justify-between items-center bg-${isDamageOverLimit?'red':'emerald'}-50 p-4 rounded-xl">
+                                <span class="text-xs font-bold ${isDamageOverLimit?'text-red-600':'text-emerald-700'} uppercase">% ความเสียหายจากช่าง</span>
+                                <span class="text-xl font-black ${isDamageOverLimit?'text-red-600':'text-emerald-600'}">${techDamagePercentSales.toFixed(2)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Chart & Insights -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0 mt-4">
+                    <!-- Chart -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-6 lg:p-8 border border-slate-200 shadow-sm flex flex-col shrink-0">
+                        <div class="flex items-center justify-between gap-6 mb-6 pb-4 border-b border-slate-100 overflow-x-auto custom-scrollbar w-full">
+                            <div class="flex items-center gap-4 shrink-0">
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight text-base whitespace-nowrap m-0 flex items-center"><i data-lucide="trending-up" class="w-5 h-5 text-emerald-500 mr-2"></i> แนวโน้มยอดขายฟิล์มรถยนต์ (12 สัปดาห์)</h3>
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full min-h-[350px] relative"><canvas id="carTrendChartCanvas"></canvas></div>
+                    </div>
+                    
+                    <!-- Executive Insights -->
+                    <div class="bg-white rounded-[2rem] p-6 lg:p-8 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="lightbulb" class="w-64 h-64 text-emerald-600"></i></div>
+                        <h3 class="font-black text-slate-800 flex items-center gap-2 text-xl uppercase tracking-tight mb-6 relative z-10">
+                            <i data-lucide="lightbulb" class="text-amber-500 w-6 h-6"></i> วิเคราะห์ฟิล์มรถยนต์
+                        </h3>
+                        
+                        <div class="flex flex-col gap-4 relative z-10 mb-6 flex-1">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-emerald-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Growth (เทียบวีคก่อน)</p>
+                                    <p class="text-2xl font-black ${salesGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}">${salesGrowth >= 0 ? '↑' : '↓'} ${Math.abs(salesGrowth).toFixed(1)}%</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${salesGrowth >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0"><i data-lucide="trending-${salesGrowth >= 0 ? 'up' : 'down'}" class="w-6 h-6"></i></div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-emerald-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">ส่วนต่างเป้าสัปดาห์นี้</p>
+                                    <p class="text-2xl font-black ${isSalesOverTarget ? 'text-emerald-600' : 'text-red-600'}">${isSalesOverTarget ? '+' : '-'}${formatCurrency(Math.abs(sales.actual - sales.target))} ฿</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${isSalesOverTarget ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0"><i data-lucide="target" class="w-6 h-6"></i></div>
+                            </div>
+                            
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-emerald-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">% ความเสียหาย (ยอดขาย)</p>
+                                    <p class="text-2xl font-black ${isDamageOverLimit ? 'text-red-600' : 'text-emerald-600'}">${techDamagePercentSales.toFixed(2)}%</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${isDamageOverLimit ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'} flex items-center justify-center shrink-0"><i data-lucide="shield-alert" class="w-6 h-6"></i></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto p-5 ${insightType === 'good' ? 'bg-emerald-50/50 border-emerald-100' : (insightType === 'high_damage' ? 'bg-red-50/50 border-red-100' : 'bg-amber-50/50 border-amber-100')} rounded-2xl border text-sm leading-relaxed text-slate-800 font-medium relative z-10 flex flex-col justify-center">
+                            <b class="${insightType === 'good' ? 'text-emerald-600' : (insightType === 'high_damage' ? 'text-red-600' : 'text-amber-600')} uppercase font-black tracking-widest block mb-2">💡 สรุปสถานการณ์:</b> 
+                            ${insightType === 'good' 
+                                ? `ยอดเยี่ยม! ฟิล์มรถยนต์สามารถทำยอดขายได้ทะลุเป้าหมาย <b class="text-emerald-700">(${salesProgress.toFixed(1)}%)</b> โดยมีอัตราการเปลี่ยนลูกค้า (Conversion) อยู่ที่ <b class="text-emerald-700">${convRate.toFixed(1)}%</b> และควบคุมความเสียหายได้ดี` 
+                                : (insightType === 'high_damage' 
+                                    ? `แจ้งเตือน! อัตราความเสียหายเกินเกณฑ์ 5% โดยสัปดาห์นี้อยู่ที่ <b class="text-red-600">${techDamagePercentSales.toFixed(2)}%</b> แนะนำให้เร่งตรวจสอบมาตรฐานงานติดตั้งของทีมช่างฟิล์มรถยนต์`
+                                    : `ยอดขายสัปดาห์นี้ยังต่ำกว่าเป้าหมาย <b class="text-amber-600">${formatCurrency(sales.target - sales.actual)} ฿</b> แนะนำให้ตรวจสอบจำนวนคนทักจาก Marketing หรือเพิ่มโปรโมชั่นกระตุ้นการตัดสินใจ (Conversion Rate: ${convRate.toFixed(1)}%)`)}
+                        </div>
+                    </div>
                 </div>
             `;
             setTimeout(() => {
@@ -962,12 +1195,22 @@
                 const recentData = dashboardData.filter(d => d.carDetail.sales.actual > 0).slice(-12);
                 charts['carTrend'] = new Chart(ctx, {
                     type: 'bar',
-                    data: { labels: recentData.map(d => d.week), datasets: [{ type: 'bar', label: 'ยอดขายจริง', data: recentData.map(d => d.carDetail.sales.actual), backgroundColor: '#10b981', borderRadius: 4, barPercentage: 0.6, order: 2 }, { type: 'line', label: 'เป้าหมาย', data: recentData.map(d => d.carDetail.sales.target), borderColor: '#cbd5e1', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#cbd5e1', tension: 0.1, order: 1 }] },
+                    data: { 
+                        labels: recentData.map(d => d.week), 
+                        datasets: [
+                            { type: 'bar', label: 'ยอดขายจริง (฿)', data: recentData.map(d => d.carDetail.sales.actual), backgroundColor: '#10b981', borderRadius: 4, barPercentage: 0.6, order: 2 }, 
+                            { type: 'line', label: 'เป้าหมายสัปดาห์ (฿)', data: recentData.map(d => d.carDetail.sales.target), borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], tension: 0.1, order: 1 }
+                        ] 
+                    },
                     options: { 
                         layout: { padding: { top: 30 } },
                         responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCurrency(c.parsed.y)} ฿` } } },
-                        scales: { x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } }, y: { beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 1000 ? (v/1000)+'k' : v } } }
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Sarabun', weight: 'bold' }, usePointStyle: true, boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ฿${formatCurrency(c.parsed.y)}` } } },
+                        scales: { 
+                            x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } }, 
+                            y: { type: 'linear', position: 'left', beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' }, callback: (v) => v >= 1000 ? (v/1000)+'k' : v } } 
+                        }
                     },
                     plugins: [createProgressPlugin(false)]
                 });
@@ -1153,7 +1396,7 @@
                         <div class="flex items-center justify-between gap-6 mb-6 pb-4 border-b border-slate-100 overflow-x-auto custom-scrollbar w-full">
                             <div class="flex items-center gap-6 shrink-0">
                                 <h3 class="font-black text-slate-800 uppercase tracking-tight text-lg whitespace-nowrap m-0">
-                                    ${activeMarketingChartTab === 'trend' ? 'แนวโน้มค่าโฆษณาย้อนหลัง 12 สัปดาห์' : 'แนวโน้มค่าโฆษณาปีนี้ (รายเดือน)'}
+                                    ${activeMarketingChartTab === 'trend' ? 'แนวโน้มค่าโฆษณาย้อนหลัง 12 สัปดาห์' : 'แนวโน้มค่าโฆณาปีนี้ (รายเดือน)'}
                                 </h3>
                                 <div class="flex gap-2 shrink-0">
                                     <button onclick="changeMarketingTrendFilter('total')" class="px-4 py-1.5 rounded-full text-xs lg:text-sm font-black transition-all ${marketingTrendFilter === 'total' ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวมทั้งหมด</button>
@@ -1340,55 +1583,266 @@
         }
 
         // ==========================================
-        // RENDER: TECH TEAM 
+        // RENDER: TECH TEAM (Redesigned - Modern & Clean Layout)
         // ==========================================
         function renderTechDeepDiveHTML(current, m, opt, container) {
             const t = current.tech;
             const YEARLY_INSTALL_TARGET = 2640;
             const YEARLY_AREA_TARGET = 792000;
+            
             const cIdx = dashboardData.findIndex(d => d.id === current.id);
+            const prev = cIdx > 0 ? dashboardData[cIdx - 1] : null;
             const ytdData = dashboardData.slice(0, cIdx + 1);
+            
             const ytdInstalls = ytdData.reduce((sum, d) => sum + d.tech.installs.actual, 0);
             const ytdArea = ytdData.reduce((sum, d) => sum + d.tech.area.actual, 0);
             const ytdDamageValue = ytdData.reduce((sum, d) => sum + d.tech.damage.totalValue, 0);
+            
             const ytdInstallPercent = (ytdInstalls / YEARLY_INSTALL_TARGET) * 100;
             const ytdAreaPercent = (ytdArea / YEARLY_AREA_TARGET) * 100;
+            
             const installProgress = t.installs.target > 0 ? (t.installs.actual / t.installs.target) * 100 : 0;
             const areaProgress = t.area.target > 0 ? (t.area.actual / t.area.target) * 100 : 0;
+            const isInstallOverTarget = t.installs.actual >= t.installs.target;
+            
             const avgInstallsPerTeam = t.teams > 0 ? (t.installs.actual / t.teams) : 0;
             const avgAreaPerTeam = t.teams > 0 ? (t.area.actual / t.teams) : 0;
+            
             const buildingSales = current.gfs.actual + current.mhl.actual;
             const damagePercentSales = buildingSales > 0 ? (t.damage.totalValue / buildingSales) * 100 : 0;
             const isDamageOverLimit = damagePercentSales > 1;
 
+            // Metrics for insights
+            const prevInstalls = prev ? prev.tech.installs.actual : 0;
+            const installGrowth = prevInstalls > 0 ? ((t.installs.actual - prevInstalls) / prevInstalls) * 100 : 0;
+            const prevDamage = prev ? prev.tech.damage.totalValue : 0;
+            const damageGrowth = prevDamage > 0 ? ((t.damage.totalValue - prevDamage) / prevDamage) * 100 : 0;
+            
+            let insightType = 'good';
+            if (isDamageOverLimit) insightType = 'high_damage';
+            else if (!isInstallOverTarget) insightType = 'low_install';
+
             container.innerHTML = `
-                <div class="flex items-center gap-2 mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0"><i data-lucide="filter" class="w-5 h-5 text-slate-400"></i><span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span><select onchange="handleWeekChange(event)" class="ml-auto bg-amber-50 border border-amber-200 text-amber-700 text-base font-bold rounded-xl p-2 w-72 cursor-pointer">${opt}</select></div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
-                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">จำนวนงานติดตั้งสะสม (YTD)</p><h3 class="text-4xl font-black text-slate-900">${formatCurrency(ytdInstalls)} <span class="text-lg">งาน</span></h3><p class="text-base font-bold text-blue-600 mt-2">เป้า: ${formatCurrency(YEARLY_INSTALL_TARGET)} (${ytdInstallPercent.toFixed(1)}%)</p></div>
-                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">พื้นที่ติดตั้งสะสม (YTD)</p><h3 class="text-4xl font-black text-slate-900">${formatCurrency(ytdArea)} <span class="text-lg">ตร.ฟ.</span></h3><p class="text-base font-bold text-emerald-600 mt-2">เป้า: ${formatCurrency(YEARLY_AREA_TARGET)} (${ytdAreaPercent.toFixed(1)}%)</p></div>
-                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"><p class="text-sm font-black text-slate-500 uppercase mb-2">มูลค่าความเสียหายสะสม (YTD)</p><h3 class="text-4xl font-black text-rose-600">฿${formatCurrency(ytdDamageValue)}</h3></div>
+                <!-- Filter Section -->
+                <div class="flex items-center gap-2 mb-6 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                    <i data-lucide="filter" class="w-5 h-5 text-slate-400 ml-2"></i>
+                    <span class="text-base font-bold text-slate-600 mr-2">เลือกสัปดาห์:</span>
+                    <select onchange="handleWeekChange(event)" class="ml-auto bg-sky-50 border border-sky-200 text-sky-700 text-base font-bold rounded-xl p-2 w-72 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer">${opt}</select>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 shrink-0">
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm"><h4 class="text-base font-black text-blue-600 mb-4">จำนวนงานติดตั้ง</h4><h3 class="text-5xl font-black text-slate-900 mb-4">${formatCurrency(t.installs.actual)} <span class="text-lg">งาน</span></h3><p class="text-base font-bold text-slate-500 mb-2">เป้าหมาย: ${formatCurrency(t.installs.target)} งาน (${installProgress.toFixed(1)}%)</p><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="bg-blue-50 h-full" style="width:${Math.min(installProgress,100)}%"></div></div><div class="grid grid-cols-2 gap-4 mt-6"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">GFS: ${formatCurrency(t.installs.gfs)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">MHL: ${formatCurrency(t.installs.mhl)}</p></div></div></div>
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm"><h4 class="text-base font-black text-emerald-600 mb-4">พื้นที่ติดตั้ง</h4><h3 class="text-5xl font-black text-slate-900 mb-4">${formatCurrency(t.area.actual)} <span class="text-lg">ตร.ฟ.</span></h3><p class="text-base font-bold text-slate-500 mb-2">เป้าหมาย: ${formatCurrency(t.area.target)} ตร.ฟ. (${areaProgress.toFixed(1)}%)</p><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${Math.min(areaProgress,100)}%"></div></div><div class="grid grid-cols-2 gap-4 mt-6"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">GFS: ${formatCurrency(t.area.gfs)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-base text-slate-500 font-bold">MHL: ${formatCurrency(t.area.mhl)}</p></div></div></div>
+                
+                <!-- Section 1: YTD Hero Cards -->
+                <div class="flex items-center gap-3 mb-6 shrink-0 mt-2">
+                    <h3 class="font-black text-slate-800 text-2xl uppercase tracking-tight flex items-center gap-3"><i data-lucide="target" class="text-sky-600 w-7 h-7"></i> เป้าหมายสะสมปีนี้ (YTD Goals)</h3>
+                    <div class="h-px bg-slate-200 flex-1 ml-2"></div>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0">
-                    <div class="bg-white rounded-[2rem] p-8 border ${isDamageOverLimit?'border-red-300 ring-4 ring-red-50':'border-slate-200'} shadow-sm"><h4 class="text-base font-black text-slate-700 mb-4">มูลค่าความเสียหาย</h4><h3 class="text-4xl font-black ${isDamageOverLimit?'text-red-600':'text-slate-900'} mb-4">฿${formatCurrency(t.damage.totalValue)}</h3><div class="space-y-3 mb-6"><p class="text-base text-slate-600 font-medium">จากช่าง: ฿${formatCurrency(t.damage.byTech)}</p><p class="text-base text-slate-600 font-medium">จากฟิล์ม: ฿${formatCurrency(t.damage.byFilm)}</p></div><div class="bg-${isDamageOverLimit?'red':'emerald'}-50 p-4 rounded-xl"><p class="text-sm font-bold ${isDamageOverLimit?'text-red-600':'text-emerald-600'} uppercase">% เทียบยอดขายอาคาร: ${damagePercentSales.toFixed(2)}%</p></div></div>
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center"><div class="mb-8"><p class="text-sm font-bold text-slate-500 uppercase">จำนวนงานเคลม</p><p class="text-4xl font-black text-slate-900 mt-2">${formatCurrency(t.damage.claims)} <span class="text-base">งาน</span></p></div><div><p class="text-sm font-bold text-slate-500 uppercase">ปริมาณฟิล์มเสียหาย</p><p class="text-4xl font-black text-slate-900 mt-2">${formatCurrency(t.damage.filmArea)} <span class="text-base">ตร.ฟ.</span></p></div></div>
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center"><h4 class="text-base font-black text-slate-700 mb-6 flex items-center gap-2">ประสิทธิภาพทีมช่าง <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-black"><i data-lucide="users" class="w-4 h-4 inline"></i> ${t.teams} ทีม</span></h4><div class="mb-6"><p class="text-sm font-bold text-slate-500 uppercase">เฉลี่ย งาน/ทีม</p><p class="text-4xl font-black text-indigo-600 mt-2">${avgInstallsPerTeam.toFixed(1)} <span class="text-base">งาน</span></p></div><div><p class="text-sm font-bold text-slate-500 uppercase">เฉลี่ย พื้นที่/ทีม</p><p class="text-4xl font-black text-indigo-600 mt-2">${formatCurrency(avgAreaPerTeam)} <span class="text-base">ตร.ฟ.</span></p></div></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 shrink-0">
+                    <!-- 1. YTD Installs -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="maximize" class="w-32 h-32 text-blue-600"></i></div>
+                        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2 relative z-10"><i data-lucide="maximize" class="w-5 h-5 text-blue-500"></i> จำนวนงานติดตั้งสะสม</p>
+                        <h2 class="text-5xl font-black text-slate-900 mt-2 mb-3 relative z-10">${formatCurrency(ytdInstalls)} <span class="text-lg text-slate-500 font-bold">งาน</span></h2>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2 relative z-10">
+                            <div class="bg-blue-500 h-full rounded-full" style="width:${Math.min(ytdInstallPercent, 100)}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm font-bold relative z-10">
+                            <span class="text-slate-500">เป้าทั้งปี: ${formatCurrency(YEARLY_INSTALL_TARGET)}</span>
+                            <span class="text-blue-600">${ytdInstallPercent.toFixed(1)}%</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. YTD Area -->
+                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="layers" class="w-32 h-32 text-emerald-600"></i></div>
+                        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2 relative z-10"><i data-lucide="layers" class="w-5 h-5 text-emerald-500"></i> พื้นที่ติดตั้งสะสม</p>
+                        <h2 class="text-5xl font-black text-slate-900 mt-2 mb-3 relative z-10">${formatCurrency(ytdArea)} <span class="text-lg text-slate-500 font-bold">ตร.ฟ.</span></h2>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2 relative z-10">
+                            <div class="bg-emerald-500 h-full rounded-full" style="width:${Math.min(ytdAreaPercent, 100)}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm font-bold relative z-10">
+                            <span class="text-slate-500">เป้าทั้งปี: ${formatCurrency(YEARLY_AREA_TARGET)}</span>
+                            <span class="text-emerald-600">${ytdAreaPercent.toFixed(1)}%</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. YTD Damage -->
+                    <div class="bg-gradient-to-br from-rose-50 to-white rounded-[2rem] p-8 border border-rose-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="alert-triangle" class="w-32 h-32 text-rose-600"></i></div>
+                        <p class="text-sm font-bold text-rose-600 uppercase tracking-widest mb-1 flex items-center gap-2 relative z-10"><i data-lucide="alert-triangle" class="w-5 h-5"></i> มูลค่าความเสียหายสะสม</p>
+                        <h2 class="text-5xl font-black text-rose-600 mt-2 relative z-10 tracking-tighter">฿${formatCurrency(ytdDamageValue)}</h2>
+                        <p class="text-sm font-bold text-slate-500 mt-3 border-t border-rose-100 pt-3 relative z-10">ควบคุมไม่ให้เกิน 1% ของยอดขาย</p>
+                    </div>
                 </div>
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col shrink-0">
-                    <div class="flex items-center justify-between gap-6 mb-6 pb-4 border-b border-slate-100 overflow-x-auto custom-scrollbar w-full">
-                        <div class="flex items-center gap-6 shrink-0">
-                            <h3 class="font-black text-slate-800 uppercase tracking-tight text-base whitespace-nowrap m-0"><i data-lucide="trending-up" class="w-5 h-5 text-blue-500 inline mr-2"></i> แนวโน้มงานติดตั้ง (12 สัปดาห์)</h3>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="changeTechTrendFilter('total')" class="px-4 py-1.5 rounded-full text-sm font-black transition-all ${techTrendFilter === 'total' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวม</button>
-                                <button onclick="changeTechTrendFilter('gfs')" class="px-4 py-1.5 rounded-full text-sm font-black transition-all ${techTrendFilter === 'gfs' ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
-                                <button onclick="changeTechTrendFilter('mhl')" class="px-4 py-1.5 rounded-full text-sm font-black transition-all ${techTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+
+                <div class="flex items-center gap-3 mb-6 shrink-0 mt-4">
+                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight flex items-center gap-3"><i data-lucide="wrench" class="text-sky-500 w-6 h-6"></i> ผลงานประจำสัปดาห์ (Weekly Performance)</h3>
+                    <div class="h-px bg-slate-200 flex-1 ml-2"></div>
+                </div>
+
+                <!-- Section 2: Weekly Deep Dive (Grid) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 shrink-0">
+                    
+                    <!-- 1. Installs (Weekly) -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${isInstallOverTarget ? 'border-blue-300 ring-2 ring-blue-50' : 'border-slate-200'} shadow-sm flex flex-col">
+                        <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black shrink-0"><i data-lucide="check-square" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-black text-slate-800 text-base leading-none">งานติดตั้งเสร็จสิ้น</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase mt-1">สัปดาห์นี้</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <h3 class="text-4xl font-black text-slate-900">${formatCurrency(t.installs.actual)} <span class="text-sm text-slate-500 font-bold">งาน</span></h3>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
+                            <div class="${isInstallOverTarget ? 'bg-blue-500' : 'bg-slate-400'} h-full rounded-full" style="width:${Math.min(installProgress, 100)}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold uppercase text-slate-500 mb-4">
+                            <span>เป้า: ${t.installs.target}</span>
+                            <span class="${isInstallOverTarget ? 'text-blue-600' : ''}">${installProgress.toFixed(1)}%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-auto">
+                            <div class="bg-slate-50 p-2 rounded-lg text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">GFS</p><p class="text-sm font-black text-slate-700">${formatCurrency(t.installs.gfs)}</p></div>
+                            <div class="bg-slate-50 p-2 rounded-lg text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">MHL</p><p class="text-sm font-black text-slate-700">${formatCurrency(t.installs.mhl)}</p></div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Area (Weekly) -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${areaProgress >= 100 ? 'border-emerald-300 ring-2 ring-emerald-50' : 'border-slate-200'} shadow-sm flex flex-col">
+                        <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4">
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-black shrink-0"><i data-lucide="layers" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-black text-slate-800 text-base leading-none">พื้นที่ติดตั้งรวม</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase mt-1">สัปดาห์นี้</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <h3 class="text-4xl font-black text-slate-900">${formatCurrency(t.area.actual)} <span class="text-sm text-slate-500 font-bold">ตร.ฟ.</span></h3>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
+                            <div class="${areaProgress >= 100 ? 'bg-emerald-500' : 'bg-slate-400'} h-full rounded-full" style="width:${Math.min(areaProgress, 100)}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold uppercase text-slate-500 mb-4">
+                            <span>เป้า: ${t.area.target}</span>
+                            <span class="${areaProgress >= 100 ? 'text-emerald-600' : ''}">${areaProgress.toFixed(1)}%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-auto">
+                            <div class="bg-slate-50 p-2 rounded-lg text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">GFS</p><p class="text-sm font-black text-slate-700">${formatCurrency(t.area.gfs)}</p></div>
+                            <div class="bg-slate-50 p-2 rounded-lg text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">MHL</p><p class="text-sm font-black text-slate-700">${formatCurrency(t.area.mhl)}</p></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Efficiency -->
+                    <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4">
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black shrink-0"><i data-lucide="users" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-black text-slate-800 text-base leading-none">ประสิทธิภาพทีม</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase mt-1">ทั้งหมด ${t.teams} ทีม</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4 mt-auto flex-1 flex flex-col justify-center">
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <span class="text-sm font-bold text-slate-500 uppercase tracking-widest">เฉลี่ย งาน/ทีม</span>
+                                    <span class="text-2xl font-black text-indigo-600">${avgInstallsPerTeam.toFixed(1)} <span class="text-sm text-slate-500 font-bold">งาน</span></span>
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-50 pt-4">
+                                <div class="flex justify-between items-end mb-1">
+                                    <span class="text-sm font-bold text-slate-500 uppercase tracking-widest">เฉลี่ย พื้นที่/ทีม</span>
+                                    <span class="text-2xl font-black text-indigo-600">${formatCurrency(avgAreaPerTeam)} <span class="text-sm text-slate-500 font-bold">ตร.ฟ.</span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="flex-1 w-full min-h-[350px] relative"><canvas id="techTrendChartCanvas"></canvas></div>
+
+                    <!-- 4. Damage Control -->
+                    <div class="bg-white rounded-[2rem] p-6 border ${isDamageOverLimit?'border-red-300 ring-4 ring-red-50':'border-slate-200'} shadow-sm flex flex-col relative overflow-hidden">
+                        <div class="absolute -right-2 -bottom-2 opacity-5 pointer-events-none"><i data-lucide="shield-alert" class="w-24 h-24 text-rose-600"></i></div>
+                        <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4 relative z-10">
+                            <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center font-black shrink-0"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-black text-slate-800 text-base leading-none">ควบคุมความเสียหาย</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase mt-1 ${isDamageOverLimit?'text-rose-500':''}">${damagePercentSales.toFixed(2)}% ของยอดขาย</p>
+                            </div>
+                        </div>
+                        <div class="mb-3 relative z-10 text-center">
+                            <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-0.5">มูลค่าความเสียหาย</p>
+                            <h3 class="text-3xl font-black ${isDamageOverLimit?'text-rose-600':'text-slate-900'} tracking-tighter">฿${formatCurrency(t.damage.totalValue)}</h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-auto relative z-10">
+                            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-0.5">จากช่าง</p>
+                                <p class="text-sm font-black text-slate-800">฿${formatCurrency(t.damage.byTech)}</p>
+                            </div>
+                            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-0.5">จากฟิล์ม</p>
+                                <p class="text-sm font-black text-slate-800">฿${formatCurrency(t.damage.byFilm)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Chart & Insights -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 shrink-0 mt-4">
+                    <!-- Chart -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-6 lg:p-8 border border-slate-200 shadow-sm flex flex-col shrink-0">
+                        <div class="flex items-center justify-between gap-6 mb-6 pb-4 border-b border-slate-100 overflow-x-auto custom-scrollbar w-full">
+                            <div class="flex items-center gap-4 shrink-0">
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight text-base whitespace-nowrap m-0 flex items-center"><i data-lucide="trending-up" class="w-5 h-5 text-sky-500 mr-2"></i> แนวโน้มงานติดตั้งอาคาร (12 สัปดาห์)</h3>
+                                <div class="flex gap-2 shrink-0 ml-4">
+                                    <button onclick="changeTechTrendFilter('total')" class="px-4 py-1.5 rounded-full text-xs lg:text-sm font-black transition-all ${techTrendFilter === 'total' ? 'bg-sky-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">รวมทั้งหมด</button>
+                                    <button onclick="changeTechTrendFilter('gfs')" class="px-4 py-1.5 rounded-full text-xs lg:text-sm font-black transition-all ${techTrendFilter === 'gfs' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">GFS</button>
+                                    <button onclick="changeTechTrendFilter('mhl')" class="px-4 py-1.5 rounded-full text-xs lg:text-sm font-black transition-all ${techTrendFilter === 'mhl' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">MHL</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full min-h-[350px] relative"><canvas id="techTrendChartCanvas"></canvas></div>
+                    </div>
+                    
+                    <!-- Executive Insights -->
+                    <div class="bg-white rounded-[2rem] p-6 lg:p-8 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i data-lucide="lightbulb" class="w-64 h-64 text-sky-600"></i></div>
+                        <h3 class="font-black text-slate-800 flex items-center gap-2 text-xl uppercase tracking-tight mb-6 relative z-10">
+                            <i data-lucide="lightbulb" class="text-amber-500 w-6 h-6"></i> วิเคราะห์งานช่างอาคาร
+                        </h3>
+                        
+                        <div class="flex flex-col gap-4 relative z-10 mb-6 flex-1">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-sky-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">เทียบเป้าหมายติดตั้ง</p>
+                                    <p class="text-2xl font-black ${isInstallOverTarget ? 'text-emerald-600' : 'text-slate-700'}">${installProgress.toFixed(1)}%</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${isInstallOverTarget ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'} flex items-center justify-center shrink-0"><i data-lucide="target" class="w-6 h-6"></i></div>
+                            </div>
+                            
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-sky-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">% ความเสียหาย (ยอดขาย)</p>
+                                    <p class="text-2xl font-black ${isDamageOverLimit ? 'text-red-600' : 'text-emerald-600'}">${damagePercentSales.toFixed(2)}%</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${isDamageOverLimit ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'} flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-sky-200 transition-colors">
+                                <div>
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">งานติดตั้ง (เทียบวีคก่อน)</p>
+                                    <p class="text-2xl font-black ${installGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}">${installGrowth >= 0 ? '↑' : '↓'} ${Math.abs(installGrowth).toFixed(1)}%</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl ${installGrowth >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0"><i data-lucide="trending-${installGrowth >= 0 ? 'up' : 'down'}" class="w-6 h-6"></i></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto p-5 ${insightType === 'good' ? 'bg-emerald-50/50 border-emerald-100' : (insightType === 'high_damage' ? 'bg-red-50/50 border-red-100' : 'bg-amber-50/50 border-amber-100')} rounded-2xl border text-sm leading-relaxed text-slate-800 font-medium relative z-10 flex flex-col justify-center">
+                            <b class="${insightType === 'good' ? 'text-emerald-600' : (insightType === 'high_damage' ? 'text-red-600' : 'text-amber-600')} uppercase font-black tracking-widest block mb-2">💡 สรุปสถานการณ์:</b> 
+                            ${insightType === 'good' 
+                                ? `ยอดเยี่ยม! ทีมช่างอาคารสามารถจบงานได้ทะลุเป้าหมาย <b class="text-emerald-700">(${installProgress.toFixed(1)}%)</b> และควบคุมความเสียหายได้ดีเยี่ยมอยู่ในเกณฑ์ปกติ <b class="text-emerald-700">(${damagePercentSales.toFixed(2)}%)</b>` 
+                                : (insightType === 'high_damage' 
+                                    ? `แจ้งเตือน! อัตราความเสียหายเกินเกณฑ์มาตรฐาน 1% โดยสัปดาห์นี้อยู่ที่ <b class="text-red-600">${damagePercentSales.toFixed(2)}%</b> มูลค่ารวม <b class="text-red-600">฿${formatCurrency(t.damage.totalValue)}</b> แนะนำให้ตรวจสอบสาเหตุด่วน (จากช่างหรือจากฟิล์ม)`
+                                    : `จำนวนงานติดตั้งสัปดาห์นี้ยังต่ำกว่าเป้าหมาย <b class="text-amber-600">(${installProgress.toFixed(1)}%)</b> ขาดอีก ${t.installs.target - t.installs.actual} งาน แต่อัตราควบคุมความเสียหายยังอยู่ในเกณฑ์ที่รับได้`)}
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -1402,22 +1856,22 @@
                 
                 if (techTrendFilter === 'total') {
                     recentData = dashboardData.filter(d => d.tech.installs.actual > 0).slice(-12);
-                    dLabelAct = 'งานติดตั้งรวม'; dAct = recentData.map(d => d.tech.installs.actual); cBg = '#3b82f6';
+                    dLabelAct = 'งานติดตั้งรวม'; dAct = recentData.map(d => d.tech.installs.actual); cBg = '#0284c7'; // sky-600
                 } else if (techTrendFilter === 'gfs') {
                     recentData = dashboardData.filter(d => d.tech.installs.gfs > 0).slice(-12);
-                    dLabelAct = 'งานติดตั้ง GFS'; dAct = recentData.map(d => d.tech.installs.gfs); cBg = '#3b82f6';
+                    dLabelAct = 'งานติดตั้ง GFS'; dAct = recentData.map(d => d.tech.installs.gfs); cBg = '#2563eb'; // blue-600
                 } else if (techTrendFilter === 'mhl') {
                     recentData = dashboardData.filter(d => d.tech.installs.mhl > 0).slice(-12);
-                    dLabelAct = 'งานติดตั้ง MHL'; dAct = recentData.map(d => d.tech.installs.mhl); cBg = '#f59e0b';
+                    dLabelAct = 'งานติดตั้ง MHL'; dAct = recentData.map(d => d.tech.installs.mhl); cBg = '#f59e0b'; // amber-500
                 }
 
                 let datasets = [{ type: 'bar', label: dLabelAct, data: dAct, backgroundColor: cBg, order: 2, borderRadius: 4, barPercentage: 0.6, yAxisID: 'y' }];
 
                 if (techTrendFilter === 'total') {
-                    datasets.push({ type: 'line', label: 'เป้าหมายรวม (งาน)', data: recentData.map(d => d.tech.installs.target), borderColor: '#cbd5e1', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], tension: 0.1, order: 1, yAxisID: 'y' });
+                    datasets.push({ type: 'line', label: 'เป้าหมายรวม (งาน)', data: recentData.map(d => d.tech.installs.target), borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], tension: 0.1, order: 1, yAxisID: 'y' });
                 }
 
-                datasets.push({ type: 'line', label: 'ความเสียหาย (฿)', data: recentData.map(d => d.tech.damage.totalValue), borderColor: '#f43f5e', backgroundColor: '#f43f5e', borderWidth: 2, tension: 0.4, order: 0, yAxisID: 'y1' });
+                datasets.push({ type: 'line', label: 'ความเสียหาย (฿)', data: recentData.map(d => d.tech.damage.totalValue), borderColor: '#f43f5e', backgroundColor: '#fef1f2', borderWidth: 2, tension: 0.4, order: 0, yAxisID: 'y1', fill: false });
 
                 charts['techTrend'] = new Chart(ctx, {
                     type: 'bar',
@@ -1440,7 +1894,7 @@
                         },
                         scales: { 
                             x: { grid: { display: false }, ticks: { font: { family: 'Sarabun' } } },
-                            y: { type: 'linear', position: 'left', beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { weight: 'bold' } } },
+                            y: { type: 'linear', position: 'left', beginAtZero: true, grace: '25%', grid: { color: '#f1f5f9' }, ticks: { font: { weight: 'bold' } } },
                             y1: { type: 'linear', position: 'right', beginAtZero: true, grace: '25%', grid: { drawOnChartArea: false }, ticks: { font: { family: 'Sarabun' }, color: '#f43f5e', callback: (v) => v >= 1000 ? (v/1000)+'k' : v } }
                         }
                     },
@@ -1462,7 +1916,8 @@
             
             const convRate = current.admin.contacts.total > 0 ? ((current.admin.leads.actual / current.admin.contacts.total) * 100) : 0;
             const closeRate = current.admin.leads.actual > 0 ? ((current.admin.sales.totalInstalls / current.admin.leads.actual) * 100) : 0;
-            
+            const leadTargetProgress = current.admin.leads.target > 0 ? ((current.admin.leads.actual / current.admin.leads.target) * 100) : 0;
+
             const insightType = convRate < 25 ? 'low_conv' : (closeRate < 15 ? 'low_close' : 'good');
             
             const gfsContacts = current.admin.contacts.gfs.line + current.admin.contacts.gfs.fb + current.admin.contacts.gfs.tel;
@@ -1688,10 +2143,10 @@
                         <div class="mt-auto p-5 ${insightType === 'good' ? 'bg-emerald-50/50 border-emerald-100' : (insightType === 'low_close' ? 'bg-amber-50/50 border-amber-100' : 'bg-red-50/50 border-red-100')} rounded-2xl border text-sm leading-relaxed text-slate-800 font-medium relative z-10 flex flex-col justify-center">
                             <b class="${insightType === 'good' ? 'text-emerald-600' : (insightType === 'low_close' ? 'text-amber-600' : 'text-red-600')} uppercase font-black tracking-widest block mb-2">💡 สรุปสถานการณ์:</b> 
                             ${insightType === 'good' 
-                                ? `ยอดเยี่ยมมาก! แอดมินคัดกรองลูกค้าและส่งต่อให้เซลล์ได้สูงถึง <b class="text-emerald-700">${convRate.toFixed(1)}%</b> และมีการปิดการขายได้ถึง <b class="text-emerald-700">${closeRate.toFixed(1)}%</b> แสดงให้เห็นถึงคุณภาพของ Leads ที่แอดมินคุยมาดีมาก` 
+                                ? `ยอดเยี่ยมมาก! แอดมินสามารถคัดกรองลูกค้าและส่งต่อให้เซลล์ได้สูงถึง <b class="text-emerald-700">${convRate.toFixed(1)}%</b> และมีการปิดการขายได้ถึง <b class="text-emerald-700">${closeRate.toFixed(1)}%</b> แสดงให้เห็นถึงคุณภาพของ Leads ที่แอดมินคุยมาดีมาก` 
                                 : (insightType === 'low_close' 
-                                    ? `แอดมินส่งมอบ Leads ได้ดี <b class="text-amber-600">(${convRate.toFixed(1)}%)</b> แต่เซลล์ปิดการขายได้ค่อนข้างต่ำ <b class="text-amber-600">(${closeRate.toFixed(1)}%)</b> แนะนำให้ตรวจสอบว่าปัญหาเกิดจากคุณภาพ Leads หรือเซลล์ตามงานไม่ทัน`
-                                    : `การเปลี่ยน Contact เป็น Leads ต่ำกว่าเกณฑ์ <b class="text-red-600">(${convRate.toFixed(1)}%)</b> แม้จะมีคนทักมามาก แต่แอดมินไม่สามารถดึงข้อมูลส่งให้เซลล์ได้ ควรปรับปรุงสคริปต์การตอบด่วน`)}
+                                    ? `แอดมินทำงานได้ดีในการส่งมอบ Leads <b class="text-amber-600">(${convRate.toFixed(1)}%)</b> แต่เซลล์ปิดการขายได้ค่อนข้างต่ำ <b class="text-amber-600">(${closeRate.toFixed(1)}%)</b> แนะนำให้ตรวจสอบว่าปัญหาเกิดจากคุณภาพของ Leads หรือเซลล์ตามงานไม่ทัน`
+                                    : `ประสิทธิภาพการเปลี่ยน Contact เป็น Leads ต่ำกว่าเกณฑ์ปกติ <b class="text-red-600">(${convRate.toFixed(1)}%)</b> แม้จะมีคนทักมามาก แต่แอดมินไม่สามารถดึงข้อมูลหรือส่งให้เซลล์ได้ ควรเร่งตรวจสอบและปรับปรุงสคริปต์การตอบด่วน`)}
                         </div>
                     </div>
                 </div>
