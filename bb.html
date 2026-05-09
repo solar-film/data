@@ -502,12 +502,11 @@
             const totalTarget = current.gfs.target + current.mhl.target + current.car.target;
             const totalSalesProgress = totalTarget > 0 ? (totalSales / totalTarget) * 100 : 0;
 
+            const buildingSales = current.gfs.actual + current.mhl.actual;
             const buildingInstalls = current.tech.installs.actual;
-            const carInstalls = current.carDetail ? (current.carDetail.installs.line + current.carDetail.installs.fb + current.carDetail.installs.tel + current.carDetail.installs.walkin + current.carDetail.installs.showroom + current.carDetail.installs.other) : 0;
-            const totalInstalls = buildingInstalls + carInstalls;
             
-            const totalDamageValue = current.tech.damage.totalValue + (current.carDetail ? (current.carDetail.tech.filmIssueValue + current.carDetail.tech.techIssueValue) : 0);
-            const damagePercent = totalSales > 0 ? (totalDamageValue / totalSales) * 100 : 0;
+            const buildingDamageValue = current.tech.damage.totalValue;
+            const damagePercent = buildingSales > 0 ? (buildingDamageValue / buildingSales) * 100 : 0;
 
             container.innerHTML = `
                 <!-- ส่วน Filter สัปดาห์ -->
@@ -607,18 +606,18 @@
                         </div>
                     </div>
 
-                    <!-- ช่างติดตั้ง -->
+                    <!-- ช่างติดตั้ง (อาคาร) -->
                     <div class="bg-white rounded-[2rem] p-6 border ${damagePercent > 1 ? 'border-red-300 ring-2 ring-red-50' : 'border-slate-200'} shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" onclick="changePage('tech')">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 ${damagePercent > 1 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-600'} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><i data-lucide="wrench" class="w-6 h-6"></i></div>
-                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">4. ช่างติดตั้ง</h4><p class="text-xs font-bold text-slate-400 mt-1">ส่งมอบงาน</p></div>
+                            <div><h4 class="font-black text-slate-800 text-lg uppercase leading-none">4. ช่างติดตั้ง (อาคาร)</h4><p class="text-xs font-bold text-slate-400 mt-1">ส่งมอบงาน</p></div>
                         </div>
                         <div class="mb-4">
                             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">งานติดตั้งสำเร็จ</p>
-                            <p class="text-3xl font-black text-slate-900">${formatCurrency(totalInstalls)} <span class="text-sm text-slate-500 font-bold">คัน/งาน</span></p>
+                            <p class="text-3xl font-black text-slate-900">${formatCurrency(buildingInstalls)} <span class="text-sm text-slate-500 font-bold">งาน</span></p>
                         </div>
                         <div class="mt-auto pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
-                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">มูลค่าเสียหาย</p><p class="text-sm font-black ${damagePercent > 1 ? 'text-red-600' : 'text-slate-700'}">฿${formatCurrency(totalDamageValue)}</p></div>
+                            <div><p class="text-xs text-slate-400 font-bold mb-0.5">มูลค่าเสียหาย</p><p class="text-sm font-black ${damagePercent > 1 ? 'text-red-600' : 'text-slate-700'}">฿${formatCurrency(buildingDamageValue)}</p></div>
                             <div><p class="text-xs text-slate-400 font-bold mb-0.5">% เสียหาย</p><p class="text-sm font-black ${damagePercent > 1 ? 'text-red-600' : 'text-emerald-600'}">${damagePercent.toFixed(2)}%</p></div>
                         </div>
                     </div>
